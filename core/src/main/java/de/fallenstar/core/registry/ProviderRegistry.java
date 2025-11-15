@@ -46,61 +46,59 @@ public class ProviderRegistry {
      * Erkennt verfügbare Plugins und registriert entsprechende Provider.
      *
      * Wird beim Server-Start vom Core-Plugin aufgerufen.
+     *
+     * NOTE: Currently all providers use NoOp implementations.
+     * Real implementations (Towny, Vault, Citizens) can be added
+     * when their JAR files are available at runtime.
      */
     public void detectAndRegister() {
         logger.info("Detecting available providers...");
 
-        // Plot Provider Detection
+        // Plot Provider - NoOp (Towny/Factions support can be added later)
+        plotProvider = new NoOpPlotProvider();
         if (isPluginEnabled("Towny")) {
-            plotProvider = new TownyPlotProvider();
-            logger.info("✓ Registered TownyPlotProvider");
+            logger.info("○ Towny detected - using NoOp provider (add TownyPlotProvider implementation)");
         } else if (isPluginEnabled("Factions")) {
-            // plotProvider = new FactionsPlotProvider();
-            logger.info("✓ Registered FactionsPlotProvider");
+            logger.info("○ Factions detected - using NoOp provider (add FactionsPlotProvider implementation)");
         } else {
-            plotProvider = new NoOpPlotProvider();
-            logger.warning("✗ No plot plugin found - plot features disabled");
+            logger.info("○ No plot plugin found - plot features disabled");
         }
 
-        // Economy Provider Detection
+        // Economy Provider - NoOp (Vault support can be added later)
+        economyProvider = new NoOpEconomyProvider();
         if (isPluginEnabled("Vault")) {
-            economyProvider = new VaultEconomyProvider(logger);
-            logger.info("✓ Registered VaultEconomyProvider");
+            logger.info("○ Vault detected - using NoOp provider (add VaultEconomyProvider implementation)");
         } else {
-            economyProvider = new NoOpEconomyProvider();
-            logger.warning("✗ No economy plugin found - economy features disabled");
+            logger.info("○ No economy plugin found - economy features disabled");
         }
 
-        // NPC Provider Detection
+        // NPC Provider - NoOp (Citizens support can be added later)
+        npcProvider = new NoOpNPCProvider();
         if (isPluginEnabled("Citizens")) {
-            npcProvider = new CitizensNPCProvider(plugin, logger);
-            logger.info("✓ Registered CitizensNPCProvider");
+            logger.info("○ Citizens detected - using NoOp provider (add CitizensNPCProvider implementation)");
         } else if (isPluginEnabled("ZNPCsPlus")) {
-            // npcProvider = new ZNPCProvider();
-            logger.info("✓ Registered ZNPCProvider");
+            logger.info("○ ZNPCsPlus detected - using NoOp provider (add ZNPCProvider implementation)");
         } else {
-            npcProvider = new NoOpNPCProvider();
-            logger.warning("✗ No NPC plugin found - NPC features disabled");
+            logger.info("○ No NPC plugin found - NPC features disabled");
         }
 
-        // Item Provider Detection (optional)
+        // Item Provider - NoOp
+        itemProvider = new NoOpItemProvider();
         if (isPluginEnabled("MMOItems")) {
-            // itemProvider = new MMOItemsProvider();
-            logger.info("✓ Registered MMOItemsProvider");
+            logger.info("○ MMOItems detected - using NoOp provider (add MMOItemsProvider implementation)");
         } else {
-            itemProvider = new NoOpItemProvider();
             logger.info("○ No custom item plugin - using vanilla items only");
         }
 
-        // Chat Provider Detection (optional)
+        // Chat Provider - NoOp
         chatProvider = new NoOpChatProvider();
-        logger.info("○ Chat provider disabled - no external chat integration");
+        logger.info("○ Chat provider: NoOp (external chat integration disabled)");
 
-        // Network Provider Detection (optional)
+        // Network Provider - NoOp
         networkProvider = new NoOpNetworkProvider();
-        logger.info("○ Network provider disabled - standalone server mode");
+        logger.info("○ Network provider: NoOp (standalone server mode)");
 
-        logger.info("Provider detection completed");
+        logger.info("Provider detection completed - all providers using NoOp implementations");
     }
     
     /**

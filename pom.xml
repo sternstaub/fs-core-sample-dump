@@ -30,7 +30,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <paper.version>1.21.1-R0.1-SNAPSHOT</paper.version>
         <towny.version>0.100.2.0</towny.version>
-        <vault.version>1.7.3</vault.version>
+        <vault.version>1.7</vault.version>
         <citizens.version>2.0.33-SNAPSHOT</citizens.version>
     </properties>
 
@@ -54,10 +54,16 @@
             <url>https://maven.citizensnpcs.co/repo</url>
         </repository>
         
-        <!-- Vault -->
+        <!-- Vault API -->
         <repository>
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
+        </repository>
+
+        <!-- Nexus (alternative for various dependencies) -->
+        <repository>
+            <id>sonatype</id>
+            <url>https://oss.sonatype.org/content/groups/public/</url>
         </repository>
     </repositories>
 
