@@ -74,12 +74,12 @@ public class FallenStarCore extends JavaPlugin {
     
     /**
      * Initialisiert die Provider-Registry.
-     * 
+     *
      * Auto-Detection aller verfügbaren Plugins und
      * Registrierung entsprechender Provider.
      */
     private void initializeProviders() {
-        providerRegistry = new ProviderRegistry(getLogger());
+        providerRegistry = new ProviderRegistry(this, getLogger());
         providerRegistry.detectAndRegister();
     }
     
