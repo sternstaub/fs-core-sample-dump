@@ -56,7 +56,7 @@ public class ProviderRegistry {
 
         // Plot Provider - NoOp (Towny/Factions support can be added later)
         plotProvider = new NoOpPlotProvider();
-        if (isPluginEnabled("Towny")) {
+        if (isPluginEnabled("TownyAdvanced")) {
             logger.info("○ Towny detected - using NoOp provider (add TownyPlotProvider implementation)");
         } else if (isPluginEnabled("Factions")) {
             logger.info("○ Factions detected - using NoOp provider (add FactionsPlotProvider implementation)");
