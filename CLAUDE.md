@@ -8,14 +8,57 @@ This document provides comprehensive guidance for AI assistants working on this 
 
 ## Table of Contents
 
-1. [Project Overview](#project-overview)
-2. [Codebase Structure](#codebase-structure)
-3. [Architecture & Design Patterns](#architecture--design-patterns)
-4. [Development Workflow](#development-workflow)
-5. [Code Conventions](#code-conventions)
-6. [Common Tasks](#common-tasks)
-7. [Testing Guidelines](#testing-guidelines)
-8. [Important Files Reference](#important-files-reference)
+1. [Language Conventions / Sprachkonventionen](#language-conventions--sprachkonventionen)
+2. [Project Overview](#project-overview)
+3. [Codebase Structure](#codebase-structure)
+4. [Architecture & Design Patterns](#architecture--design-patterns)
+5. [Development Workflow](#development-workflow)
+6. [Code Conventions](#code-conventions)
+7. [Common Tasks](#common-tasks)
+8. [Testing Guidelines](#testing-guidelines)
+9. [Important Files Reference](#important-files-reference)
+
+---
+
+## Language Conventions / Sprachkonventionen
+
+### 🇩🇪 **WICHTIG: Dieses Projekt verwendet Deutsch als primäre Sprache**
+
+**Für AI-Assistenten:**
+- **Kommunikation mit dem Benutzer:** Immer auf Deutsch
+- **Code-Kommentare:** Deutsch (wie im bestehenden Code)
+- **Javadoc-Dokumentation:** Deutsch
+- **Commit Messages:** Deutsch
+- **README und Dokumentation:** Deutsch (außer technische Begriffe)
+
+**Englisch wird verwendet für:**
+- Java-Code selbst (Klassen-, Methoden-, Variablennamen)
+- Technische Fachbegriffe (Provider, Registry, Plugin, etc.)
+- Log-Ausgaben können gemischt sein
+
+### Beispiel:
+
+```java
+/**
+ * Initialisiert die Provider-Registry.
+ *
+ * Auto-Detection aller verfügbaren Plugins und
+ * Registrierung entsprechender Provider.
+ */
+private void initializeProviders() {
+    // Registry erstellen und Provider erkennen
+    providerRegistry = new ProviderRegistry(getLogger());
+    providerRegistry.detectAndRegister();
+}
+```
+
+### Wichtige Punkte:
+
+1. ✅ **Javadoc auf Deutsch** - Beschreibungen, Parameter, Return-Werte
+2. ✅ **Inline-Kommentare auf Deutsch** - Erklärungen im Code
+3. ✅ **Commit Messages auf Deutsch** - Beschreibung der Änderungen
+4. ✅ **User-Kommunikation auf Deutsch** - Antworten, Erklärungen, Fragen
+5. ✅ **Log-Messages gemischt** - Technische Begriffe auf Englisch, Kontext auf Deutsch
 
 ---
 
@@ -875,7 +918,7 @@ public void testGracefulDegradation() {
 
 1. **Always follow existing patterns** - Don't invent new structures
 2. **Copy Javadoc style** from templates
-3. **Use German or English** consistently (match existing files)
+3. **🇩🇪 Use German** for all documentation, comments, and user communication (see [Language Conventions](#language-conventions--sprachkonventionen))
 4. **Test compilation** after each class
 5. **Reference line numbers** when discussing code (e.g., `FallenStarCore.java:82`)
 
@@ -954,13 +997,14 @@ git log --oneline -10
 
 **When working on this codebase:**
 
-1. ✅ **Understand the provider pattern** - it's the foundation
-2. ✅ **Follow sprint-based approach** - one module at a time
-3. ✅ **Use templates** - don't reinvent patterns
-4. ✅ **Document heavily** - Javadoc everything
-5. ✅ **Test incrementally** - build after each class
-6. ✅ **Check SETUP_COMPLETE.md** - know what's missing
-7. ✅ **Reference existing code** - maintain consistency
+1. ✅ **🇩🇪 Arbeite auf Deutsch** - Dokumentation, Kommentare, User-Kommunikation
+2. ✅ **Understand the provider pattern** - it's the foundation
+3. ✅ **Follow sprint-based approach** - one module at a time
+4. ✅ **Use templates** - don't reinvent patterns
+5. ✅ **Document heavily** - Javadoc everything (auf Deutsch!)
+6. ✅ **Test incrementally** - build after each class
+7. ✅ **Check SETUP_COMPLETE.md** - know what's missing
+8. ✅ **Reference existing code** - maintain consistency
 
 **Key Architecture Principle:**
 > "Modules depend on Core, Core provides providers, providers abstract external plugins, NoOp providers enable graceful degradation."
