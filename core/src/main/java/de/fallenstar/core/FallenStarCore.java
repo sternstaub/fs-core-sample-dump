@@ -1,6 +1,9 @@
 package de.fallenstar.core;
 
+import de.fallenstar.core.command.CoreCommand;
 import de.fallenstar.core.database.DataStore;
+import de.fallenstar.core.database.impl.MySQLDataStore;
+import de.fallenstar.core.database.impl.PostgreSQLDataStore;
 import de.fallenstar.core.database.impl.SQLiteDataStore;
 import de.fallenstar.core.event.ProvidersReadyEvent;
 import de.fallenstar.core.registry.ProviderRegistry;
@@ -38,37 +41,71 @@ public class FallenStarCore extends JavaPlugin {
         
         // Config laden/erstellen
         saveDefaultConfig();
-        
+
         // DataStore initialisieren
         initializeDataStore();
-        
-        // Provider-Registry initialisieren
-        initializeProviders();
-        
-        // Module informieren dass Provider bereit sind
-        notifyModules();
-        
-        getLogger().info("Core initialization complete!");
+
+        // Commands registrieren
+        registerCommands();
+
+        // Provider-Registry und Module-Benachrichtigung mit Verzögerung
+        // um sicherzustellen, dass alle Plugins geladen sind
+        Bukkit.getScheduler().runTask(this, () -> {
+            // Provider-Registry initialisieren
+            initializeProviders();
+
+            // Module informieren dass Provider bereit sind
+            notifyModules();
+
+            getLogger().info("✓ Core initialization complete!");
+        });
     }
     
+    /**
+     * Registriert alle Commands.
+     */
+    private void registerCommands() {
+        CoreCommand coreCommand = new CoreCommand(this);
+        getCommand("fscore").setExecutor(coreCommand);
+        getCommand("fscore").setTabCompleter(coreCommand);
+        getLogger().info("✓ Commands registered");
+    }
+
     /**
      * Initialisiert den DataStore basierend auf Config.
      */
     private void initializeDataStore() {
         String storeType = getConfig().getString("database.type", "sqlite");
-        
-        switch (storeType.toLowerCase()) {
-            case "sqlite":
-                dataStore = new SQLiteDataStore(getDataFolder());
-                getLogger().info("✓ DataStore: SQLite");
-                break;
-            case "mysql":
-                // dataStore = new MySQLDataStore(config);
-                getLogger().info("✓ DataStore: MySQL");
-                break;
-            default:
-                getLogger().warning("Unknown database type, falling back to SQLite");
-                dataStore = new SQLiteDataStore(getDataFolder());
+
+        try {
+            switch (storeType.toLowerCase()) {
+                case "sqlite" -> {
+                    dataStore = new SQLiteDataStore(getDataFolder());
+                    getLogger().info("✓ DataStore: SQLite");
+                }
+                case "mysql" -> {
+                    dataStore = new MySQLDataStore(
+                        getConfig().getConfigurationSection("database.mysql"),
+                        getLogger()
+                    );
+                    getLogger().info("✓ DataStore: MySQL");
+                }
+                case "postgresql" -> {
+                    dataStore = new PostgreSQLDataStore(
+                        getConfig().getConfigurationSection("database.postgresql"),
+                        getLogger()
+                    );
+                    getLogger().info("✓ DataStore: PostgreSQL");
+                }
+                default -> {
+                    getLogger().warning("Unknown database type '" + storeType + "', falling back to SQLite");
+                    dataStore = new SQLiteDataStore(getDataFolder());
+                }
+            }
+        } catch (Exception e) {
+            getLogger().severe("Failed to initialize DataStore: " + e.getMessage());
+            getLogger().warning("Falling back to SQLite");
+            dataStore = new SQLiteDataStore(getDataFolder());
         }
     }
     
@@ -85,17 +122,14 @@ public class FallenStarCore extends JavaPlugin {
     
     /**
      * Informiert alle Module dass Provider bereit sind.
-     * 
+     *
      * Module können auf ProvidersReadyEvent reagieren und
      * ihre Provider-abhängigen Features initialisieren.
      */
     private void notifyModules() {
-        // Event erst im nächsten Tick feuern, damit alle Plugins geladen sind
-        Bukkit.getScheduler().runTask(this, () -> {
-            ProvidersReadyEvent event = new ProvidersReadyEvent(providerRegistry);
-            Bukkit.getPluginManager().callEvent(event);
-            getLogger().info("✓ ProvidersReadyEvent fired");
-        });
+        ProvidersReadyEvent event = new ProvidersReadyEvent(providerRegistry);
+        Bukkit.getPluginManager().callEvent(event);
+        getLogger().info("✓ ProvidersReadyEvent fired");
     }
     
     @Override
