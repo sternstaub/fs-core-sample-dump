@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- Parent POM für Multi-Module-Projekt -->
+    <groupId>de.fallenstar</groupId>
+    <artifactId>fallenstar-paper-parent</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>FallenStar Paper Parent</name>
+    <description>Modular Plugin System for FallenStar Minecraft Network</description>
+
+    <!-- Module -->
+    <modules>
+        <module>Core</module>
+        <module>Storage</module>
+        <module>Merchants</module>
+        <module>TravelSystem</module>
+        <module>AdminShops</module>
+    </modules>
+
+    <properties>
+        <java.version>21</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <paper.version>1.21.1-R0.1-SNAPSHOT</paper.version>
+        <towny.version>0.100.2.0</towny.version>
+        <vault.version>1.7.3</vault.version>
+        <citizens.version>2.0.33-SNAPSHOT</citizens.version>
+    </properties>
+
+    <!-- Repository Definitions -->
+    <repositories>
+        <!-- Paper API -->
+        <repository>
+            <id>papermc</id>
+            <url>https://repo.papermc.io/repository/maven-public/</url>
+        </repository>
+        
+        <!-- Towny -->
+        <repository>
+            <id>glaremasters</id>
+            <url>https://repo.glaremasters.me/repository/towny/</url>
+        </repository>
+        
+        <!-- Citizens -->
+        <repository>
+            <id>citizens-repo</id>
+            <url>https://maven.citizensnpcs.co/repo</url>
+        </repository>
+        
+        <!-- Vault -->
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
+
+    <!-- Dependency Management für alle Module -->
+    <dependencyManagement>
+        <dependencies>
+            <!-- Paper API -->
+            <dependency>
+                <groupId>io.papermc.paper</groupId>
+                <artifactId>paper-api</artifactId>
+                <version>${paper.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            
+            <!-- Towny (optional) -->
+            <dependency>
+                <groupId>com.palmergames.bukkit.towny</groupId>
+                <artifactId>towny</artifactId>
+                <version>${towny.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            
+            <!-- Vault API (optional) -->
+            <dependency>
+                <groupId>com.github.MilkBowl</groupId>
+                <artifactId>VaultAPI</artifactId>
+                <version>${vault.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            
+            <!-- Citizens (optional) -->
+            <dependency>
+                <groupId>net.citizensnpcs</groupId>
+                <artifactId>citizens-main</artifactId>
+                <version>${citizens.version}</version>
+                <scope>provided</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <!-- Java Compiler -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.11.0</version>
+                    <configuration>
+                        <source>${java.version}</source>
+                        <target>${java.version}</target>
+                    </configuration>
+                </plugin>
+                
+                <!-- Shade Plugin (für Dependencies bundling) -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-shade-plugin</artifactId>
+                    <version>3.5.0</version>
+                    <executions>
+                        <execution>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>shade</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+</project>
