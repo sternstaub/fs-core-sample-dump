@@ -25,21 +25,29 @@
             <artifactId>paper-api</artifactId>
         </dependency>
 
-        <!-- Towny (optional, provided by server) -->
+        <!-- Towny (optional, provided by server)
+             Commented out due to potential repository issues
+             The code will compile without it and use runtime reflection
         <dependency>
             <groupId>com.palmergames.bukkit.towny</groupId>
             <artifactId>towny</artifactId>
             <optional>true</optional>
         </dependency>
+        -->
 
-        <!-- Vault API (optional, provided by server) -->
+        <!-- Vault API (optional, provided by server)
+             Commented out due to JitPack authentication issues
+             The code will compile without it and use runtime reflection
         <dependency>
             <groupId>com.github.MilkBowl</groupId>
             <artifactId>VaultAPI</artifactId>
             <optional>true</optional>
         </dependency>
+        -->
 
-        <!-- Citizens (optional, provided by server) -->
+        <!-- Citizens (optional, provided by server)
+             Commented out due to potential repository issues
+             The code will compile without it and use runtime reflection
         <dependency>
             <groupId>net.citizensnpcs</groupId>
             <artifactId>citizens-main</artifactId>
@@ -51,6 +59,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        -->
 
         <!-- Gson for JSON serialization -->
         <dependency>
