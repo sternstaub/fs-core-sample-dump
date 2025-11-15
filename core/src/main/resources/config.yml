@@ -1,0 +1,94 @@
+# FallenStar Paper Core - Configuration
+# Version 1.0
+
+# Database Configuration
+database:
+  # Type: sqlite, mysql, redis
+  type: sqlite
+  
+  # SQLite Settings (wenn type: sqlite)
+  sqlite:
+    file: "fallenstar.db"
+    
+  # MySQL Settings (wenn type: mysql)
+  mysql:
+    host: "localhost"
+    port: 3306
+    database: "fallenstar"
+    username: "root"
+    password: "password"
+    pool-size: 10
+    
+  # Redis Settings (für Cache und Cross-Server-Sync)
+  redis:
+    enabled: false
+    host: "localhost"
+    port: 6379
+    password: ""
+
+# Provider Settings
+providers:
+  # Plot Provider
+  plot:
+    # Auto-detect oder force-disable
+    enabled: true
+    # Preferred: towny, factions
+    preferred: "towny"
+    
+  # Economy Provider
+  economy:
+    enabled: true
+    # Vault API erforderlich
+    
+  # NPC Provider
+  npc:
+    enabled: true
+    # Preferred: citizens, znpc
+    preferred: "citizens"
+    # NPC Update-Intervall (ticks)
+    update-interval: 20
+    
+  # Item Provider
+  item:
+    enabled: true
+    # Preferred: mmoitems, itemsadder, vanilla
+    preferred: "mmoitems"
+    
+  # Chat Provider
+  chat:
+    enabled: false
+    # Type: matrix, discord, irc
+    type: "matrix"
+    
+  # Network Provider
+  network:
+    enabled: true
+    # Auto-detected (Velocity/BungeeCord)
+    
+# Module Settings
+modules:
+  # Storage Module
+  storage:
+    max-chests-per-plot: 10
+    allow-mixed-chest: true
+    
+  # Merchants Module
+  merchants:
+    max-merchants-per-plot: 5
+    despawn-on-restart: false
+    
+  # TravelSystem Module
+  travel:
+    travel-duration-seconds: 300
+    max-contracts-per-town: 3
+    
+  # AdminShops Module
+  admin-shops:
+    dynamic-pricing: true
+    price-check-interval: 600
+
+# Debug Settings
+debug:
+  log-provider-calls: false
+  log-database-queries: false
+  performance-monitoring: false
