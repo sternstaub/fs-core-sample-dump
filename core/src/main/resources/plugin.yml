@@ -14,8 +14,8 @@ softdepend:
   - MMOItems
   - PlaceholderAPI
 
-# Load Priority
-load: STARTUP
+# Load Priority - removed STARTUP to allow other plugins to load first
+# Default is POSTWORLD which ensures all plugins are loaded before provider detection
 
 # Permissions
 permissions:
@@ -38,6 +38,6 @@ permissions:
 commands:
   fscore:
     description: FallenStar Core main command
-    usage: /fscore <reload|debug|providers|info>
+    usage: /fscore <status|reload|debug|help>
     permission: fallenstar.admin
     aliases: [fallenstar, fs]

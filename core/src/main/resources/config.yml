@@ -3,28 +3,44 @@
 
 # Database Configuration
 database:
-  # Type: sqlite, mysql, redis
+  # Type: sqlite, mysql, postgresql
+  # Default: sqlite (keine externe Datenbank erforderlich)
   type: sqlite
-  
-  # SQLite Settings (wenn type: sqlite)
+
+  # SQLite Settings (type: sqlite)
+  # Leichtgewichtig, ideal für kleine/mittlere Server
   sqlite:
     file: "fallenstar.db"
-    
-  # MySQL Settings (wenn type: mysql)
+
+  # MySQL Settings (type: mysql)
+  # Empfohlen für große Server oder Netzwerke
   mysql:
     host: "localhost"
     port: 3306
     database: "fallenstar"
     username: "root"
     password: "password"
+    # Connection Pool Größe
     pool-size: 10
-    
-  # Redis Settings (für Cache und Cross-Server-Sync)
-  redis:
-    enabled: false
+    # SSL-Verbindung
+    use-ssl: false
+    # Connection Timeout (Sekunden)
+    connection-timeout: 30
+
+  # PostgreSQL Settings (type: postgresql)
+  # Alternative zu MySQL, performant und feature-reich
+  postgresql:
     host: "localhost"
-    port: 6379
-    password: ""
+    port: 5432
+    database: "fallenstar"
+    username: "postgres"
+    password: "password"
+    # Connection Pool Größe
+    pool-size: 10
+    # SSL-Verbindung
+    use-ssl: false
+    # Connection Timeout (Sekunden)
+    connection-timeout: 30
 
 # Provider Settings
 providers:
