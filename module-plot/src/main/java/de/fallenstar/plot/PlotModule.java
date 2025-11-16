@@ -1,5 +1,10 @@
 package de.fallenstar.plot;
 
+import com.palmergames.bukkit.towny.event.TownBlockTypeRegisterEvent;
+import com.palmergames.bukkit.towny.exceptions.TownyException;
+import com.palmergames.bukkit.towny.object.TownBlockData;
+import com.palmergames.bukkit.towny.object.TownBlockType;
+import com.palmergames.bukkit.towny.object.TownBlockTypeHandler;
 import de.fallenstar.core.FallenStarCore;
 import de.fallenstar.core.event.ProvidersReadyEvent;
 import de.fallenstar.core.exception.ProviderFunctionalityNotFoundException;
@@ -42,6 +47,12 @@ public class PlotModule extends JavaPlugin implements Listener {
     private boolean townSystemEnabled = false;
     private boolean npcSystemEnabled = false;
     private boolean storageSystemEnabled = false;
+
+    @Override
+    public void onLoad() {
+        // Registriere Custom-Plot-Typ in Towny (muss in onLoad() erfolgen)
+        registerCustomPlotType();
+    }
 
     @Override
     public void onEnable() {
@@ -183,35 +194,45 @@ public class PlotModule extends JavaPlugin implements Listener {
     }
 
     /**
-     * Event-Handler für Towny TownBlockTypeRegisterEvent.
-     * Registriert den Custom-Plot-Typ "botschaft".
+     * Registriert den Custom-Plot-Typ "botschaft" in Towny.
+     *
+     * Diese Methode wird in onLoad() aufgerufen und auch bei Towny-Reloads
+     * via TownBlockTypeRegisterEvent.
      */
-    @EventHandler
-    public void onTownBlockTypeRegister(org.bukkit.event.Event event) {
-        // Prüfe ob es das richtige Event ist (via Reflection für optionale Dependency)
-        if (!event.getClass().getName().equals("com.palmergames.bukkit.towny.event.TownBlockTypeRegisterEvent")) {
+    private void registerCustomPlotType() {
+        // Prüfe ob der Typ bereits existiert
+        if (TownBlockTypeHandler.exists("botschaft")) {
             return;
         }
 
+        // Erstelle TownBlockType mit Custom TownBlockData
+        TownBlockType botschaftType = new TownBlockType("botschaft", new TownBlockData() {
+            @Override
+            public String getMapKey() {
+                return "B"; // 'B' für Botschaft auf der Map
+            }
+
+            @Override
+            public double getCost() {
+                return 150.0; // Kosten zum Setzen des Plot-Typs (etwas teurer als Embassy)
+            }
+        });
+
         try {
-            // Erstelle TownBlockType für "botschaft"
-            Class<?> townBlockTypeClass = Class.forName("com.palmergames.bukkit.towny.object.TownBlockType");
-
-            // TownBlockType(name, formattedName)
-            Object botschaftType = townBlockTypeClass
-                .getConstructor(String.class, String.class)
-                .newInstance("botschaft", "Botschaft");
-
-            // Registriere über TownBlockTypeHandler.registerType()
-            Class<?> handlerClass = Class.forName("com.palmergames.bukkit.towny.object.TownBlockTypeHandler");
-            handlerClass.getMethod("registerType", townBlockTypeClass)
-                .invoke(null, botschaftType);
-
+            TownBlockTypeHandler.registerType(botschaftType);
             getLogger().info("✓ Custom-Plot-Typ 'botschaft' in Towny registriert");
-
-        } catch (Exception e) {
-            getLogger().warning("✗ Fehler beim Registrieren von 'botschaft': " + e.getMessage());
+        } catch (TownyException e) {
+            getLogger().severe("✗ Fehler beim Registrieren von 'botschaft': " + e.getMessage());
         }
+    }
+
+    /**
+     * Event-Handler für Towny TownBlockTypeRegisterEvent.
+     * Wird aufgerufen wenn Towny reloaded wird.
+     */
+    @EventHandler
+    public void onTownBlockTypeRegister(TownBlockTypeRegisterEvent event) {
+        registerCustomPlotType();
     }
 
     /**
