@@ -84,14 +84,26 @@ public class ProviderRegistry {
             logger.info("○ No economy plugin found - economy features disabled");
         }
 
-        // NPC Provider - NoOp (Citizens support can be added later)
-        npcProvider = new NoOpNPCProvider();
+        // NPC Provider - Citizens oder NoOp
         if (isPluginEnabled("Citizens")) {
-            logger.info("○ Citizens detected - using NoOp provider (add CitizensNPCProvider implementation)");
+            try {
+                CitizensNPCProvider citizensProvider = new CitizensNPCProvider();
+                npcProvider = citizensProvider;
+
+                // Registriere als Event-Listener für Click-Events
+                Bukkit.getPluginManager().registerEvents(citizensProvider, plugin);
+
+                logger.info("✓ Citizens detected - CitizensNPCProvider registered");
+            } catch (Exception e) {
+                logger.warning("✗ Citizens found but failed to initialize: " + e.getMessage());
+                npcProvider = new NoOpNPCProvider();
+            }
         } else if (isPluginEnabled("ZNPCsPlus")) {
             logger.info("○ ZNPCsPlus detected - using NoOp provider (add ZNPCProvider implementation)");
+            npcProvider = new NoOpNPCProvider();
         } else {
             logger.info("○ No NPC plugin found - NPC features disabled");
+            npcProvider = new NoOpNPCProvider();
         }
 
         // Item Provider - NoOp
