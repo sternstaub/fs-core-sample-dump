@@ -177,24 +177,26 @@ public class PlotModule extends JavaPlugin implements Listener {
                 return;
             }
 
-            // Registriere "botschaft" Plot-Typ über TownBlockType
+            // Registriere "botschaft" Plot-Typ über TownBlockTypeHandler
+            Class<?> townBlockTypeHandlerClass = Class.forName("com.palmergames.bukkit.towny.object.TownBlockTypeHandler");
             Class<?> townBlockTypeClass = Class.forName("com.palmergames.bukkit.towny.object.TownBlockType");
 
-            // TownBlockType.register(name, displayName) - statische Methode
-            townBlockTypeClass.getMethod("register", String.class, String.class)
+            // TownBlockTypeHandler.registerCustomType(name, displayName)
+            townBlockTypeHandlerClass.getMethod("registerCustomType", String.class, String.class)
                 .invoke(null, "botschaft", "Botschaft");
 
             getLogger().info("✓ Custom-Plot-Typ 'botschaft' in Towny registriert");
 
         } catch (ClassNotFoundException e) {
             getLogger().warning("✗ Towny-Klassen nicht gefunden - Custom-Plot-Typen nicht registriert");
+            getLogger().warning("  Klasse nicht gefunden: " + e.getMessage());
         } catch (NoSuchMethodException e) {
-            getLogger().warning("✗ TownBlockType.register() Methode nicht gefunden");
-            getLogger().warning("  Towny unterstützt möglicherweise keine Custom-Plot-Typen");
+            getLogger().warning("✗ TownBlockTypeHandler.registerCustomType() Methode nicht gefunden");
+            getLogger().warning("  Methode: " + e.getMessage());
             getLogger().warning("  Verwende stattdessen Standard-Typen wie 'embassy'");
         } catch (Exception e) {
-            getLogger().warning("✗ Fehler beim Registrieren der Custom-Plot-Typen: " + e.getMessage());
-            // Kein Stack-Trace, um Logs sauber zu halten
+            getLogger().warning("✗ Fehler beim Registrieren der Custom-Plot-Typen: " + e.getClass().getSimpleName());
+            getLogger().warning("  " + e.getMessage());
         }
     }
 
