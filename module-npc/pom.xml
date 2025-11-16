@@ -35,7 +35,7 @@
     </dependencies>
 
     <build>
-        <directory>${project.parent.basedir}/target</directory>
+        <directory>../target</directory>
         <finalName>FallenStar-NPC-${project.version}</finalName>
         <defaultGoal>clean package</defaultGoal>
         <resources>
