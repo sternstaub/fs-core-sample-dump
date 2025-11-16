@@ -35,6 +35,7 @@
     </dependencies>
 
     <build>
+        <directory>${project.parent.basedir}/target</directory>
         <finalName>FallenStar-Coin-${project.version}</finalName>
         <defaultGoal>clean package</defaultGoal>
         <resources>
