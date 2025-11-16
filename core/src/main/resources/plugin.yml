@@ -25,19 +25,24 @@ permissions:
     children:
       fallenstar.core.reload: true
       fallenstar.core.debug: true
-      
+      fallenstar.core.admin: true
+
   fallenstar.core.reload:
     description: Reload core configuration
     default: op
-    
+
   fallenstar.core.debug:
     description: Enable debug mode
+    default: op
+
+  fallenstar.core.admin:
+    description: Access to admin commands (GUI testing, etc.)
     default: op
 
 # Commands
 commands:
   fscore:
     description: FallenStar Core main command
-    usage: /fscore <status|reload|debug|help>
+    usage: /fscore <status|reload|debug|admin|plotstorage|help>
     permission: fallenstar.admin
     aliases: [fallenstar, fs]

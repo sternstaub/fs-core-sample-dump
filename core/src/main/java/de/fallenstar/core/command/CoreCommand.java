@@ -27,6 +27,7 @@ import java.util.List;
  * - /fscore status - Zeigt Provider-Status und System-Info
  * - /fscore reload - Lädt Config und Provider neu
  * - /fscore debug - Toggle Debug-Modus
+ * - /fscore admin - Admin-Befehle (erfordert Permission)
  * - /fscore help - Zeigt Hilfe
  *
  * @author FallenStar
@@ -35,10 +36,12 @@ import java.util.List;
 public class CoreCommand implements CommandExecutor, TabCompleter {
 
     private final FallenStarCore plugin;
+    private final AdminCommand adminCommand;
     private boolean debugMode;
 
     public CoreCommand(FallenStarCore plugin) {
         this.plugin = plugin;
+        this.adminCommand = new AdminCommand(plugin);
         this.debugMode = false;
     }
 
@@ -57,6 +60,7 @@ public class CoreCommand implements CommandExecutor, TabCompleter {
             case "status" -> handleStatus(sender);
             case "reload" -> handleReload(sender);
             case "debug" -> handleDebug(sender);
+            case "admin" -> adminCommand.handleAdminCommand(sender, Arrays.copyOfRange(args, 1, args.length));
             case "plotstorage" -> handlePlotStorage(sender, Arrays.copyOfRange(args, 1, args.length));
             case "help" -> sendHelp(sender);
             default -> {
@@ -271,6 +275,7 @@ public class CoreCommand implements CommandExecutor, TabCompleter {
         sendCommandHelp(sender, "/fscore status", "Zeigt Provider-Status und System-Info");
         sendCommandHelp(sender, "/fscore reload", "Lädt Config und Provider neu");
         sendCommandHelp(sender, "/fscore debug", "Toggle Debug-Modus");
+        sendCommandHelp(sender, "/fscore admin", "Admin-Befehle (erfordert Permission)");
         sendCommandHelp(sender, "/fscore plotstorage view", "Zeigt Materialien auf dem aktuellen Plot");
         sendCommandHelp(sender, "/fscore help", "Zeigt diese Hilfe");
     }
@@ -287,7 +292,7 @@ public class CoreCommand implements CommandExecutor, TabCompleter {
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
                                                   @NotNull String alias, @NotNull String[] args) {
         if (args.length == 1) {
-            List<String> subCommands = Arrays.asList("status", "reload", "debug", "plotstorage", "help");
+            List<String> subCommands = Arrays.asList("status", "reload", "debug", "admin", "plotstorage", "help");
             List<String> completions = new ArrayList<>();
 
             for (String sub : subCommands) {
@@ -297,6 +302,11 @@ public class CoreCommand implements CommandExecutor, TabCompleter {
             }
 
             return completions;
+        }
+
+        // Tab-Completion für admin subcommands
+        if (args.length >= 2 && "admin".equalsIgnoreCase(args[0])) {
+            return adminCommand.getTabCompletions(Arrays.copyOfRange(args, 1, args.length));
         }
 
         // Tab-Completion für plotstorage subcommands

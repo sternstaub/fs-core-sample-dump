@@ -31,6 +31,7 @@ public class ProviderRegistry {
     private ItemProvider itemProvider;
     private ChatProvider chatProvider;
     private NetworkProvider networkProvider;
+    private UIRegistry uiRegistry;
 
     /**
      * Erstellt eine neue ProviderRegistry.
@@ -132,6 +133,10 @@ public class ProviderRegistry {
         networkProvider = new NoOpNetworkProvider();
         logger.info("○ Network provider: NoOp (standalone server mode)");
 
+        // UI Registry - Zentrale Registry für Test-UIs
+        uiRegistry = new UIRegistry(logger);
+        logger.info("✓ UI Registry initialized");
+
         logger.info("Provider detection completed");
     }
     
@@ -151,4 +156,5 @@ public class ProviderRegistry {
     public ItemProvider getItemProvider() { return itemProvider; }
     public ChatProvider getChatProvider() { return chatProvider; }
     public NetworkProvider getNetworkProvider() { return networkProvider; }
+    public UIRegistry getUIRegistry() { return uiRegistry; }
 }

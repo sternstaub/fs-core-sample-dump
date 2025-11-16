@@ -18,11 +18,11 @@
     <modules>
         <module>core</module>
         <module>module-plots</module>
+        <module>module-items</module>
         <module>module-npcs</module>
         <module>module-economy</module>
         <!-- Other modules will be added as they are implemented
         <module>module-ui</module>
-        <module>module-items</module>
         <module>module-worldanchors</module>
         <module>module-chat</module>
         <module>module-auth</module>

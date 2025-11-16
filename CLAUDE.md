@@ -87,13 +87,15 @@ A **modular Minecraft plugin system** for Paper 1.21.1 with provider-based archi
 
 - **Version:** 1.0-SNAPSHOT
 - **Phase:** Aktive Entwicklung
-- **Completion:** ~15% (Core ✅ + Plots ✅)
-- **Nächster Sprint:** Sprint 1-2 Erweiterung - UI Provider Interface in Core
-- **Dann:** Sprint 5-6 - UI-Modul (natives Rendering)
+- **Completion:** ~30% (Core ✅ + Plots ✅ + UI-Framework ✅ + Items ✅)
+- **Aktueller Sprint:** Sprint 5-6 ✅ abgeschlossen (Items-Modul + MMOItems-Integration)
+- **Nächster Sprint:** Sprint 7-8 - UI-Modul (Konkrete UIs: TradeUI, AmbassadorUI, etc.)
 - **Wichtige Architektur:** Provider-Implementierungen in Modulen, Core nur Interfaces!
-- **Neue Planung:** 20 Sprints (40 Wochen) mit UI-System, Chat, Auth, WebHooks
+- **Planung:** 20 Sprints (40 Wochen) mit Items, UI, Economy, Chat, Auth, WebHooks
 - **Storage-Modul:** ✅ Entfernt (redundant, in Plots integriert)
-- **Denizen-Ersatz:** 📋 Geplant (natives NPC-System mit UI)
+- **UI-Framework:** ✅ Basis-Klassen implementiert (BaseUI, SmallChestUI, etc.)
+- **ItemProvider:** ✅ Interface erweitert, MMOItems 6.10+ Integration abgeschlossen
+- **Items-Modul:** ✅ Vollständig implementiert mit Reflection-basiertem MMOItems-Zugriff
 
 ---
 
@@ -173,18 +175,21 @@ fs-core-sample-dump/
 │       ├── plugin.yml
 │       └── config.yml
 │
-├── module-items/                    # FallenStar Items (Sprint 5-6)
-│   ├── pom.xml                      # Custom Items, MMOItems-Integration
+├── module-items/                    # FallenStar Items (Sprint 5-6) ✅
+│   ├── pom.xml                      # MMOItems 6.10.1-SNAPSHOT + MythicLib 1.6.2-SNAPSHOT
 │   ├── src/main/java/de/fallenstar/items/
-│   │   ├── ItemsModule.java                   # Main class
+│   │   ├── ItemsModule.java                   # Main class (ProvidersReadyEvent)
 │   │   ├── provider/                          # Provider-Implementierungen
-│   │   │   └── MMOItemsItemProvider.java      # MMOItems-Integration
+│   │   │   └── MMOItemsItemProvider.java      # ✅ Reflection-basiert (kein MMOPlugin!)
 │   │   ├── command/                           # Item-Befehle
+│   │   │   └── ItemsCommand.java              # /items browse, info, reload
 │   │   ├── manager/                           # Item-Manager
-│   │   ├── model/                             # Item-Modelle
-│   │   └── factory/                           # Item-Factory
+│   │   │   └── SpecialItemManager.java        # ✅ Währungs-Items (Münzen), UI-Buttons
+│   │   └── ui/                                # Test-UIs (für UIRegistry)
+│   │       ├── ItemBrowserUI.java             # ✅ Kategorie-basierter Browser
+│   │       └── TestTradeUI.java               # ✅ Vanilla Trading Demo
 │   └── src/main/resources/
-│       ├── plugin.yml
+│       ├── plugin.yml                         # Dependency: FallenStar-Core, MMOItems
 │       └── config.yml
 │
 ├── module-economy/                  # FallenStar Economy (Sprint 7-8)
@@ -233,14 +238,14 @@ fs-core-sample-dump/
 ### Module Dependency Graph
 
 ```
-Core (UI Provider Interface + Native Fallback + alle Interfaces)
+Core (UI-Framework + alle Provider-Interfaces + NoOp-Implementierungen)
  ↑
- ├── UI               (Natives UI-Rendering, registriert NativeUIProvider)
  ├── Plots            (Plot-System + Storage ✅, Towny → TownyPlotProvider)
- ├── Items            (Custom Items, MMOItems, nutzt UIProvider)
- ├── Economy          (Weltwirtschaft, Vault, nutzt UIProvider)
+ ├── Items            (MMOItems-Wrapper ✅, registriert MMOItemsItemProvider)
+ ├── UI               (Konkrete UIs: TradeUI, AmbassadorUI, nutzt ItemProvider)
+ ├── Economy          (Weltwirtschaft, Vault, nutzt ItemProvider + UI)
  ├── WorldAnchors     (Schnellreisen, POIs, Wegpunkte)
- ├── NPCs             (NPC-System, Denizen-Ersatz, nutzt UIProvider + PlotProvider)
+ ├── NPCs             (NPC-System, Denizen-Ersatz, nutzt ItemProvider + PlotProvider + UI)
  ├── Chat             (Matrix-Bridge → MatrixChatProvider)
  ├── Auth             (Keycloak → KeycloakAuthProvider)
  └── WebHooks         (Wiki/Forum-Integration)
@@ -472,10 +477,10 @@ Das Projekt folgt einem 20-Sprint-Fahrplan (40 Wochen):
 
 | Sprint | Module | Duration | Status | Beschreibung |
 |--------|--------|----------|--------|--------------|
-| **1-2** | **Core + UI Provider Interface** | 2 Wochen | ✅ / 📋 | Core abgeschlossen, UI Provider Interface hinzufügen |
+| **1-2** | **Core + UI Framework** | 2 Wochen | ✅ | Core + UI-Basis-Klassen + Admin-Commands |
 | **3-4** | **Plots (inkl. Storage)** | 2 Wochen | ✅ | Plot-System + Storage-Integration (fertig) |
-| **5-6** | **UI-Modul** | 2 Wochen | 📋 | Natives UI-Rendering (Text, Chat, Inventory, Books) |
-| **7-8** | **Items** | 2 Wochen | 📋 | Custom Items mit UI-Integration |
+| **5-6** | **Items (MMOItems-Wrapper)** | 2 Wochen | ✅ | MMOItems 6.10+ Reflection-Integration + Test-UIs |
+| **7-8** | **UI-Modul** | 2 Wochen | 📋 | Konkrete UIs (TradeUI, AmbassadorUI, etc.) |
 | **9-10** | **Economy** | 2 Wochen | 📋 | Weltwirtschaft mit UI-Integration |
 | **11-12** | **WorldAnchors** | 2 Wochen | 📋 | Schnellreisen, POIs, Wegpunkte |
 | **13-14** | **NPCs** | 2 Wochen | 📋 | NPC-System mit UI, Denizen-Ersatz |
@@ -489,14 +494,15 @@ Das Projekt folgt einem 20-Sprint-Fahrplan (40 Wochen):
 - 📋 Geplant
 
 **Wichtige Architektur-Änderungen:**
-- **Core** enthält nur Interfaces + NoOp-Implementierungen + natives UI-Fallback
+- **Core** enthält nur Interfaces + NoOp-Implementierungen + UI-Framework-Basis-Klassen
 - **Provider-Implementierungen** liegen in den jeweiligen Modulen
 - **Module** kommunizieren NUR über Core-Interfaces
 - **Storage-Modul** ❌ entfernt (redundant, in Plots integriert)
-- **UI-Provider-System** ✅ neu (Interface + NativeTextUIProvider in Core)
+- **UI-Framework** ✅ neu (BaseUI, SmallChestUI, LargeChestUI, SignUI, AnvilUI, BookUI)
+- **Admin-Command-System** ✅ neu (/fscore admin gui für UI-Tests)
 - **Denizen-Ersatz** 📋 natives NPC-Dialog-System im NPCs-Modul
-- **Neue Module:** UI (Sprint 5-6), Chat (15-16), Auth (17-18), WebHooks (19-20)
-- **Sprint-Umplanung:** Items verschoben von 5-6 → 7-8, Economy 7-8 → 9-10, etc.
+- **Sprint-Umplanung:** Items VOR UI-Modul (5-6), UI-Modul nach Items (7-8)
+- **Begründung:** Trading-UIs benötigen Custom-Item-Support (MMOItems)
 
 ### Working on a Sprint
 
@@ -1195,9 +1201,53 @@ git log --oneline -10
 
 ---
 
+## Sprint 5-6: Items-Modul - Wichtige Erkenntnisse
+
+### Technische Herausforderungen gelöst:
+
+1. **MMOItems API 6.10+ Kompatibilität**
+   - `getTags()` entfernt → Type-basierte Kategorisierung
+   - `getConfigFile()` entfernt → Vereinfachte Preisberechnung
+   - `ItemStat` API komplett umgebaut → Stats-Zugriff entfernt
+
+2. **MMOPlugin-Dependency Problem (Kritisch!)**
+   - Problem: `MMOItems.plugin` benötigt `io.lumine.mythic.lib.module.MMOPlugin`
+   - Lösung: **Reflection-basierter Zugriff** auf MMOItems API
+   - Helper-Methoden: `getAllMMOTypes()`, `getType()`, `getTemplate()`, `getTemplates()`
+   - Benefit: Kein direkter Import der MMOItems-Klasse zur Compile-Zeit nötig!
+
+3. **Maven Dependencies**
+   - `MMOItems-API 6.10.1-SNAPSHOT` (Phoenix Repository)
+   - `MythicLib-dist 1.6.2-SNAPSHOT` (Required by MMOItems)
+   - Core ArtifactId: `fallenstar-core` (nicht `core`)
+
+4. **Exception Handling**
+   - Alle `ItemProvider`-Methoden werfen `ProviderFunctionalityNotFoundException`
+   - Try-catch in **allen** UI-Klassen, Commands und Managern erforderlich
+   - Graceful Degradation mit Optional.empty() oder false-Fallbacks
+
+### Implementierte Komponenten:
+
+- ✅ **MMOItemsItemProvider**: Reflection-Wrapper für MMOItems 6.10+
+- ✅ **ItemBrowserUI**: Kategorie-basierter Item-Browser mit Pagination
+- ✅ **TestTradeUI**: Vanilla Trading Interface Demo
+- ✅ **SpecialItemManager**: Währungs-Items (Münzen), UI-Buttons
+- ✅ **ItemsCommand**: `/items browse`, `/items info`, `/items reload`
+- ✅ **UIRegistry-Integration**: Test-UIs verfügbar über `/fscore admin gui`
+
+### Best Practices etabliert:
+
+1. **Reflection Pattern** für externe Plugin-APIs mit komplexen Class-Hierarchien
+2. **Comprehensive Exception Handling** in allen Provider-Consumers
+3. **Type-basierte Fallbacks** wenn Original-API-Features entfernt wurden
+4. **Cache-Invalidierung** für Hot-Reload-Support
+
+---
+
 **Last Updated:** 2025-11-16
 **Repository:** fs-core-sample-dump
-**Branch:** claude/restructure-project-modules-018sEM2NT9pJcUDj7CmmeWTC
+**Branch:** claude/setup-ui-framework-012idY94bWphh2zfeXHvW2gb
 **Version:** 1.0-SNAPSHOT
+**Sprint Status:** Sprint 5-6 ✅ abgeschlossen | Nächster: Sprint 7-8 (UI-Modul)
 **Architektur:** Provider-Implementierungen in Modulen, Core nur Interfaces + NoOp
-**Modulstruktur:** Items-Modul vor Economy eingefügt (Sprint 5-6)
+**Build Status:** ✅ Alle Module kompilieren erfolgreich (Core, Plots, Items, NPCs, Economy)
