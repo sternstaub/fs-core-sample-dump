@@ -17,8 +17,8 @@
     <!-- Module -->
     <modules>
         <module>core</module>
-        <!-- Other modules will be added as they are implemented
         <module>module-storage</module>
+        <!-- Other modules will be added as they are implemented
         <module>module-merchants</module>
         <module>module-travel</module>
         <module>module-adminshops</module>

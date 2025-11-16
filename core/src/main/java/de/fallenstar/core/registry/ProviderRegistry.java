@@ -54,13 +54,15 @@ public class ProviderRegistry {
     public void detectAndRegister() {
         logger.info("Detecting available providers...");
 
-        // Plot Provider - NoOp (Towny/Factions support can be added later)
-        plotProvider = new NoOpPlotProvider();
-        if (isPluginEnabled("TownyAdvanced")) {
-            logger.info("○ Towny detected - using NoOp provider (add TownyPlotProvider implementation)");
+        // Plot Provider - Towny/Factions support
+        if (isPluginEnabled("Towny") || isPluginEnabled("TownyAdvanced")) {
+            plotProvider = new TownyPlotProvider();
+            logger.info("✓ Towny detected - TownyPlotProvider registered");
         } else if (isPluginEnabled("Factions")) {
+            plotProvider = new NoOpPlotProvider();
             logger.info("○ Factions detected - using NoOp provider (add FactionsPlotProvider implementation)");
         } else {
+            plotProvider = new NoOpPlotProvider();
             logger.info("○ No plot plugin found - plot features disabled");
         }
 
@@ -98,7 +100,7 @@ public class ProviderRegistry {
         networkProvider = new NoOpNetworkProvider();
         logger.info("○ Network provider: NoOp (standalone server mode)");
 
-        logger.info("Provider detection completed - all providers using NoOp implementations");
+        logger.info("Provider detection completed");
     }
     
     /**

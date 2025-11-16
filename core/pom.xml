@@ -25,15 +25,12 @@
             <artifactId>paper-api</artifactId>
         </dependency>
 
-        <!-- Towny (optional, provided by server)
-             Commented out due to potential repository issues
-             The code will compile without it and use runtime reflection
+        <!-- Towny (optional, provided by server) -->
         <dependency>
             <groupId>com.palmergames.bukkit.towny</groupId>
             <artifactId>towny</artifactId>
-            <optional>true</optional>
+            <scope>provided</scope>
         </dependency>
-        -->
 
         <!-- Vault API (optional, provided by server)
              Commented out due to JitPack authentication issues

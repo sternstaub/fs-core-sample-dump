@@ -1,0 +1,32 @@
+name: FallenStar-Storage
+version: 1.0
+main: de.fallenstar.storage.StorageModule
+api-version: 1.21
+authors: [FallenStar]
+description: Plot-based storage system for chests and materials
+
+# Core dependency (REQUIRED)
+depend:
+  - FallenStar-Core
+
+# Optional dependencies (für PlotProvider)
+softdepend:
+  - Towny
+  - Factions
+
+# Commands
+commands:
+  storage-list:
+    description: Zeigt alle Materialien auf dem aktuellen Grundstück
+    usage: /storage list
+    aliases: [slist, storage-l]
+
+  storage-info:
+    description: Zeigt Details zu einem Material auf dem Grundstück
+    usage: /storage info <material>
+    aliases: [sinfo, storage-i]
+
+  storage-setreceiver:
+    description: Setzt die angeschaute Truhe als Empfangskiste
+    usage: /storage setreceiver
+    aliases: [sreceiver, storage-sr]
