@@ -1,5 +1,7 @@
 package de.fallenstar.plot;
 
+import com.palmergames.bukkit.towny.TownyCommandAddonAPI;
+import com.palmergames.bukkit.towny.TownyCommandAddonAPI.CommandType;
 import com.palmergames.bukkit.towny.event.TownBlockTypeRegisterEvent;
 import com.palmergames.bukkit.towny.exceptions.TownyException;
 import com.palmergames.bukkit.towny.object.TownBlockData;
@@ -312,7 +314,14 @@ public class PlotModule extends JavaPlugin implements Listener {
     }
 
     /**
-     * Registriert alle Commands.
+     * Registriert alle Commands über Towny Command Addon API.
+     *
+     * Unsere Commands werden als Subcommands zu Townys /plot hinzugefügt:
+     * - /plot info - Plot-Informationen
+     * - /plot gui - Plot-GUI (typ-abhängig)
+     * - /plot price - Preisverwaltung (Handelsgilde)
+     * - /plot storage - Storage-Verwaltung
+     * - /plot npc - NPC-Verwaltung
      */
     private void registerCommands() {
         this.plotCommand = new de.fallenstar.plot.command.PlotCommand(
@@ -327,10 +336,61 @@ public class PlotModule extends JavaPlugin implements Listener {
             storageManager
         );
 
-        getCommand("plot").setExecutor(plotCommand);
-        getCommand("plot").setTabCompleter(plotCommand);
+        // Registriere Subcommands über Towny API
+        // Jeder Command erhält einen eigenen Wrapper
+        try {
+            // /plot info
+            TownyCommandAddonAPI.addSubCommand(CommandType.PLOT, "info", (sender, cmd, label, args) -> {
+                String[] newArgs = new String[args.length + 1];
+                newArgs[0] = "info";
+                System.arraycopy(args, 0, newArgs, 1, args.length);
+                return plotCommand.onCommand(sender, cmd, "plot", newArgs);
+            });
 
-        getLogger().info("✓ Commands registriert");
+            // /plot gui
+            TownyCommandAddonAPI.addSubCommand(CommandType.PLOT, "gui", (sender, cmd, label, args) -> {
+                String[] newArgs = new String[args.length + 1];
+                newArgs[0] = "gui";
+                System.arraycopy(args, 0, newArgs, 1, args.length);
+                return plotCommand.onCommand(sender, cmd, "plot", newArgs);
+            });
+
+            // /plot price
+            TownyCommandAddonAPI.addSubCommand(CommandType.PLOT, "price", (sender, cmd, label, args) -> {
+                String[] newArgs = new String[args.length + 1];
+                newArgs[0] = "price";
+                System.arraycopy(args, 0, newArgs, 1, args.length);
+                return plotCommand.onCommand(sender, cmd, "plot", newArgs);
+            });
+
+            // /plot storage (optional)
+            if (storageSystemEnabled) {
+                TownyCommandAddonAPI.addSubCommand(CommandType.PLOT, "storage", (sender, cmd, label, args) -> {
+                    String[] newArgs = new String[args.length + 1];
+                    newArgs[0] = "storage";
+                    System.arraycopy(args, 0, newArgs, 1, args.length);
+                    return plotCommand.onCommand(sender, cmd, "plot", newArgs);
+                });
+            }
+
+            // /plot npc (optional)
+            if (npcSystemEnabled) {
+                TownyCommandAddonAPI.addSubCommand(CommandType.PLOT, "npc", (sender, cmd, label, args) -> {
+                    String[] newArgs = new String[args.length + 1];
+                    newArgs[0] = "npc";
+                    System.arraycopy(args, 0, newArgs, 1, args.length);
+                    return plotCommand.onCommand(sender, cmd, "plot", newArgs);
+                });
+            }
+
+            getLogger().info("✓ Commands über Towny API registriert");
+            getLogger().info("  Verfügbar: /plot info, /plot gui, /plot price" +
+                (storageSystemEnabled ? ", /plot storage" : "") +
+                (npcSystemEnabled ? ", /plot npc" : ""));
+        } catch (Exception e) {
+            getLogger().severe("Fehler beim Registrieren der Towny-Commands: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     /**
