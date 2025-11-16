@@ -175,7 +175,7 @@ public class ItemsModule extends JavaPlugin implements Listener {
         // Bronzestern (1er Münze)
         specialItemManager.registerVanillaItem(
                 "bronze_stern",
-                Material.GOLD_NUGGET,
+                Material.COPPER_INGOT,
                 1,  // Custom Model Data
                 net.kyori.adventure.text.Component.text("Bronzestern")
                         .color(net.kyori.adventure.text.format.NamedTextColor.GOLD)
@@ -190,7 +190,7 @@ public class ItemsModule extends JavaPlugin implements Listener {
         // Silberstern (10er Münze)
         specialItemManager.registerVanillaItem(
                 "silver_stern",
-                Material.GOLD_NUGGET,
+                Material.IRON_INGOT,
                 2,  // Custom Model Data
                 net.kyori.adventure.text.Component.text("Silberstern")
                         .color(net.kyori.adventure.text.format.NamedTextColor.AQUA)
@@ -206,7 +206,7 @@ public class ItemsModule extends JavaPlugin implements Listener {
         specialItemManager.registerVanillaItem(
                 "gold_stern",
                 Material.GOLD_INGOT,
-                1,  // Custom Model Data
+                3,  // Custom Model Data
                 net.kyori.adventure.text.Component.text("Goldstern")
                         .color(net.kyori.adventure.text.format.NamedTextColor.YELLOW)
                         .decoration(net.kyori.adventure.text.format.TextDecoration.BOLD, true),

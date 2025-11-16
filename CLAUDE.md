@@ -87,8 +87,8 @@ A **modular Minecraft plugin system** for Paper 1.21.1 with provider-based archi
 
 - **Version:** 1.0-SNAPSHOT
 - **Phase:** Aktive Entwicklung
-- **Completion:** ~45% (Core ✅ + Plots ✅ + UI-Framework ✅ + Items ✅ + UI-Modul ✅ + Economy 🔨)
-- **Aktueller Sprint:** Sprint 9-10 🔨 in Arbeit (Economy-Modul: Währungen, Münzsystem)
+- **Completion:** ~50% (Core ✅ + Plots ✅ + UI-Framework ✅ + Items ✅ + UI-Modul ✅ + Economy ✅)
+- **Aktueller Sprint:** Sprint 9-10 ✅ ABGESCHLOSSEN (Economy-Modul: Währungen, Münzsystem, Vault, Withdraw)
 - **Nächster Sprint:** Sprint 11-12 - WorldAnchors (Schnellreisen, POIs, Wegpunkte)
 - **Wichtige Architektur:** Provider-Implementierungen in Modulen, Core nur Interfaces!
 - **Planung:** 20 Sprints (40 Wochen) mit Items, UI, Economy, Chat, Auth, WebHooks
@@ -97,8 +97,9 @@ A **modular Minecraft plugin system** for Paper 1.21.1 with provider-based archi
 - **ItemProvider:** ✅ Interface erweitert, MMOItems 6.10+ Integration abgeschlossen
 - **Items-Modul:** ✅ Vollständig implementiert mit Reflection-basiertem MMOItems-Zugriff
 - **UI-Modul:** ✅ Abgeschlossen (ConfirmationUI, SimpleTradeUI, UIButtonManager)
-- **Economy-Modul:** 🔨 In Entwicklung (CurrencyManager, Basiswährung "Sterne")
+- **Economy-Modul:** ✅ Abgeschlossen (CurrencyManager, Basiswährung "Sterne", VaultEconomyProvider, Withdraw-Funktionalität)
 - **Testbefehle:** ✅ Neue Struktur unter `/fscore admin [gui/items/plots/economy]`
+- **Architektur-Refactoring:** ✅ Reflection-Eliminierung (AdminCommandRegistry, Handler-Pattern)
 
 ---
 
@@ -500,8 +501,8 @@ Das Projekt folgt einem 20-Sprint-Fahrplan (40 Wochen):
 | **1-2** | **Core + UI Framework** | 2 Wochen | ✅ | Core + UI-Basis-Klassen + Admin-Commands |
 | **3-4** | **Plots (inkl. Storage)** | 2 Wochen | ✅ | Plot-System + Storage-Integration (fertig) |
 | **5-6** | **Items (MMOItems-Wrapper)** | 2 Wochen | ✅ | MMOItems 6.10+ Reflection-Integration + Test-UIs |
-| **7-8** | **UI-Modul** | 2 Wochen | 🔨 | ConfirmationUI ✅, SimpleTradeUI ✅, UIButtonManager ✅ |
-| **9-10** | **Economy** | 2 Wochen | 📋 | Weltwirtschaft mit UI-Integration |
+| **7-8** | **UI-Modul** | 2 Wochen | ✅ | ConfirmationUI ✅, SimpleTradeUI ✅, UIButtonManager ✅ |
+| **9-10** | **Economy** | 2 Wochen | ✅ | CurrencyManager ✅, Basiswährung "Sterne" ✅, Vault-Integration ✅, Withdraw-Funktionalität ✅ |
 | **11-12** | **WorldAnchors** | 2 Wochen | 📋 | Schnellreisen, POIs, Wegpunkte |
 | **13-14** | **NPCs** | 2 Wochen | 📋 | NPC-System mit UI, Denizen-Ersatz |
 | **15-16** | **Chat** | 2 Wochen | 📋 | Matrix-Bridge, globaler Chat |
@@ -1416,9 +1417,9 @@ git log --oneline -10
    - getCurrencyCount für Status-Logs
 
 4. **Basiswährung "Sterne"** ✅
-   - Bronzestern (Gold Nugget, Custom Model Data: 1, Wert: 1)
-   - Silberstern (Gold Nugget, Custom Model Data: 2, Wert: 10)
-   - Goldstern (Gold Nugget, Custom Model Data: 3, Wert: 100)
+   - Bronzestern (Kupferbarren/COPPER_INGOT, Custom Model Data: 1, Wert: 1)
+   - Silberstern (Eisenbarren/IRON_INGOT, Custom Model Data: 2, Wert: 10)
+   - Goldstern (Goldbarren/GOLD_INGOT, Custom Model Data: 3, Wert: 100)
    - Wechselkurs: 1:1 (Referenzwährung)
    - Automatische Registrierung beim Modul-Start
 
@@ -1430,14 +1431,28 @@ git log --oneline -10
    - Getter für CurrencyManager und ProviderRegistry
 
 6. **Admin-Befehle** ✅
-   - `/fscore admin economy getcoin <währung> [tier] [anzahl]`
+   - `/fscore admin economy getcoin <währung> [tier] [anzahl]` - Kostenlose Münzen
+   - `/fscore admin economy withdraw <währung> [tier] [anzahl]` - Vault-basierte Auszahlung
    - Beispiele:
      - `/fscore admin economy getcoin sterne bronze 10`
-     - `/fscore admin economy getcoin sterne silver 5`
-     - `/fscore admin economy getcoin sterne gold`
+     - `/fscore admin economy withdraw sterne silver 5`
    - Tab-Completion für Währung, Tier, Anzahl
-   - Reflection-basierte Inter-Modul-Kommunikation (Core → Economy)
-   - Graceful Error Handling
+   - Command-Handler-Pattern (keine Reflection mehr!)
+   - Balance-Anzeige vor/nach withdraw
+
+7. **VaultEconomyProvider** ✅
+   - Implementiert EconomyProvider-Interface
+   - Vault Economy API Integration (iConomy, Essentials, etc.)
+   - Methoden: getBalance, withdraw, deposit, format
+   - Registrierung in ProviderRegistry beim Modul-Start
+   - Automatische Economy-Erkennung
+
+8. **Withdraw-Funktionalität** ✅
+   - `CurrencyManager.withdrawCoins()` mit Vault-Integration
+   - Berechnet Kosten basierend auf Tier-Wert und Wechselkurs
+   - Prüft Vault-Balance vor Auszahlung
+   - Zahlt maximal möglichen Betrag aus bei unzureichendem Guthaben
+   - Rollback-Pattern: Erstattet Geld bei Item-Auszahlungs-Fehler
 
 ### Technische Details:
 
@@ -1453,20 +1468,134 @@ git log --oneline -10
    - Wechselkurs-Berechnungen automatisch
    - CurrencyTier Enum (BRONZE, SILVER, GOLD)
 
-3. **Inter-Modul-Kommunikation**
-   - Reflection für Zugriff auf EconomyModule.getCurrencyManager()
-   - Reflection für CurrencyItemSet.CurrencyTier Enum
-   - Reflection für CurrencyManager.payoutCoins()
-   - Try-Catch für Graceful Degradation
+3. **Inter-Modul-Kommunikation** (Reflection eliminiert!)
+   - **Command-Handler-Registry-Pattern** statt Reflection
+   - `AdminSubcommandHandler` Interface für Module
+   - `AdminCommandRegistry` für zentrale Handler-Verwaltung
+   - Module registrieren eigene Handler in `onProvidersReady()`
+   - Type-safe Method Calls, bessere IDE-Unterstützung
 
 ### Geplante Features (zukünftige Sprints):
 
-- 📋 VaultEconomyProvider (Vault-Integration)
-- 📋 Balance-System (getBalance, setBalance, deposit, withdraw)
+- ✅ VaultEconomyProvider (Vault-Integration) - **FERTIG**
+- ✅ Withdraw-System - **FERTIG**
+- 📋 Deposit-Command (Münzen → Vault-Guthaben)
 - 📋 Preisberechnungen (dynamisch, material-basiert, region-basiert)
 - 📋 Shop-System (Admin-Shops, Player-Shops, Shop-UIs)
 - 📋 Transaktions-Historie
 - 📋 Währungskonvertierung-UI
+
+### Custom Model Data Manager (Roadmap-Erweiterung):
+
+**Hintergrund:**
+- Währungs-Items nutzen aktuell Custom Model Data (CMD) für Resource Pack Support
+- CMD-Werte werden manuell vergeben (Bronze: 1, Silber: 2, Gold: 3)
+- Zukünftig: Zentrale Verwaltung aller Custom Model Data Werte
+
+**Geplant für Items-Modul (zukünftiger Sprint):**
+- ✅ **CustomModelDataRegistry**: Zentrale Registry für CMD-Werte
+- ✅ **Kategorisierung**: Material-basierte CMD-Pools (COPPER_INGOT: 1-100, IRON_INGOT: 101-200, etc.)
+- ✅ **Konflikvermeidung**: Automatische Prüfung auf CMD-Kollisionen
+- ✅ **Resource Pack Integration**: Export aller CMD-Werte für Resource Pack Generator
+- ✅ **Admin-UI**: Übersicht aller registrierten CMD-Werte
+- ✅ **Validierung**: Warnung bei CMD-Überschneidungen zwischen Modulen
+
+**Use Cases:**
+- Währungs-Items (Economy-Modul)
+- UI-Button Items (UI-Modul)
+- Quest-Items (zukünftiges Quest-Modul)
+- Custom Tools/Armor (zukünftige Module)
+
+---
+
+## Reflection-Eliminierung: Command-Handler-Registry-Pattern
+
+### Problem
+
+Ursprüngliche Implementierung nutzte **java.lang.reflect** für Inter-Modul-Kommunikation:
+- `AdminCommand` (Core) → Reflection-Aufrufe → Module (Economy, Plots)
+- Runtime-Errors bei falschen Method-Names/Signatures
+- Keine IDE-Unterstützung (Autocompletion, Refactoring)
+- Schwer wartbar und fehleranfällig
+
+### Lösung: Command-Handler-Registry-Pattern
+
+**Core-Komponenten:**
+```java
+// 1. Interface für Module
+public interface AdminSubcommandHandler {
+    boolean handle(CommandSender sender, String[] args);
+    List<String> getTabCompletions(String[] args);
+    void sendHelp(CommandSender sender);
+}
+
+// 2. Registry für Handler
+public class AdminCommandRegistry {
+    private final Map<String, AdminSubcommandHandler> handlers;
+
+    public void registerHandler(String subcommand, AdminSubcommandHandler handler) {
+        handlers.put(subcommand.toLowerCase(), handler);
+    }
+
+    public Optional<AdminSubcommandHandler> getHandler(String subcommand) {
+        return Optional.ofNullable(handlers.get(subcommand.toLowerCase()));
+    }
+}
+
+// 3. AdminCommand delegiert an Handler
+private void handleEconomyCommand(CommandSender sender, String[] args) {
+    AdminCommandRegistry registry = getAdminRegistry();
+    if (registry == null) {
+        sender.sendMessage("Admin-Command-System noch nicht bereit!");
+        return;
+    }
+
+    registry.getHandler("economy").ifPresentOrElse(
+        handler -> handler.handle(sender, args),
+        () -> sender.sendMessage("Economy-Modul nicht geladen!")
+    );
+}
+```
+
+**Modul-Implementierung:**
+```java
+// Economy-Modul
+public class EconomyAdminHandler implements AdminSubcommandHandler {
+    private final CurrencyManager currencyManager;
+
+    @Override
+    public boolean handle(CommandSender sender, String[] args) {
+        // Direkte Methoden-Aufrufe - keine Reflection!
+        if (args[0].equals("getcoin")) {
+            currencyManager.payoutCoins(...);
+        }
+    }
+}
+
+// In EconomyModule.onProvidersReady()
+AdminCommandRegistry registry = core.getAdminCommandRegistry();
+registry.registerHandler("economy", new EconomyAdminHandler(currencyManager, providers));
+```
+
+### Vorteile
+
+- ✅ **Type-Safe**: Compile-time Fehlerprüfung statt Runtime-Errors
+- ✅ **IDE-Support**: Autocompletion, Refactoring, "Find Usages"
+- ✅ **Performance**: Direkte Method Calls statt Reflection
+- ✅ **Wartbarkeit**: Klare Interfaces und Dependencies
+- ✅ **Testbarkeit**: Handler isoliert testbar
+- ✅ **Erweiterbar**: Neue Module registrieren einfach eigene Handler
+
+### Implementierte Handler
+
+- **EconomyAdminHandler** (Economy-Modul): `getcoin`, `withdraw` Commands
+- **PlotsAdminHandler** (Plots-Modul): `info`, `storage view`, `storage scan` Commands
+
+### Code-Reduktion
+
+- ❌ Entfernt: ~550 Zeilen Reflection-Code aus `AdminCommand`
+- ✅ Hinzugefügt: ~300 Zeilen sauberer Handler-Code in Modulen
+- **Netto:** -250 Zeilen, bessere Wartbarkeit
 
 ---
 
@@ -1474,7 +1603,8 @@ git log --oneline -10
 **Repository:** fs-core-sample-dump
 **Branch:** claude/ui-items-implementation-018dv6yDuyau5iAYBKeGSMHg
 **Version:** 1.0-SNAPSHOT
-**Sprint Status:** Sprint 9-10 🔨 in Arbeit (Economy: CurrencyManager ✅, Basiswährung ✅, Admin-Befehle ✅)
-**Architektur:** Provider-Implementierungen in Modulen, Core nur Interfaces + NoOp
+**Sprint Status:** Sprint 9-10 ✅ **ABGESCHLOSSEN** (Economy: CurrencyManager ✅, VaultEconomyProvider ✅, Withdraw ✅, Reflection eliminiert ✅, Plot Storage Integration ✅)
+**Architektur:** Command-Handler-Registry-Pattern (kein Reflection mehr!)
 **Build Status:** ✅ Alle Module kompilieren erfolgreich (Core, Plots, Items, UI, Economy)
-**Testbefehle:** `/fscore admin [gui/items/plots/economy]` - neue Struktur aktiv
+**Testbefehle:** `/fscore admin [gui/items/plots/economy]` - Handler-basierte Struktur aktiv
+**Währungssystem:** Kupferbarren/Eisenbarren/Goldbarren (COPPER_INGOT/IRON_INGOT/GOLD_INGOT, Custom Model Data 1/2/3 für Resource Pack)
