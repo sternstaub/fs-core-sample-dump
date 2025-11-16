@@ -57,8 +57,13 @@ public class ProviderRegistry {
 
         // Plot Provider - Towny/Factions support
         if (isPluginEnabled("Towny") || isPluginEnabled("TownyAdvanced")) {
-            plotProvider = new TownyPlotProvider();
-            logger.info("✓ Towny detected - TownyPlotProvider registered");
+            try {
+                plotProvider = new TownyPlotProvider();
+                logger.info("✓ Towny detected - TownyPlotProvider registered");
+            } catch (Exception e) {
+                logger.warning("✗ Towny found but failed to initialize PlotProvider: " + e.getMessage());
+                plotProvider = new NoOpPlotProvider();
+            }
         } else if (isPluginEnabled("Factions")) {
             plotProvider = new NoOpPlotProvider();
             logger.info("○ Factions detected - using NoOp provider (add FactionsPlotProvider implementation)");
@@ -69,8 +74,13 @@ public class ProviderRegistry {
 
         // Town Provider - Towny support
         if (isPluginEnabled("Towny") || isPluginEnabled("TownyAdvanced")) {
-            townProvider = new TownyTownProvider();
-            logger.info("✓ Towny detected - TownyTownProvider registered");
+            try {
+                townProvider = new TownyTownProvider();
+                logger.info("✓ Towny detected - TownyTownProvider registered");
+            } catch (Exception e) {
+                logger.warning("✗ Towny found but failed to initialize TownProvider: " + e.getMessage());
+                townProvider = new NoOpTownProvider();
+            }
         } else {
             townProvider = new NoOpTownProvider();
             logger.info("○ No town plugin found - town features disabled");
