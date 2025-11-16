@@ -1,5 +1,10 @@
 package de.fallenstar.plot;
 
+import com.palmergames.bukkit.towny.event.TownBlockTypeRegisterEvent;
+import com.palmergames.bukkit.towny.exceptions.TownyException;
+import com.palmergames.bukkit.towny.object.TownBlockData;
+import com.palmergames.bukkit.towny.object.TownBlockType;
+import com.palmergames.bukkit.towny.object.TownBlockTypeHandler;
 import de.fallenstar.core.FallenStarCore;
 import de.fallenstar.core.event.ProvidersReadyEvent;
 import de.fallenstar.core.exception.ProviderFunctionalityNotFoundException;
@@ -9,7 +14,6 @@ import de.fallenstar.core.provider.NPCProvider;
 import de.fallenstar.core.registry.PlotTypeRegistry;
 import de.fallenstar.core.registry.ProviderRegistry;
 import de.fallenstar.plot.command.PlotCommand;
-import de.fallenstar.plot.integration.TownyIntegration;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -43,6 +47,12 @@ public class PlotModule extends JavaPlugin implements Listener {
     private boolean townSystemEnabled = false;
     private boolean npcSystemEnabled = false;
     private boolean storageSystemEnabled = false;
+
+    @Override
+    public void onLoad() {
+        // Registriere Custom-Plot-Typ in Towny (muss in onLoad() erfolgen)
+        registerCustomPlotType();
+    }
 
     @Override
     public void onEnable() {
@@ -174,9 +184,6 @@ public class PlotModule extends JavaPlugin implements Listener {
         // Registriere Commands
         registerCommands();
 
-        // Registriere Towny-Integration wenn verfügbar
-        registerTownyIntegration();
-
         // Initialer Status-Log
         getLogger().info("=== Plot Module Initialized ===");
         getLogger().info("  Plot-System: " + (plotSystemEnabled ? "enabled" : "disabled"));
@@ -187,28 +194,45 @@ public class PlotModule extends JavaPlugin implements Listener {
     }
 
     /**
-     * Registriert die Towny-Integration.
-     * Registriert Custom-Plot-Typen in Towny.
+     * Registriert den Custom-Plot-Typ "botschaft" in Towny.
+     *
+     * Diese Methode wird in onLoad() aufgerufen und auch bei Towny-Reloads
+     * via TownBlockTypeRegisterEvent.
      */
-    private void registerTownyIntegration() {
-        // Prüfe ob Towny verfügbar ist
-        org.bukkit.plugin.Plugin towny = getServer().getPluginManager().getPlugin("Towny");
-        if (towny == null || !towny.isEnabled()) {
-            getLogger().warning("✗ Towny nicht verfügbar - Plot-Modul benötigt Towny!");
-            getLogger().warning("  Custom-Plot-Typen können nicht registriert werden");
+    private void registerCustomPlotType() {
+        // Prüfe ob der Typ bereits existiert
+        if (TownBlockTypeHandler.exists("botschaft")) {
             return;
         }
 
-        try {
-            // Registriere Towny-Integration
-            TownyIntegration integration = new TownyIntegration(this);
-            getServer().getPluginManager().registerEvents(integration, this);
-            getLogger().info("✓ Towny-Integration aktiviert (Custom-Plot-Typen verfügbar)");
+        // Erstelle TownBlockType mit Custom TownBlockData
+        TownBlockType botschaftType = new TownBlockType("botschaft", new TownBlockData() {
+            @Override
+            public String getMapKey() {
+                return "B"; // 'B' für Botschaft auf der Map
+            }
 
-        } catch (Exception e) {
-            getLogger().warning("✗ Fehler beim Laden der Towny-Integration: " + e.getMessage());
-            e.printStackTrace();
+            @Override
+            public double getCost() {
+                return 150.0; // Kosten zum Setzen des Plot-Typs (etwas teurer als Embassy)
+            }
+        });
+
+        try {
+            TownBlockTypeHandler.registerType(botschaftType);
+            getLogger().info("✓ Custom-Plot-Typ 'botschaft' in Towny registriert");
+        } catch (TownyException e) {
+            getLogger().severe("✗ Fehler beim Registrieren von 'botschaft': " + e.getMessage());
         }
+    }
+
+    /**
+     * Event-Handler für Towny TownBlockTypeRegisterEvent.
+     * Wird aufgerufen wenn Towny reloaded wird.
+     */
+    @EventHandler
+    public void onTownBlockTypeRegister(TownBlockTypeRegisterEvent event) {
+        registerCustomPlotType();
     }
 
     /**
