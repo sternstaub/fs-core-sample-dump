@@ -174,9 +174,89 @@ public class PlotPriceCommand {
         player.sendMessage("§7Grundstück: §e" + x + "," + z);
         player.sendMessage("§7Besitzer: §e" + owner);
         player.sendMessage("");
-        player.sendMessage("§7[Roadmap] Preisliste wird hier angezeigt");
-        player.sendMessage("§7Integration mit ItemBasePriceProvider folgt...");
+
+        // Hole alle Preise vom ItemBasePriceProvider
+        try {
+            var plugin = Bukkit.getPluginManager().getPlugin("FallenStar-Economy");
+            if (plugin == null) {
+                player.sendMessage("§cEconomy-Modul nicht geladen!");
+                return;
+            }
+
+            var getPriceProvider = plugin.getClass().getMethod("getPriceProvider");
+            var priceProvider = getPriceProvider.invoke(plugin);
+
+            // Hole alle Vanilla-Preise
+            var getAllVanillaPricesMethod = priceProvider.getClass().getMethod("getAllVanillaPrices");
+            var vanillaPrices = (java.util.Collection<?>) getAllVanillaPricesMethod.invoke(priceProvider);
+
+            if (vanillaPrices.isEmpty()) {
+                player.sendMessage("§7Keine Preise definiert.");
+                player.sendMessage("§7Nutze §e/plot price set§7, um Preise festzulegen.");
+            } else {
+                player.sendMessage("§7Registrierte Preise (§e" + vanillaPrices.size() + "§7):");
+                player.sendMessage("");
+
+                // Sortiere Preise nach Material-Name
+                var sortedPrices = new java.util.ArrayList<>(vanillaPrices);
+                sortedPrices.sort((a, b) -> {
+                    try {
+                        var getMaterial = a.getClass().getMethod("getMaterial");
+                        Material matA = (Material) getMaterial.invoke(a);
+                        Material matB = (Material) getMaterial.invoke(b);
+                        return matA.name().compareTo(matB.name());
+                    } catch (Exception e) {
+                        return 0;
+                    }
+                });
+
+                // Zeige Preise an
+                for (Object priceObj : sortedPrices) {
+                    try {
+                        var getMaterial = priceObj.getClass().getMethod("getMaterial");
+                        var getPrice = priceObj.getClass().getMethod("getPrice");
+
+                        Material material = (Material) getMaterial.invoke(priceObj);
+                        BigDecimal price = (BigDecimal) getPrice.invoke(priceObj);
+
+                        // Formatiere Material-Name schöner
+                        String materialName = material.name().replace("_", " ").toLowerCase();
+                        materialName = capitalizeWords(materialName);
+
+                        player.sendMessage("§e  " + materialName + " §7- §6" + price + " Sterne");
+                    } catch (Exception e) {
+                        player.sendMessage("§c  Fehler beim Lesen eines Preises");
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            player.sendMessage("§cFehler beim Laden der Preise!");
+            e.printStackTrace();
+        }
+
         player.sendMessage("§6§m--------------------------------------------");
+    }
+
+    /**
+     * Kapitalisiert die ersten Buchstaben jedes Wortes.
+     *
+     * @param text Text
+     * @return Kapitalisierter Text
+     */
+    private String capitalizeWords(String text) {
+        String[] words = text.split(" ");
+        StringBuilder result = new StringBuilder();
+
+        for (String word : words) {
+            if (!word.isEmpty()) {
+                result.append(Character.toUpperCase(word.charAt(0)))
+                      .append(word.substring(1))
+                      .append(" ");
+            }
+        }
+
+        return result.toString().trim();
     }
 
     /**
@@ -477,6 +557,10 @@ public class PlotPriceCommand {
                 BigDecimal.class
             );
             registerMethod.invoke(priceProvider, material, context.getCurrentPrice());
+
+            // WICHTIG: Speichere Config auf Festplatte!
+            var saveConfigMethod = plugin.getClass().getMethod("saveConfiguration");
+            saveConfigMethod.invoke(plugin);
 
             return true;
 

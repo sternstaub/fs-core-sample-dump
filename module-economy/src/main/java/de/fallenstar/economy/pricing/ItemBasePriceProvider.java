@@ -322,4 +322,52 @@ public class ItemBasePriceProvider {
     public Collection<ItemBasePrice.CustomItemPrice> getAllCustomPrices() {
         return Collections.unmodifiableCollection(customPrices.values());
     }
+
+    /**
+     * Speichert alle Preise in eine Config zurück.
+     *
+     * Diese Methode schreibt die aktuellen In-Memory-Preise
+     * zurück in die FileConfiguration.
+     *
+     * Config-Struktur:
+     * <pre>
+     * item-base-prices:
+     *   defaults:
+     *     vanilla: 1.0
+     *     custom: 10.0
+     *   vanilla:
+     *     DIAMOND: 100.0
+     *     IRON_INGOT: 5.0
+     *   custom:
+     *     "SWORD:EXCALIBUR": 1000.0
+     * </pre>
+     *
+     * @param config FileConfiguration zum Speichern
+     */
+    public void saveToConfig(FileConfiguration config) {
+        // Erstelle Hauptsektion
+        config.set("item-base-prices", null); // Alte Daten löschen
+
+        // Speichere Defaults
+        config.set("item-base-prices.defaults.vanilla", defaultVanillaPrice.doubleValue());
+        config.set("item-base-prices.defaults.custom", defaultCustomPrice.doubleValue());
+
+        // Speichere Vanilla-Preise
+        for (Map.Entry<Material, ItemBasePrice.VanillaItemPrice> entry : vanillaPrices.entrySet()) {
+            Material material = entry.getKey();
+            BigDecimal price = entry.getValue().getPrice();
+            config.set("item-base-prices.vanilla." + material.name(), price.doubleValue());
+        }
+
+        // Speichere Custom-Preise
+        for (Map.Entry<String, ItemBasePrice.CustomItemPrice> entry : customPrices.entrySet()) {
+            String key = entry.getKey();
+            BigDecimal price = entry.getValue().getPrice();
+            config.set("item-base-prices.custom." + key, price.doubleValue());
+        }
+
+        logger.info("Preise in Config gespeichert: " +
+                vanillaPrices.size() + " Vanilla, " +
+                customPrices.size() + " Custom");
+    }
 }

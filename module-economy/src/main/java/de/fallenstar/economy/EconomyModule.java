@@ -234,4 +234,19 @@ public class EconomyModule extends JavaPlugin implements Listener {
     public ProviderRegistry getProviders() {
         return providers;
     }
+
+    /**
+     * Speichert die Config zurück auf die Festplatte.
+     *
+     * Diese Methode wird nach Preis-Änderungen aufgerufen.
+     */
+    public void saveConfiguration() {
+        // Speichere Preise in Config
+        priceProvider.saveToConfig(getConfig());
+
+        // Schreibe Config auf Festplatte
+        saveConfig();
+
+        getLogger().fine("Config gespeichert");
+    }
 }

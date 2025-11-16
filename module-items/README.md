@@ -14,13 +14,13 @@ Das Items-Modul stellt ein **Vanilla-First** Währungssystem bereit und integrie
 
 ## ✅ Features
 
-### Vanilla Currency System (IMMER verfügbar)
-- **Bronze Coin** (GOLD_NUGGET, CMD: 1, Wert: 1)
-- **Silver Coin** (GOLD_NUGGET, CMD: 2, Wert: 10)
-- **Gold Coin** (GOLD_INGOT, CMD: 1, Wert: 100)
+### Vanilla Currency System "Sterne" (IMMER verfügbar)
+- **Bronzestern** (COPPER_NUGGET, CMD: 1, Wert: 1)
+- **Silberstern** (IRON_NUGGET, CMD: 2, Wert: 10)
+- **Goldstern** (GOLD_NUGGET, CMD: 3, Wert: 100)
 - PDC-basierte Item-Identifikation (`fallenstar:item_id`)
-- Custom Model Data für Texturpacks
-- Währungswert-Berechnung
+- Custom Model Data für Resource Pack Support
+- Währungswert-Berechnung (1:10:100 Ratio)
 
 ### Optional: MMOItems Integration
 - MMOItemsItemProvider (nur wenn MMOItems installiert)
@@ -108,18 +108,18 @@ public class MMOItemsItemProvider implements ItemProvider {
 ItemsModule itemsModule = (ItemsModule) Bukkit.getPluginManager().getPlugin("FallenStar-Items");
 SpecialItemManager manager = itemsModule.getSpecialItemManager();
 
-// Bronze Coins erstellen
-manager.createCurrency("bronze", 50).ifPresent(coins -> {
+// Bronzesterne erstellen (50 Stück = 50 Wert)
+manager.createItem("bronze_stern", 50).ifPresent(coins -> {
     player.getInventory().addItem(coins);
 });
 
-// Silver Coins erstellen
-manager.createCurrency("silver", 10).ifPresent(coins -> {
+// Silbersterne erstellen (10 Stück = 100 Wert)
+manager.createItem("silver_stern", 10).ifPresent(coins -> {
     player.getInventory().addItem(coins);
 });
 
-// Gold Coins erstellen
-manager.createCurrency("gold", 1).ifPresent(coins -> {
+// Goldsterne erstellen (1 Stück = 100 Wert)
+manager.createItem("gold_stern", 1).ifPresent(coins -> {
     player.getInventory().addItem(coins);
 });
 ```
@@ -127,14 +127,30 @@ manager.createCurrency("gold", 1).ifPresent(coins -> {
 ### Currency Items erkennen
 
 ```java
-// Prüfen ob Item eine Währung ist
-if (manager.isCurrencyItem(itemInHand)) {
-    // Währungstyp ermitteln
-    manager.getCurrencyType(itemInHand).ifPresent(type -> {
-        // type = "bronze", "silver" oder "gold"
-        int value = manager.getCurrencyValue(itemInHand);
-        player.sendMessage("Wert: " + value);
+// Prüfen ob Item ein Special Item (inkl. Währung) ist
+if (manager.isSpecialItem(itemInHand)) {
+    // Item-ID ermitteln
+    manager.getSpecialItemId(itemInHand).ifPresent(itemId -> {
+        // itemId = "bronze_stern", "silver_stern" oder "gold_stern"
+        player.sendMessage("Item: " + itemId);
+
+        // Bei Währungs-Items kann der Wert berechnet werden
+        if (itemId.endsWith("_stern")) {
+            int amount = itemInHand.getAmount();
+            int singleValue = getSingleCoinValue(itemId); // 1, 10 oder 100
+            int totalValue = amount * singleValue;
+            player.sendMessage("Gesamtwert: " + totalValue + " Sterne");
+        }
     });
+}
+
+private int getSingleCoinValue(String itemId) {
+    return switch (itemId) {
+        case "bronze_stern" -> 1;
+        case "silver_stern" -> 10;
+        case "gold_stern" -> 100;
+        default -> 0;
+    };
 }
 ```
 
@@ -168,15 +184,86 @@ if (itemsModule.getItemProvider() != null) {
 
 ---
 
-## 📊 Währungs-Definitionen
+## 📊 Basiswährung "Sterne" - Definitionen
 
-| Währung | Material | CMD | Wert | Beschreibung |
-|---------|----------|-----|------|--------------|
-| **Bronze** | GOLD_NUGGET | 1 | 1 | Grundwährung |
-| **Silver** | GOLD_NUGGET | 2 | 10 | Handelswährung |
-| **Gold** | GOLD_INGOT | 1 | 100 | Edelwährung |
+| Name | Item-ID | Material | Custom Model Data | Wert | Beschreibung |
+|------|---------|----------|-------------------|------|--------------|
+| **Bronzestern** | `bronze_stern` | `COPPER_NUGGET` | `1` | 1 | Basiswährung (1er Münze) |
+| **Silberstern** | `silver_stern` | `IRON_NUGGET` | `2` | 10 | Handelswährung (10er Münze) |
+| **Goldstern** | `gold_stern` | `GOLD_NUGGET` | `3` | 100 | Edelwährung (100er Münze) |
 
-**Custom Model Data (CMD)** ermöglicht Texturpack-Integration!
+### Custom Model Data für Resource Packs
+
+**Custom Model Data (CMD)** ermöglicht benutzerdefinierte Item-Texturen ohne Mod!
+
+#### Resource Pack Integration
+
+Erstelle einen Resource Pack mit folgenden Override-Einträgen:
+
+**`assets/minecraft/models/item/copper_nugget.json`:**
+```json
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "minecraft:item/copper_nugget"
+  },
+  "overrides": [
+    {
+      "predicate": { "custom_model_data": 1 },
+      "model": "fallenstar:item/bronze_stern"
+    }
+  ]
+}
+```
+
+**`assets/minecraft/models/item/iron_nugget.json`:**
+```json
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "minecraft:item/iron_nugget"
+  },
+  "overrides": [
+    {
+      "predicate": { "custom_model_data": 2 },
+      "model": "fallenstar:item/silver_stern"
+    }
+  ]
+}
+```
+
+**`assets/minecraft/models/item/gold_nugget.json`:**
+```json
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "minecraft:item/gold_nugget"
+  },
+  "overrides": [
+    {
+      "predicate": { "custom_model_data": 3 },
+      "model": "fallenstar:item/gold_stern"
+    }
+  ]
+}
+```
+
+Dann erstelle die benutzerdefinierten Modelle in:
+- `assets/fallenstar/models/item/bronze_stern.json`
+- `assets/fallenstar/models/item/silver_stern.json`
+- `assets/fallenstar/models/item/gold_stern.json`
+
+Und die Texturen in:
+- `assets/fallenstar/textures/item/bronze_stern.png` (16x16 PNG)
+- `assets/fallenstar/textures/item/silver_stern.png` (16x16 PNG)
+- `assets/fallenstar/textures/item/gold_stern.png` (16x16 PNG)
+
+#### Hinweise für Resource Pack Ersteller:
+- **CMD-Werte NICHT ändern** - hardcoded im Code
+- Texturen sollten münzähnlich sein
+- Empfohlene Größe: 16x16 Pixel
+- Format: PNG mit Transparenz
+- Farbschema: Bronze (kupferfarben), Silber (grau-weiß), Gold (golden-gelb)
 
 ---
 
@@ -185,12 +272,12 @@ if (itemsModule.getItemProvider() != null) {
 ### 1. Optional-Pattern verwenden
 ```java
 // ✅ RICHTIG
-manager.createCurrency("bronze", 10).ifPresent(coins -> {
+manager.createItem("bronze_stern", 10).ifPresent(coins -> {
     // Verwende coins
 });
 
 // ❌ FALSCH
-ItemStack coins = manager.createCurrency("bronze", 10).get(); // NoSuchElementException!
+ItemStack coins = manager.createItem("bronze_stern", 10).get(); // NoSuchElementException!
 ```
 
 ### 2. Graceful Degradation
