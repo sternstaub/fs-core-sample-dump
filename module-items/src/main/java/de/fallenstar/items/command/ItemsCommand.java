@@ -92,19 +92,23 @@ public class ItemsCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        if (!plugin.getItemProvider().isCustomItem(item)) {
-            player.sendMessage(Component.text("Dies ist kein Custom-Item!", NamedTextColor.YELLOW));
-            return;
+        try {
+            if (!plugin.getItemProvider().isCustomItem(item)) {
+                player.sendMessage(Component.text("Dies ist kein Custom-Item!", NamedTextColor.YELLOW));
+                return;
+            }
+
+            Optional<String> itemId = plugin.getItemProvider().getItemId(item);
+            Optional<String> itemType = plugin.getItemProvider().getItemType(item);
+
+            player.sendMessage(Component.text("═══ Custom Item Info ═══", NamedTextColor.GOLD));
+            player.sendMessage(Component.text("ID: ", NamedTextColor.GRAY)
+                    .append(Component.text(itemId.orElse("Unknown"), NamedTextColor.WHITE)));
+            player.sendMessage(Component.text("Type: ", NamedTextColor.GRAY)
+                    .append(Component.text(itemType.orElse("Unknown"), NamedTextColor.WHITE)));
+        } catch (Exception e) {
+            player.sendMessage(Component.text("✗ Fehler beim Abrufen der Item-Informationen!", NamedTextColor.RED));
         }
-
-        Optional<String> itemId = plugin.getItemProvider().getItemId(item);
-        Optional<String> itemType = plugin.getItemProvider().getItemType(item);
-
-        player.sendMessage(Component.text("═══ Custom Item Info ═══", NamedTextColor.GOLD));
-        player.sendMessage(Component.text("ID: ", NamedTextColor.GRAY)
-                .append(Component.text(itemId.orElse("Unknown"), NamedTextColor.WHITE)));
-        player.sendMessage(Component.text("Type: ", NamedTextColor.GRAY)
-                .append(Component.text(itemType.orElse("Unknown"), NamedTextColor.WHITE)));
     }
 
     private void handleReload(CommandSender sender) {
