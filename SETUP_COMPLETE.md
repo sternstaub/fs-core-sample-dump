@@ -36,11 +36,12 @@
 
 ## 📊 Statistics (aktualisiert)
 
-- **Module:** 5 (Core + 4 Feature-Module)
+- **Module:** 6 (Core + 5 Feature-Module)
 - **Abgeschlossene Module:** 2 (Core, Plots)
 - **In Entwicklung:** 1 (NPCs)
-- **Geplant:** 2 (Economy, WorldAnchors)
+- **Geplant:** 3 (Items, Economy, WorldAnchors)
 - **Dokumentationsdateien:** Vollständig aktualisiert
+- **Architektur:** Provider-Implementierungen in Modulen!
 
 ---
 
@@ -70,23 +71,31 @@ ls -R module-npcs/src/main/java/de/fallenstar/npcs/
 
 ### 3. Aktuelle Entwicklungsziele
 
-**Aktuell:** NPCs Module (Sprint 9-10) 🔨
+**Aktuell:** NPCs Module (Sprint 11-12) 🔨
 ```bash
 cd module-npcs/
-# Citizens-Integration finalisieren
+# CitizensNPCProvider vervollständigen (in provider/)
 # NPC-Commands implementieren
 # Trade- und Dialogue-System vervollständigen
 ```
 
-**Nächster Sprint:** Economy Module (Sprint 5-6) 📋
+**Nächster Sprint:** Items Module (Sprint 5-6) 📋
 ```bash
-cd module-economy/
-# Währungssystem implementieren
-# Preisberechnungen entwickeln
-# Weltwirtschaft-Manager erstellen
+cd module-items/
+# MMOItemsItemProvider erstellen (in provider/)
+# Item-Manager und Factory implementieren
+# Item-Commands entwickeln
 ```
 
-**Zukünftig:** WorldAnchors Module (Sprint 7-8) 📋
+**Danach:** Economy Module (Sprint 7-8) 📋
+```bash
+cd module-economy/
+# VaultEconomyProvider erstellen (in provider/)
+# Währungssystem implementieren
+# Preisberechnungen entwickeln
+```
+
+**Zukünftig:** WorldAnchors Module (Sprint 9-10) 📋
 ```bash
 cd module-worldanchors/
 # Schnellreise-System implementieren
@@ -163,22 +172,31 @@ cp module-*/target/*.jar /path/to/server/plugins/
 - ✅ Storage-Integration abgeschlossen
 - ✅ Plot-System mit Towny-Bridge
 
-### NPCs Module (Sprint 9-10) - In Arbeit 🔨
+### NPCs Module (Sprint 11-12) - In Arbeit 🔨
 - [x] Basis-Struktur vorhanden
-- [ ] Citizens-Integration vervollständigen
+- [ ] CitizensNPCProvider vervollständigen (in module-npcs/provider/)
 - [ ] NPC-Commands finalisieren
 - [ ] Trade-System implementieren
 - [ ] Dialogue-System implementieren
 - [ ] GUI-Handler vervollständigen
 
-### Economy Module (Sprint 5-6) - Geplant 📋
+### Items Module (Sprint 5-6) - Geplant 📋
+- [ ] MMOItemsItemProvider erstellen (in module-items/provider/)
+- [ ] Item-Manager implementieren
+- [ ] Item-Factory entwickeln
+- [ ] Commands implementieren
+- [ ] Custom Item Definitions
+- [ ] Config erstellen
+
+### Economy Module (Sprint 7-8) - Geplant 📋
+- [ ] VaultEconomyProvider erstellen (in module-economy/provider/)
 - [ ] Currency-System implementieren
 - [ ] Pricing-Engine entwickeln
 - [ ] World-Economy-Manager erstellen
 - [ ] Commands implementieren
 - [ ] Config erstellen
 
-### WorldAnchors Module (Sprint 7-8) - Geplant 📋
+### WorldAnchors Module (Sprint 9-10) - Geplant 📋
 - [ ] Anchor-System implementieren
 - [ ] POI-System entwickeln
 - [ ] Travel-Mechaniken erstellen
@@ -213,16 +231,18 @@ cp module-*/target/*.jar /path/to/server/plugins/
 
 Die Projekt-Struktur wurde überarbeitet und an die neuen Anforderungen angepasst.
 
-**Wichtige Änderungen:**
-- ✅ **Storage-Modul** wurde in **Plots-Modul** integriert
-- ✅ **AdminShops** wurde entfernt
-- ✅ **TravelSystem** wurde zu **WorldAnchors** umbenannt
-- ✅ Neue Modulstruktur: Core → Plots → Economy → WorldAnchors → NPCs
+**Wichtige Architektur-Änderungen:**
+- ✅ **Provider-Implementierungen** in Modulen, Core nur Interfaces!
+- ✅ **Storage-Modul** in **Plots-Modul** integriert
+- ✅ **Items-Modul** vor Economy eingefügt (Sprint 5-6)
+- ✅ **TravelSystem** zu **WorldAnchors** umbenannt
+- ✅ Neue Modulstruktur: Core → Plots → Items → Economy → WorldAnchors → NPCs
 
 **Aktueller Fokus:**
-- 🔨 **NPCs Module** (Sprint 9-10) finalisieren
-- 📋 **Economy Module** (Sprint 5-6) als nächstes
-- 📋 **WorldAnchors Module** (Sprint 7-8) danach
+- 🔨 **NPCs Module** (Sprint 11-12) finalisieren
+- 📋 **Items Module** (Sprint 5-6) als nächstes
+- 📋 **Economy Module** (Sprint 7-8) danach
+- 📋 **WorldAnchors Module** (Sprint 9-10) später
 
 Good luck! 🚀
 

@@ -87,9 +87,10 @@ A **modular Minecraft plugin system** for Paper 1.21.1 with provider-based archi
 
 - **Version:** 1.0-SNAPSHOT
 - **Phase:** Aktive Entwicklung
-- **Completion:** ~50% (Core ✅ + Plots ✅ + NPCs 🔨)
-- **Nächster Sprint:** Sprint 5-6 - FallenStar Economy
-- **Kürzlich geändert:** Modulstruktur überarbeitet (Storage → Plots, TravelSystem → WorldAnchors)
+- **Completion:** ~40% (Core ✅ + Plots ✅ + NPCs 🔨)
+- **Nächster Sprint:** Sprint 5-6 - FallenStar Items
+- **Aktuell in Arbeit:** Sprint 11-12 - FallenStar NPCs
+- **Wichtige Architektur:** Provider-Implementierungen in Modulen, Core nur Interfaces!
 
 ---
 
@@ -115,13 +116,12 @@ fs-core-sample-dump/
 │   │   │   │   ├── ChatProvider.java
 │   │   │   │   ├── NetworkProvider.java
 │   │   │   │   ├── Plot.java                  # Data model
-│   │   │   │   └── impl/                      # Concrete implementations
-│   │   │   │       ├── TownyPlotProvider.java
+│   │   │   │   └── impl/                      # NUR NoOp-Implementierungen!
 │   │   │   │       ├── NoOpPlotProvider.java
-│   │   │   │       ├── NoOpEconomyProvider.java (missing)
-│   │   │   │       ├── NoOpNPCProvider.java (missing)
-│   │   │   │       ├── VaultEconomyProvider.java (missing)
-│   │   │   │       └── CitizensNPCProvider.java (missing)
+│   │   │   │       ├── NoOpEconomyProvider.java
+│   │   │   │       ├── NoOpNPCProvider.java
+│   │   │   │       ├── NoOpItemProvider.java
+│   │   │   │       └── NoOpChatProvider.java
 │   │   │   ├── registry/
 │   │   │   │   └── ProviderRegistry.java      # Auto-detects providers
 │   │   │   ├── exception/
@@ -139,6 +139,8 @@ fs-core-sample-dump/
 │   ├── pom.xml                      # Plot-System + Storage-Integration
 │   ├── src/main/java/de/fallenstar/plots/
 │   │   ├── PlotsModule.java                   # Main class
+│   │   ├── provider/                          # Provider-Implementierungen
+│   │   │   └── TownyPlotProvider.java         # Towny-Integration
 │   │   ├── command/                           # Plot-Befehle
 │   │   ├── manager/                           # Plot- und Storage-Manager
 │   │   ├── model/                             # Plot-Datenmodelle
@@ -147,10 +149,26 @@ fs-core-sample-dump/
 │       ├── plugin.yml
 │       └── config.yml
 │
-├── module-economy/                  # FallenStar Economy (Sprint 5-6)
+├── module-items/                    # FallenStar Items (Sprint 5-6)
+│   ├── pom.xml                      # Custom Items, MMOItems-Integration
+│   ├── src/main/java/de/fallenstar/items/
+│   │   ├── ItemsModule.java                   # Main class
+│   │   ├── provider/                          # Provider-Implementierungen
+│   │   │   └── MMOItemsItemProvider.java      # MMOItems-Integration
+│   │   ├── command/                           # Item-Befehle
+│   │   ├── manager/                           # Item-Manager
+│   │   ├── model/                             # Item-Modelle
+│   │   └── factory/                           # Item-Factory
+│   └── src/main/resources/
+│       ├── plugin.yml
+│       └── config.yml
+│
+├── module-economy/                  # FallenStar Economy (Sprint 7-8)
 │   ├── pom.xml                      # Weltwirtschaft, Münzgeld, Preise
 │   ├── src/main/java/de/fallenstar/economy/
 │   │   ├── EconomyModule.java                 # Main class
+│   │   ├── provider/                          # Provider-Implementierungen
+│   │   │   └── VaultEconomyProvider.java      # Vault-Integration
 │   │   ├── command/                           # Wirtschafts-Befehle
 │   │   ├── manager/                           # Wirtschafts-Manager
 │   │   ├── model/                             # Wirtschafts-Modelle
@@ -159,7 +177,7 @@ fs-core-sample-dump/
 │       ├── plugin.yml
 │       └── config.yml
 │
-├── module-worldanchors/             # FallenStar WorldAnchors (Sprint 7-8)
+├── module-worldanchors/             # FallenStar WorldAnchors (Sprint 9-10)
 │   ├── pom.xml                      # Schnellreisen, POIs, Wegpunkte
 │   ├── src/main/java/de/fallenstar/worldanchors/
 │   │   ├── WorldAnchorsModule.java            # Main class
@@ -171,10 +189,12 @@ fs-core-sample-dump/
 │       ├── plugin.yml
 │       └── config.yml
 │
-├── module-npcs/                     # FallenStar NPCs (Sprint 9-10)
+├── module-npcs/                     # FallenStar NPCs (Sprint 11-12)
 │   ├── pom.xml                      # NPC-System (Citizens-Integration)
 │   ├── src/main/java/de/fallenstar/npcs/
 │   │   ├── NPCsModule.java                    # Main class
+│   │   ├── provider/                          # Provider-Implementierungen
+│   │   │   └── CitizensNPCProvider.java       # Citizens-Integration
 │   │   ├── command/                           # NPC-Befehle
 │   │   ├── manager/                           # NPC-Manager
 │   │   ├── model/                             # NPC-Modelle
@@ -189,21 +209,97 @@ fs-core-sample-dump/
 ### Module Dependency Graph
 
 ```
-Core (Foundation - NO business logic)
+Core (Foundation - NO business logic, nur Interfaces + NoOp)
  ↑
- ├── Plots            (Plot-System + Storage-Integration, Towny-Bridge)
- ├── Economy          (Weltwirtschaft, Münzgeld, Preisberechnungen)
- ├── WorldAnchors     (Schnellreisen, POIs, Wegpunkte für Spieler/NPCs)
- └── NPCs             (NPC-System, Citizens-Integration, Trading)
+ ├── Plots            (Plot-System + Storage, Towny → TownyPlotProvider)
+ ├── Items            (Custom Items, MMOItems → MMOItemsItemProvider)
+ ├── Economy          (Weltwirtschaft, Vault → VaultEconomyProvider)
+ ├── WorldAnchors     (Schnellreisen, POIs, Wegpunkte)
+ └── NPCs             (NPC-System, Citizens → CitizensNPCProvider)
 ```
 
-**Important:** Modules **ONLY** depend on Core, never on each other.
+**Important:**
+- Modules **ONLY** depend on Core, never on each other
+- Modules communicate via Core's Provider-Interfaces
+- Each module provides its own Provider-Implementation
+- Core enthält NUR Interfaces und NoOp-Implementierungen
+- Konkrete Provider-Implementierungen liegen in den Modulen
 
-**Note:** Storage-Funktionalität wurde in das Plots-Modul integriert.
+**Beispiel:** NPCs-Modul nutzt PlotProvider (Core-Interface), nicht Towny-API direkt!
 
 ---
 
 ## Architecture & Design Patterns
+
+### 0. Provider Architecture (WICHTIG!)
+
+**Core Plugin = Abstraktionsebene**
+
+Das Core-Plugin ist die zentrale Abstraktionsebene und enthält **NUR**:
+- Provider-Interfaces (PlotProvider, NPCProvider, ItemProvider, etc.)
+- NoOp-Implementierungen (NoOpPlotProvider, NoOpNPCProvider, etc.)
+- ProviderRegistry zur Auto-Detection
+- Basis-Events und Exceptions
+
+**Keine konkreten Provider-Implementierungen im Core!**
+
+**Module = Provider-Implementierungen**
+
+Jedes Modul, das mit einer externen API arbeitet, enthält seine eigene Provider-Implementierung:
+
+```
+module-plots/
+├── provider/
+│   └── TownyPlotProvider.java    ← Implementiert PlotProvider (Core-Interface)
+└── (verwendet Towny-API)
+
+module-npcs/
+├── provider/
+│   └── CitizensNPCProvider.java  ← Implementiert NPCProvider (Core-Interface)
+└── (verwendet Citizens-API)
+
+module-items/
+├── provider/
+│   └── MMOItemsItemProvider.java ← Implementiert ItemProvider (Core-Interface)
+└── (verwendet MMOItems-API)
+```
+
+**Inter-Modul-Kommunikation**
+
+Module kommunizieren **ausschließlich** über Core-Interfaces:
+
+```java
+// ✅ RICHTIG: NPCs-Modul nutzt PlotProvider-Interface
+public class NPCManager {
+    private PlotProvider plotProvider;  // Core-Interface!
+
+    public void spawnNPC(Location location) {
+        // Spricht mit Core-Interface, nicht direkt mit Towny!
+        Plot plot = plotProvider.getPlot(location);
+        // ...
+    }
+}
+
+// ❌ FALSCH: Direkter Zugriff auf Towny-API
+import com.palmergames.bukkit.towny.*;  // NIEMALS!
+```
+
+**Registrierung der Provider**
+
+Die ProviderRegistry erkennt automatisch, welche Module geladen sind:
+
+```java
+// In ProviderRegistry.java (Core)
+public void detectAndRegister() {
+    // Prüft ob Plots-Modul geladen ist
+    if (isPluginEnabled("FallenStar-Plots")) {
+        // Nutzt TownyPlotProvider vom Plots-Modul
+        plotProvider = getForeignProvider(TownyPlotProvider.class);
+    } else {
+        plotProvider = new NoOpPlotProvider();
+    }
+}
+```
 
 ### 1. Provider Pattern
 
@@ -343,20 +439,23 @@ public class ProviderRegistry {
 
 ### Sprint-Based Development
 
-Das Projekt folgt einem überarbeiteten 10-Sprint-Fahrplan:
+Das Projekt folgt einem überarbeiteten 12-Sprint-Fahrplan:
 
 | Sprint | Module | Duration | Status |
 |--------|--------|----------|--------|
 | 1-2 | Core | 2 Wochen | Abgeschlossen ✅ |
 | 3-4 | FallenStar Plots | 2 Wochen | Abgeschlossen ✅ |
-| 5-6 | FallenStar Economy | 2 Wochen | Geplant 📋 |
-| 7-8 | FallenStar WorldAnchors | 2 Wochen | Geplant 📋 |
-| 9-10 | FallenStar NPCs | 2 Wochen | In Arbeit 🔨 |
+| 5-6 | FallenStar Items | 2 Wochen | Geplant 📋 |
+| 7-8 | FallenStar Economy | 2 Wochen | Geplant 📋 |
+| 9-10 | FallenStar WorldAnchors | 2 Wochen | Geplant 📋 |
+| 11-12 | FallenStar NPCs | 2 Wochen | In Arbeit 🔨 |
 
-**Hinweis:**
-- **Storage-Modul** wurde gestrichen und in **Plots** integriert
-- **AdminShops** wurde aus dem Plan entfernt
-- **TravelSystem** wurde zu **WorldAnchors** umbenannt
+**Wichtige Architektur-Änderungen:**
+- **Core** enthält nur Interfaces + NoOp-Implementierungen
+- **Provider-Implementierungen** liegen in den jeweiligen Modulen
+- **Module** kommunizieren NUR über Core-Interfaces
+- **Storage-Modul** wurde in **Plots** integriert
+- **Items-Modul** vor Economy eingefügt (Sprint 5-6)
 
 ### Working on a Sprint
 
@@ -741,6 +840,7 @@ mvn clean package
 **Build Outputs:**
 - `core/target/FallenStar-Core-1.0.jar`
 - `module-plots/target/FallenStar-Plots-1.0.jar`
+- `module-items/target/FallenStar-Items-1.0.jar`
 - `module-economy/target/FallenStar-Economy-1.0.jar`
 - `module-worldanchors/target/FallenStar-WorldAnchors-1.0.jar`
 - `module-npcs/target/FallenStar-NPCs-1.0.jar`
@@ -944,13 +1044,14 @@ public void testGracefulDegradation() {
 **Break Down Large Tasks:**
 
 ```
-"Implement Economy Module" →
-  1. Implement Currency-System (Münzgeld)
-  2. Implement Pricing-Engine (Preisberechnungen)
-  3. Implement World-Economy-Manager (Weltwirtschaft)
-  4. Implement Economy-Commands
-  5. Create config.yml mit Wirtschafts-Parametern
-  6. Test functionality
+"Implement Items Module" →
+  1. Implement ItemProvider-Interface Nutzung
+  2. Implement MMOItemsItemProvider (in module-items/provider/)
+  3. Implement Item-Manager
+  4. Implement Item-Factory für Custom Items
+  5. Implement Item-Commands
+  6. Create config.yml mit Item-Definitions
+  7. Test functionality
 ```
 
 ### Code Generation Best Practices
@@ -1057,4 +1158,5 @@ git log --oneline -10
 **Repository:** fs-core-sample-dump
 **Branch:** claude/restructure-project-modules-018sEM2NT9pJcUDj7CmmeWTC
 **Version:** 1.0-SNAPSHOT
-**Modulstruktur:** Überarbeitet (Storage → Plots integriert, TravelSystem → WorldAnchors, AdminShops entfernt)
+**Architektur:** Provider-Implementierungen in Modulen, Core nur Interfaces + NoOp
+**Modulstruktur:** Items-Modul vor Economy eingefügt (Sprint 5-6)

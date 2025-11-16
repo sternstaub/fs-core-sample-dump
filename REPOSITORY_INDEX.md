@@ -90,12 +90,43 @@ FallenStar-Paper-Samples/
 │           ├── plugin.yml
 │           └── config.yml
 │
+├── module-items/                      ← FallenStar Items Module
+│   ├── README.md
+│   ├── pom.xml
+│   └── src/main/
+│       ├── java/de/fallenstar/items/
+│       │   ├── ItemsModule.java
+│       │   │
+│       │   ├── provider/              ← Provider-Implementierungen
+│       │   │   └── MMOItemsItemProvider.java
+│       │   │
+│       │   ├── command/               ← Item-Befehle
+│       │   │   ├── ItemCreateCommand.java
+│       │   │   ├── ItemGiveCommand.java
+│       │   │   └── ItemListCommand.java
+│       │   │
+│       │   ├── manager/               ← Business Logic
+│       │   │   └── ItemManager.java
+│       │   │
+│       │   ├── model/                 ← Data Models
+│       │   │   └── CustomItem.java
+│       │   │
+│       │   └── factory/               ← Item-Factory
+│       │       └── ItemFactory.java
+│       │
+│       └── resources/
+│           ├── plugin.yml
+│           └── config.yml
+│
 ├── module-economy/                    ← FallenStar Economy Module
 │   ├── README.md
 │   ├── pom.xml
 │   └── src/main/
 │       ├── java/de/fallenstar/economy/
 │       │   ├── EconomyModule.java
+│       │   │
+│       │   ├── provider/              ← Provider-Implementierungen
+│       │   │   └── VaultEconomyProvider.java
 │       │   │
 │       │   ├── command/               ← Wirtschafts-Befehle
 │       │   │   ├── CurrencyCommand.java
@@ -154,6 +185,9 @@ FallenStar-Paper-Samples/
         ├── java/de/fallenstar/npcs/
         │   ├── NPCsModule.java
         │   │
+        │   ├── provider/              ← Provider-Implementierungen
+        │   │   └── CitizensNPCProvider.java
+        │   │
         │   ├── command/               ← NPC-Befehle
         │   │   ├── NPCCreateCommand.java
         │   │   ├── NPCRemoveCommand.java
@@ -198,6 +232,7 @@ mvn clean package
 Dies erstellt:
 - `core/target/FallenStar-Core-1.0.jar`
 - `module-plots/target/FallenStar-Plots-1.0.jar`
+- `module-items/target/FallenStar-Items-1.0.jar`
 - `module-economy/target/FallenStar-Economy-1.0.jar`
 - `module-worldanchors/target/FallenStar-WorldAnchors-1.0.jar`
 - `module-npcs/target/FallenStar-NPCs-1.0.jar`
@@ -217,16 +252,17 @@ cp */target/*.jar /path/to/server/plugins/
 Alle Sample-Java-Files sind bereits in diesem Repository vorhanden.
 Die unten aufgeführten Files sollten für eine vollständige Implementation erstellt werden:
 
-#### Core Module - Fehlende Implementations
+#### Core Module - NUR NoOp-Implementierungen!
 
 ```java
 // core/src/main/java/de/fallenstar/core/provider/impl/
+// WICHTIG: Core enthält NUR NoOp-Implementierungen!
+// Konkrete Provider-Implementierungen gehören in die Module!
 
-NoOpEconomyProvider.java
-NoOpNPCProvider.java
-NoOpItemProvider.java
-VaultEconomyProvider.java
-CitizensNPCProvider.java
+NoOpEconomyProvider.java     ✅ (falls noch fehlend)
+NoOpNPCProvider.java          ✅ (falls noch fehlend)
+NoOpItemProvider.java         ✅ (falls noch fehlend)
+NoOpChatProvider.java         ✅ (falls noch fehlend)
 ```
 
 #### Core Module - Database Implementations
@@ -234,24 +270,40 @@ CitizensNPCProvider.java
 ```java
 // core/src/main/java/de/fallenstar/core/database/impl/
 
-SQLiteDataStore.java
-MySQLDataStore.java
+SQLiteDataStore.java          ✅ (meist bereits vorhanden)
+MySQLDataStore.java           ✅ (meist bereits vorhanden)
 ```
 
-#### Plots Module - Teilweise Implementiert
+#### Plots Module - Vollständig Implementiert ✅
 
 ```java
 // module-plots/src/main/java/de/fallenstar/plots/
 
-// Weitere Plot-Features nach Bedarf
-// Storage-Integration ist bereits vorhanden
+provider/TownyPlotProvider.java    ✅ Implementiert
+// Weitere Plot-Features vollständig
+// Storage-Integration vorhanden
 ```
 
-#### Economy Module - Vollständige Implementation
+#### Items Module - Vollständige Implementation 📋
+
+```java
+// module-items/src/main/java/de/fallenstar/items/
+
+provider/MMOItemsItemProvider.java
+command/ItemCreateCommand.java
+command/ItemGiveCommand.java
+command/ItemListCommand.java
+manager/ItemManager.java
+model/CustomItem.java
+factory/ItemFactory.java
+```
+
+#### Economy Module - Vollständige Implementation 📋
 
 ```java
 // module-economy/src/main/java/de/fallenstar/economy/
 
+provider/VaultEconomyProvider.java
 command/CurrencyCommand.java
 command/PriceCommand.java
 command/BalanceCommand.java
@@ -280,11 +332,12 @@ model/TravelRoute.java
 task/TravelTask.java
 ```
 
-#### NPCs Module - In Arbeit
+#### NPCs Module - In Arbeit 🔨
 
 ```java
 // module-npcs/src/main/java/de/fallenstar/npcs/
 
+provider/CitizensNPCProvider.java  (teilweise implementiert)
 command/NPCCreateCommand.java
 command/NPCRemoveCommand.java
 command/NPCTradeCommand.java
@@ -344,10 +397,10 @@ gui/DialogueGUI.java
 
 ## 🎯 Nächste Schritte
 
-### Aktueller Sprint: NPCs Module (Sprint 9-10) 🔨
+### Aktueller Sprint: NPCs Module (Sprint 11-12) 🔨
 
 1. **NPC-System finalisieren:**
-   - Citizens-Integration vervollständigen
+   - CitizensNPCProvider vervollständigen (in module-npcs/provider/)
    - NPC-Commands implementieren
    - Trade- und Dialogue-System
 
@@ -355,10 +408,28 @@ gui/DialogueGUI.java
    - NPC-Erstellung und -Verwaltung
    - Trading-Funktionalität
    - Dialog-System
+   - Provider-Integration mit Core
 
-### Nächster Sprint: Economy Module (Sprint 5-6) 📋
+### Nächster Sprint: Items Module (Sprint 5-6) 📋
+
+1. **Item-System implementieren:**
+   - MMOItemsItemProvider erstellen (in module-items/provider/)
+   - Item-Manager für Custom Items
+   - Item-Factory für Erstellung
+
+2. **Commands implementieren:**
+   - ItemCreateCommand, ItemGiveCommand, ItemListCommand
+   - Admin-Tools für Item-Verwaltung
+
+3. **Testing:**
+   - Custom Item Erstellung
+   - MMOItems-Integration
+   - Item-Commands
+
+### Danach: Economy Module (Sprint 7-8) 📋
 
 1. **Währungssystem implementieren:**
+   - VaultEconomyProvider erstellen (in module-economy/provider/)
    - Currency-Manager
    - Münzgeld-Mechaniken
    - Balance-Tracking
@@ -368,16 +439,11 @@ gui/DialogueGUI.java
    - MarketCalculator für dynamische Preise
    - Weltwirtschaft-System
 
-3. **Commands erstellen:**
-   - Currency-, Price-, Balance-Commands
-   - Admin-Tools für Wirtschaftsverwaltung
-
-4. **Testing:**
+3. **Testing:**
    - Währungstransaktionen
-   - Preisberechnungen
-   - Integration mit Vault-Provider
+   - Vault-Provider-Integration
 
-### Zukünftig: WorldAnchors Module (Sprint 7-8) 📋
+### Zukünftig: WorldAnchors Module (Sprint 9-10) 📋
 
 1. **Schnellreise-System:**
    - WorldAnchors (Ankerpunkte) implementieren
@@ -423,16 +489,18 @@ Jede neue Klasse braucht:
 
 ## 📊 Status
 
-**Repository-Struktur:** ✅ Überarbeitet und aktualisiert
-**Core Plugin:** ✅ Vollständig implementiert
-**Plots Module:** ✅ Vollständig implementiert (inkl. Storage-Integration)
-**NPCs Module:** 🔨 In aktiver Entwicklung
-**Economy Module:** 📋 Geplant für Sprint 5-6
-**WorldAnchors Module:** 📋 Geplant für Sprint 7-8
+**Repository-Struktur:** ✅ Überarbeitet (Provider-Architektur korrekt!)
+**Core Plugin:** ✅ Vollständig (nur Interfaces + NoOp!)
+**Plots Module:** ✅ Vollständig (inkl. TownyPlotProvider)
+**Items Module:** 📋 Geplant für Sprint 5-6
+**Economy Module:** 📋 Geplant für Sprint 7-8
+**WorldAnchors Module:** 📋 Geplant für Sprint 9-10
+**NPCs Module:** 🔨 In aktiver Entwicklung (Sprint 11-12)
 **Dokumentation:** ✅ Aktualisiert
 **Build-Files:** ✅ Vollständig
 
-**Nächster Schritt:** NPCs Module finalisieren (Sprint 9-10), dann Economy Module (Sprint 5-6)
+**Wichtige Architektur-Änderung:** Provider-Implementierungen in Modulen, Core nur Interfaces!
+**Nächster Schritt:** NPCs Module finalisieren (Sprint 11-12), dann Items Module (Sprint 5-6)
 
 ---
 

@@ -30,11 +30,12 @@ mvn clean package
 
 | Modul | Status | Beschreibung |
 |-------|--------|--------------|
-| [Core](core/) | ✅ Abgeschlossen | Provider-System, APIs, Foundation |
-| [FallenStar Plots](module-plots/) | ✅ Abgeschlossen | Plot-System + Storage, Towny-Bridge |
-| [FallenStar Economy](module-economy/) | 📋 Geplant | Weltwirtschaft, Münzgeld, Preisberechnungen |
+| [Core](core/) | ✅ Abgeschlossen | Provider-Interfaces, NoOp-Implementierungen |
+| [FallenStar Plots](module-plots/) | ✅ Abgeschlossen | Plot-System + Storage + TownyPlotProvider |
+| [FallenStar Items](module-items/) | 📋 Geplant | Custom Items + MMOItemsItemProvider |
+| [FallenStar Economy](module-economy/) | 📋 Geplant | Weltwirtschaft + VaultEconomyProvider |
 | [FallenStar WorldAnchors](module-worldanchors/) | 📋 Geplant | Schnellreisen, POIs, Wegpunkte |
-| [FallenStar NPCs](module-npcs/) | 🔨 In Arbeit | NPC-System, Citizens-Integration |
+| [FallenStar NPCs](module-npcs/) | 🔨 In Arbeit | NPC-System + CitizensNPCProvider |
 
 ---
 
@@ -78,17 +79,18 @@ mvn clean package
 **Version:** 1.0-SNAPSHOT
 
 **Fertiggestellt:**
-- ✅ Architektur-Design & Provider-System
-- ✅ Core-Plugin vollständig implementiert
-- ✅ FallenStar Plots (inkl. Storage-Integration)
+- ✅ Architektur-Design & Provider-System (Core nur Interfaces!)
+- ✅ Core-Plugin (Interfaces + NoOp-Implementierungen)
+- ✅ FallenStar Plots (inkl. Storage + TownyPlotProvider)
 - ✅ Dokumentation & Sprint-Planung
 
 **In Arbeit:**
-- 🔨 FallenStar NPCs (Sprint 9-10)
+- 🔨 FallenStar NPCs (Sprint 11-12)
 
 **Geplant:**
-- 📋 FallenStar Economy (Sprint 5-6)
-- 📋 FallenStar WorldAnchors (Sprint 7-8)
+- 📋 FallenStar Items (Sprint 5-6)
+- 📋 FallenStar Economy (Sprint 7-8)
+- 📋 FallenStar WorldAnchors (Sprint 9-10)
 
 ---
 
