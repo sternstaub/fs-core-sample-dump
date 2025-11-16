@@ -109,7 +109,12 @@ public class ItemsCommand implements CommandExecutor, TabCompleter {
 
     private void handleReload(CommandSender sender) {
         plugin.reloadConfig();
+
+        // Invalidiere Provider-Cache
+        plugin.getItemProvider().invalidateCache();
+
         sender.sendMessage(Component.text("✓ Items Module reloaded!", NamedTextColor.GREEN));
+        sender.sendMessage(Component.text("  → Category cache invalidated", NamedTextColor.GRAY));
     }
 
     private void sendHelp(CommandSender sender) {

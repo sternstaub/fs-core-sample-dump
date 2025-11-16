@@ -2,9 +2,12 @@ package de.fallenstar.items;
 
 import de.fallenstar.core.event.ProvidersReadyEvent;
 import de.fallenstar.core.registry.ProviderRegistry;
+import de.fallenstar.core.registry.UIRegistry;
 import de.fallenstar.items.command.ItemsCommand;
 import de.fallenstar.items.manager.SpecialItemManager;
 import de.fallenstar.items.provider.MMOItemsItemProvider;
+import de.fallenstar.items.ui.ItemBrowserUI;
+import de.fallenstar.items.ui.TestTradeUI;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
@@ -66,8 +69,8 @@ public class ItemsModule extends JavaPlugin implements Listener {
         // Registriere Commands
         registerCommands();
 
-        // TODO: Registriere Test-UIs in UIRegistry
-        // registerTestUIs();
+        // Registriere Test-UIs in UIRegistry
+        registerTestUIs();
 
         getLogger().info("✓ Items Module enabled!");
     }
@@ -88,6 +91,39 @@ public class ItemsModule extends JavaPlugin implements Listener {
         getCommand("fsitems").setExecutor(cmd);
         getCommand("fsitems").setTabCompleter(cmd);
         getLogger().info("✓ Commands registered");
+    }
+
+    /**
+     * Registriert Test-UIs in der UIRegistry.
+     */
+    private void registerTestUIs() {
+        UIRegistry uiRegistry = providers.getUIRegistry();
+
+        // Erstelle Singleton-Listener-Instanzen für Event-Handling
+        ItemBrowserUI browserListener = new ItemBrowserUI(itemProvider);
+        TestTradeUI tradeListener = new TestTradeUI(itemProvider, specialItemManager);
+
+        // Registriere als Event-Listener
+        getServer().getPluginManager().registerEvents(browserListener, this);
+        getServer().getPluginManager().registerEvents(tradeListener, this);
+
+        // ItemBrowserUI registrieren
+        uiRegistry.registerUI(
+                "items-browser",
+                "Item Browser",
+                "Durchstöbere alle Custom-Items nach Kategorien",
+                () -> new ItemBrowserUI(itemProvider)
+        );
+
+        // TestTradeUI registrieren
+        uiRegistry.registerUI(
+                "items-trade-test",
+                "Trade Test UI",
+                "Demo-Händler mit Custom-Items und Münz-System",
+                () -> new TestTradeUI(itemProvider, specialItemManager)
+        );
+
+        getLogger().info("✓ Test-UIs registered (items-browser, items-trade-test)");
     }
 
     @Override

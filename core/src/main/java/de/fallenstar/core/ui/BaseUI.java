@@ -27,7 +27,7 @@ import java.util.function.Consumer;
  */
 public abstract class BaseUI {
 
-    protected final String title;
+    protected String title;
     protected final Map<Integer, ItemStack> items;
     protected final Map<Integer, Consumer<Player>> clickHandlers;
 
@@ -72,6 +72,23 @@ public abstract class BaseUI {
     public void removeItem(int slot) {
         items.remove(slot);
         clickHandlers.remove(slot);
+    }
+
+    /**
+     * Entfernt alle Items und Click-Handler.
+     */
+    public void clearItems() {
+        items.clear();
+        clickHandlers.clear();
+    }
+
+    /**
+     * Setzt den Titel des UI (für dynamische UIs).
+     *
+     * @param title Neuer Titel
+     */
+    protected void setTitle(String title) {
+        this.title = title;
     }
 
     /**
