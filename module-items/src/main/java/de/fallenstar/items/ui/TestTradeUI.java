@@ -102,8 +102,9 @@ public class TestTradeUI extends SmallChestUI {
 
         int baseSlot = 18 + (tradeIndex * 3);
 
-        // Input 1: Münzen
-        specialItemManager.createCurrency(currencyType, currencyAmount).ifPresent(coins -> {
+        // Input 1: Münzen (convertiere Currency-Type zu SpecialItem-ID)
+        String itemId = currencyType + "_stern"; // "bronze" → "bronze_stern"
+        specialItemManager.createItem(itemId, currencyAmount).ifPresent(coins -> {
             ItemStack display = coins.clone();
             ItemMeta meta = display.getItemMeta();
             List<Component> lore = meta.hasLore() ? List.copyOf(meta.lore()) : List.of();

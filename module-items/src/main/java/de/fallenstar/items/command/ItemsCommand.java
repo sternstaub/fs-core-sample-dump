@@ -69,13 +69,16 @@ public class ItemsCommand implements CommandExecutor, TabCompleter {
         String currencyType = args[1];
         int amount = Integer.parseInt(args[2]);
 
-        Optional<ItemStack> currency = plugin.getSpecialItemManager().createCurrency(currencyType, amount);
+        // Convertiere Currency-Type zu SpecialItem-ID (z.B. "bronze" → "bronze_stern")
+        String itemId = currencyType + "_stern";
+        Optional<ItemStack> currency = plugin.getSpecialItemManager().createItem(itemId, amount);
 
         if (currency.isPresent()) {
             target.getInventory().addItem(currency.get());
             sender.sendMessage(Component.text("✓ " + amount + "x " + currencyType + " Münzen an " + target.getName() + " gegeben", NamedTextColor.GREEN));
         } else {
             sender.sendMessage(Component.text("Unbekannter Währungstyp: " + currencyType, NamedTextColor.RED));
+            sender.sendMessage(Component.text("Verfügbar: bronze, silver, gold", NamedTextColor.GRAY));
         }
     }
 
@@ -146,7 +149,8 @@ public class ItemsCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 3 && "currency".equalsIgnoreCase(args[0])) {
-            return new ArrayList<>(plugin.getSpecialItemManager().getCurrencyTypes());
+            // Verfügbare Currency-Typen (fest codiert für Sterne-Währung)
+            return List.of("bronze", "silver", "gold");
         }
 
         return Collections.emptyList();
