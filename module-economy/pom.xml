@@ -24,12 +24,29 @@
             <groupId>de.fallenstar</groupId>
             <artifactId>fallenstar-core</artifactId>
             <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Items Module (für SpecialItemManager) -->
+        <dependency>
+            <groupId>de.fallenstar</groupId>
+            <artifactId>module-items</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <!-- Paper API -->
         <dependency>
             <groupId>io.papermc.paper</groupId>
             <artifactId>paper-api</artifactId>
+        </dependency>
+
+        <!-- Vault API (HARD DEPENDENCY) -->
+        <dependency>
+            <groupId>com.github.MilkBowl</groupId>
+            <artifactId>VaultAPI</artifactId>
+            <version>1.7.1</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 

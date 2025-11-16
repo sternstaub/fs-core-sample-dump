@@ -87,17 +87,18 @@ A **modular Minecraft plugin system** for Paper 1.21.1 with provider-based archi
 
 - **Version:** 1.0-SNAPSHOT
 - **Phase:** Aktive Entwicklung
-- **Completion:** ~40% (Core ✅ + Plots ✅ + UI-Framework ✅ + Items ✅ + UI-Modul 🔨)
-- **Aktueller Sprint:** Sprint 7-8 🔨 in Arbeit (UI-Modul: ConfirmationUI, SimpleTradeUI)
-- **Nächster Sprint:** Sprint 9-10 - Economy-Modul (Weltwirtschaft, Münzgeld, Preise)
+- **Completion:** ~45% (Core ✅ + Plots ✅ + UI-Framework ✅ + Items ✅ + UI-Modul ✅ + Economy 🔨)
+- **Aktueller Sprint:** Sprint 9-10 🔨 in Arbeit (Economy-Modul: Währungen, Münzsystem)
+- **Nächster Sprint:** Sprint 11-12 - WorldAnchors (Schnellreisen, POIs, Wegpunkte)
 - **Wichtige Architektur:** Provider-Implementierungen in Modulen, Core nur Interfaces!
 - **Planung:** 20 Sprints (40 Wochen) mit Items, UI, Economy, Chat, Auth, WebHooks
 - **Storage-Modul:** ✅ Entfernt (redundant, in Plots integriert)
 - **UI-Framework:** ✅ Basis-Klassen implementiert (BaseUI, SmallChestUI, etc.)
 - **ItemProvider:** ✅ Interface erweitert, MMOItems 6.10+ Integration abgeschlossen
 - **Items-Modul:** ✅ Vollständig implementiert mit Reflection-basiertem MMOItems-Zugriff
-- **UI-Modul:** 🔨 In Entwicklung (ConfirmationUI, SimpleTradeUI, UIButtonManager)
-- **Testbefehle:** ✅ Neue Struktur unter `/fscore admin [gui/items/plots]`
+- **UI-Modul:** ✅ Abgeschlossen (ConfirmationUI, SimpleTradeUI, UIButtonManager)
+- **Economy-Modul:** 🔨 In Entwicklung (CurrencyManager, Basiswährung "Sterne")
+- **Testbefehle:** ✅ Neue Struktur unter `/fscore admin [gui/items/plots/economy]`
 
 ---
 
@@ -1391,11 +1392,89 @@ git log --oneline -10
 
 ---
 
+## Sprint 9-10: Economy-Modul - Implementierung
+
+### Implementierte Komponenten:
+
+1. **Economy-Modul Struktur**
+   - Neues Maven-Modul `module-economy`
+   - Hard Dependencies: FallenStar-Core, FallenStar-Items, Vault
+   - ProvidersReadyEvent-basierte Initialisierung
+
+2. **CurrencyItemSet (Record)** ✅
+   - Immutable Währungs-Modell
+   - Bronze/Silber/Gold Tiers (1er/10er/100er Münzen)
+   - Exchange Rate zur Basiswährung (BigDecimal)
+   - Wechselkurs-Berechnungen (toBaseCurrency, fromBaseCurrency)
+   - Factory-Methode für Basiswährung
+
+3. **CurrencyManager** ✅
+   - Währungen registrieren/verwalten
+   - `payoutCoins(player, currency, tier, amount)` - Münzen auszahlen
+   - Integration mit SpecialItemManager (Items-Modul)
+   - getCurrency, getBaseCurrency, getCurrencyIds
+   - getCurrencyCount für Status-Logs
+
+4. **Basiswährung "Sterne"** ✅
+   - Bronzestern (Gold Nugget, Custom Model Data: 1, Wert: 1)
+   - Silberstern (Gold Nugget, Custom Model Data: 2, Wert: 10)
+   - Goldstern (Gold Nugget, Custom Model Data: 3, Wert: 100)
+   - Wechselkurs: 1:1 (Referenzwährung)
+   - Automatische Registrierung beim Modul-Start
+
+5. **EconomyModule.java** ✅
+   - Main Plugin Class mit ProvidersReadyEvent
+   - Dependencies-Check (Items-Modul, Vault)
+   - CurrencyManager-Initialisierung
+   - Basiswährung automatisch registriert
+   - Getter für CurrencyManager und ProviderRegistry
+
+6. **Admin-Befehle** ✅
+   - `/fscore admin economy getcoin <währung> [tier] [anzahl]`
+   - Beispiele:
+     - `/fscore admin economy getcoin sterne bronze 10`
+     - `/fscore admin economy getcoin sterne silver 5`
+     - `/fscore admin economy getcoin sterne gold`
+   - Tab-Completion für Währung, Tier, Anzahl
+   - Reflection-basierte Inter-Modul-Kommunikation (Core → Economy)
+   - Graceful Error Handling
+
+### Technische Details:
+
+1. **SpecialItem-Integration**
+   - Basiswährung nutzt SpecialItemManager v3.0
+   - PDC-basierte Item-Identifikation
+   - Custom Model Data für Texturepack-Support
+   - Vanilla-First Approach (kein MMOItems erforderlich)
+
+2. **Extensibility**
+   - Neue Währungen einfach hinzufügbar via `registerCurrency()`
+   - Exchange Rates für Multi-Currency Support
+   - Wechselkurs-Berechnungen automatisch
+   - CurrencyTier Enum (BRONZE, SILVER, GOLD)
+
+3. **Inter-Modul-Kommunikation**
+   - Reflection für Zugriff auf EconomyModule.getCurrencyManager()
+   - Reflection für CurrencyItemSet.CurrencyTier Enum
+   - Reflection für CurrencyManager.payoutCoins()
+   - Try-Catch für Graceful Degradation
+
+### Geplante Features (zukünftige Sprints):
+
+- 📋 VaultEconomyProvider (Vault-Integration)
+- 📋 Balance-System (getBalance, setBalance, deposit, withdraw)
+- 📋 Preisberechnungen (dynamisch, material-basiert, region-basiert)
+- 📋 Shop-System (Admin-Shops, Player-Shops, Shop-UIs)
+- 📋 Transaktions-Historie
+- 📋 Währungskonvertierung-UI
+
+---
+
 **Last Updated:** 2025-11-16
 **Repository:** fs-core-sample-dump
 **Branch:** claude/ui-items-implementation-018dv6yDuyau5iAYBKeGSMHg
 **Version:** 1.0-SNAPSHOT
-**Sprint Status:** Sprint 7-8 🔨 in Arbeit (ConfirmationUI ✅, SimpleTradeUI ✅, UIButtonManager ✅)
+**Sprint Status:** Sprint 9-10 🔨 in Arbeit (Economy: CurrencyManager ✅, Basiswährung ✅, Admin-Befehle ✅)
 **Architektur:** Provider-Implementierungen in Modulen, Core nur Interfaces + NoOp
-**Build Status:** ✅ Alle Module kompilieren erfolgreich (Core, Plots, Items, UI, NPCs, Economy)
-**Testbefehle:** `/fscore admin [gui/items/plots]` - neue Struktur aktiv
+**Build Status:** ✅ Alle Module kompilieren erfolgreich (Core, Plots, Items, UI, Economy)
+**Testbefehle:** `/fscore admin [gui/items/plots/economy]` - neue Struktur aktiv

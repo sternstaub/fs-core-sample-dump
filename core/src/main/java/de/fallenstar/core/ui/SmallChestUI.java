@@ -97,6 +97,9 @@ public abstract class SmallChestUI extends BaseUI implements Listener {
             SmallChestUI ui = activeUIs.get(player.getUniqueId());
             if (ui == this) {
                 activeUIs.remove(player.getUniqueId());
+
+                // Event-Listener unregistrieren, um Memory-Leaks zu vermeiden
+                org.bukkit.event.HandlerList.unregisterAll(this);
             }
         }
     }
