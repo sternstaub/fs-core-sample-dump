@@ -34,7 +34,6 @@
     </dependencies>
 
     <build>
-        <directory>../target</directory>
         <finalName>FallenStar-Coin-${project.version}</finalName>
         <defaultGoal>clean package</defaultGoal>
         <resources>
