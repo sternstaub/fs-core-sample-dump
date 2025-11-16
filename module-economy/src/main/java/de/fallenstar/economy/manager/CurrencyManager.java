@@ -260,4 +260,118 @@ public class CurrencyManager {
     public int getCurrencyCount() {
         return currencies.size();
     }
+
+    /**
+     * Nimmt Münzen vom Spieler-Inventar und zahlt den Gegenwert auf Vault ein.
+     *
+     * Diese Methode:
+     * 1. Sucht Münzen im Inventar
+     * 2. Entfernt sie aus dem Inventar
+     * 3. Zahlt den Wert auf Vault-Konto ein
+     *
+     * Falls nicht genug Münzen im Inventar sind, wird der maximal mögliche Betrag eingezahlt.
+     *
+     * @param player Spieler
+     * @param currencyId Währungs-ID
+     * @param tier Münz-Tier (BRONZE, SILVER, GOLD)
+     * @param requestedAmount Gewünschte Anzahl
+     * @return Eingezahlte Anzahl (0 wenn fehlgeschlagen)
+     */
+    public int depositCoins(Player player, String currencyId,
+                             CurrencyItemSet.CurrencyTier tier, int requestedAmount) {
+        // Prüfe ob EconomyProvider verfügbar
+        if (economyProvider == null || !economyProvider.isAvailable()) {
+            logger.warning("EconomyProvider nicht verfügbar - Einzahlung nicht möglich!");
+            return 0;
+        }
+
+        // Prüfe ob Währung existiert
+        Optional<CurrencyItemSet> currencyOpt = getCurrency(currencyId);
+        if (currencyOpt.isEmpty()) {
+            logger.warning("Währung nicht gefunden: " + currencyId);
+            return 0;
+        }
+
+        CurrencyItemSet currency = currencyOpt.get();
+
+        // Suche Münzen im Inventar
+        CurrencyItemSet.InventoryCoinResult coinResult = currency.findCoinsInInventory(
+                player.getInventory(),
+                tier,
+                (stack, itemId) -> itemManager.isSpecialItem(stack, itemId)
+        );
+
+        if (!coinResult.hasCoins()) {
+            logger.fine("Keine " + tier + " " + currency.namePlural() + " im Inventar von " + player.getName());
+            return 0;
+        }
+
+        // Berechne tatsächlichen Betrag (kann weniger sein als gewünscht)
+        int actualAmount = Math.min(requestedAmount, coinResult.totalAmount());
+
+        // Entferne Münzen aus Inventar
+        int remainingToRemove = actualAmount;
+        for (CurrencyItemSet.InventorySlotStack slotStack : coinResult.stacks()) {
+            if (remainingToRemove <= 0) break;
+
+            ItemStack stack = slotStack.stack();
+            int stackAmount = stack.getAmount();
+
+            if (stackAmount <= remainingToRemove) {
+                // Ganzen Stack entfernen
+                player.getInventory().setItem(slotStack.slot(), null);
+                remainingToRemove -= stackAmount;
+            } else {
+                // Teilmenge entfernen
+                stack.setAmount(stackAmount - remainingToRemove);
+                remainingToRemove = 0;
+            }
+        }
+
+        // Berechne Wert in Basiswährung
+        BigDecimal depositValue = calculateDepositValue(currency, tier, actualAmount);
+
+        // Zahle auf Vault ein
+        try {
+            boolean success = economyProvider.deposit(player, depositValue.doubleValue());
+            if (!success) {
+                logger.warning("Vault-Einzahlung fehlgeschlagen für " + player.getName());
+                // Rollback: Münzen zurückgeben
+                payoutCoins(player, currencyId, tier, actualAmount);
+                return 0;
+            }
+        } catch (Exception e) {
+            logger.warning("Fehler bei Vault-Einzahlung: " + e.getMessage());
+            // Rollback: Münzen zurückgeben
+            payoutCoins(player, currencyId, tier, actualAmount);
+            return 0;
+        }
+
+        logger.info("Eingezahlt von " + player.getName() + ": " + actualAmount + "x " +
+                tier + " " + currency.namePlural() + " (Wert: " + depositValue + ")");
+
+        return actualAmount;
+    }
+
+    /**
+     * Berechnet den Wert einer Anzahl von Münzen für Vault-Deposit.
+     *
+     * @param currency Währung
+     * @param tier Münz-Tier
+     * @param amount Anzahl
+     * @return Wert in Basiswährung
+     */
+    private BigDecimal calculateDepositValue(CurrencyItemSet currency, CurrencyItemSet.CurrencyTier tier, int amount) {
+        // Tier-Wert (1, 10, 100)
+        BigDecimal tierValue = BigDecimal.valueOf(currency.getTierValue(tier));
+
+        // Anzahl
+        BigDecimal amountDecimal = BigDecimal.valueOf(amount);
+
+        // Wechselkurs zur Basiswährung
+        BigDecimal exchangeRate = currency.exchangeRate();
+
+        // Wert = Tier-Wert * Anzahl * Wechselkurs
+        return tierValue.multiply(amountDecimal).multiply(exchangeRate);
+    }
 }

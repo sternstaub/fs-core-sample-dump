@@ -227,35 +227,54 @@ public class PlotModule extends JavaPlugin implements Listener {
     }
 
     /**
-     * Registriert den Custom-Plot-Typ "botschaft" in Towny.
+     * Registriert Custom-Plot-Typen ("botschaft", "handelsgilde") in Towny.
      *
      * Diese Methode wird in onLoad() aufgerufen und auch bei Towny-Reloads
      * via TownBlockTypeRegisterEvent.
      */
     private void registerCustomPlotType() {
-        // Prüfe ob der Typ bereits existiert
-        if (TownBlockTypeHandler.exists("botschaft")) {
-            return;
+        // Registriere "botschaft"
+        if (!TownBlockTypeHandler.exists("botschaft")) {
+            TownBlockType botschaftType = new TownBlockType("botschaft", new TownBlockData() {
+                @Override
+                public String getMapKey() {
+                    return "B"; // 'B' für Botschaft auf der Map
+                }
+
+                @Override
+                public double getCost() {
+                    return 150.0; // Kosten zum Setzen des Plot-Typs (etwas teurer als Embassy)
+                }
+            });
+
+            try {
+                TownBlockTypeHandler.registerType(botschaftType);
+                getLogger().info("✓ Custom-Plot-Typ 'botschaft' in Towny registriert");
+            } catch (TownyException e) {
+                getLogger().severe("✗ Fehler beim Registrieren von 'botschaft': " + e.getMessage());
+            }
         }
 
-        // Erstelle TownBlockType mit Custom TownBlockData
-        TownBlockType botschaftType = new TownBlockType("botschaft", new TownBlockData() {
-            @Override
-            public String getMapKey() {
-                return "B"; // 'B' für Botschaft auf der Map
-            }
+        // Registriere "handelsgilde"
+        if (!TownBlockTypeHandler.exists("handelsgilde")) {
+            TownBlockType handelsgildeType = new TownBlockType("handelsgilde", new TownBlockData() {
+                @Override
+                public String getMapKey() {
+                    return "H"; // 'H' für Handelsgilde auf der Map
+                }
 
-            @Override
-            public double getCost() {
-                return 150.0; // Kosten zum Setzen des Plot-Typs (etwas teurer als Embassy)
-            }
-        });
+                @Override
+                public double getCost() {
+                    return 200.0; // Kosten zum Setzen (höher als Botschaft wegen Economy-Features)
+                }
+            });
 
-        try {
-            TownBlockTypeHandler.registerType(botschaftType);
-            getLogger().info("✓ Custom-Plot-Typ 'botschaft' in Towny registriert");
-        } catch (TownyException e) {
-            getLogger().severe("✗ Fehler beim Registrieren von 'botschaft': " + e.getMessage());
+            try {
+                TownBlockTypeHandler.registerType(handelsgildeType);
+                getLogger().info("✓ Custom-Plot-Typ 'handelsgilde' in Towny registriert");
+            } catch (TownyException e) {
+                getLogger().severe("✗ Fehler beim Registrieren von 'handelsgilde': " + e.getMessage());
+            }
         }
     }
 

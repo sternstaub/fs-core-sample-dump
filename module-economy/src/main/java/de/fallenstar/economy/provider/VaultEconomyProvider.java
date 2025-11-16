@@ -4,6 +4,7 @@ import de.fallenstar.core.exception.ProviderFunctionalityNotFoundException;
 import de.fallenstar.core.provider.EconomyProvider;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
 
@@ -17,12 +18,14 @@ import java.util.logging.Logger;
  * Integration mit dem Minecraft-Wirtschaftssystem.
  *
  * Features:
- * - Spieler-Balances (getBalance, withdraw, deposit)
+ * - Spieler-Balances (getBalance, withdraw, deposit, setBalance)
+ * - Konten-Verwaltung (hasAccount, createAccount)
+ * - Währungs-Formatierung (format, getCurrencyName)
  * - Fraktions-/Stadt-Konten (future)
  * - Vault-Kompatibilität
  *
  * @author FallenStar
- * @version 1.0
+ * @version 2.0
  */
 public class VaultEconomyProvider implements EconomyProvider {
 
@@ -152,28 +155,113 @@ public class VaultEconomyProvider implements EconomyProvider {
         );
     }
 
-    /**
-     * Gibt den Namen des Economy-Plugins zurück.
-     *
-     * @return Economy-Plugin-Name
-     */
-    public String getEconomyName() {
-        if (vaultEconomy != null) {
-            return vaultEconomy.getName();
+    @Override
+    public boolean setBalance(Player player, double amount) throws ProviderFunctionalityNotFoundException {
+        if (!isAvailable()) {
+            throw new ProviderFunctionalityNotFoundException(
+                    "EconomyProvider",
+                    "setBalance",
+                    "Vault Economy nicht verfügbar"
+            );
         }
-        return "Unknown";
+
+        if (amount < 0) {
+            logger.warning("Versuch, negativen Kontostand zu setzen: " + amount);
+            return false;
+        }
+
+        // Vault hat keine direkte setBalance-Methode, wir nutzen withdraw/deposit
+        double currentBalance = vaultEconomy.getBalance(player);
+        double difference = amount - currentBalance;
+
+        if (difference > 0) {
+            // Einzahlen
+            net.milkbowl.vault.economy.EconomyResponse response = vaultEconomy.depositPlayer(player, difference);
+            return response.transactionSuccess();
+        } else if (difference < 0) {
+            // Abheben
+            net.milkbowl.vault.economy.EconomyResponse response = vaultEconomy.withdrawPlayer(player, Math.abs(difference));
+            return response.transactionSuccess();
+        }
+
+        return true; // Kontostand ist bereits korrekt
     }
 
-    /**
-     * Formatiert einen Betrag als Währungs-String.
-     *
-     * @param amount Betrag
-     * @return Formatierter String (z.B. "$100.00")
-     */
-    public String format(double amount) {
-        if (vaultEconomy != null) {
-            return vaultEconomy.format(amount);
+    @Override
+    public boolean hasAccount(OfflinePlayer player) throws ProviderFunctionalityNotFoundException {
+        if (!isAvailable()) {
+            throw new ProviderFunctionalityNotFoundException(
+                    "EconomyProvider",
+                    "hasAccount",
+                    "Vault Economy nicht verfügbar"
+            );
         }
-        return String.format("%.2f", amount);
+
+        return vaultEconomy.hasAccount(player);
+    }
+
+    @Override
+    public boolean createAccount(OfflinePlayer player) throws ProviderFunctionalityNotFoundException {
+        if (!isAvailable()) {
+            throw new ProviderFunctionalityNotFoundException(
+                    "EconomyProvider",
+                    "createAccount",
+                    "Vault Economy nicht verfügbar"
+            );
+        }
+
+        return vaultEconomy.createPlayerAccount(player);
+    }
+
+    @Override
+    public String format(double amount) throws ProviderFunctionalityNotFoundException {
+        if (!isAvailable()) {
+            throw new ProviderFunctionalityNotFoundException(
+                    "EconomyProvider",
+                    "format",
+                    "Vault Economy nicht verfügbar"
+            );
+        }
+
+        return vaultEconomy.format(amount);
+    }
+
+    @Override
+    public String getEconomyName() throws ProviderFunctionalityNotFoundException {
+        if (!isAvailable()) {
+            throw new ProviderFunctionalityNotFoundException(
+                    "EconomyProvider",
+                    "getEconomyName",
+                    "Vault Economy nicht verfügbar"
+            );
+        }
+
+        return vaultEconomy.getName();
+    }
+
+    @Override
+    public String getCurrencyNameSingular() throws ProviderFunctionalityNotFoundException {
+        if (!isAvailable()) {
+            throw new ProviderFunctionalityNotFoundException(
+                    "EconomyProvider",
+                    "getCurrencyNameSingular",
+                    "Vault Economy nicht verfügbar"
+            );
+        }
+
+        return vaultEconomy.currencyNameSingular();
+    }
+
+    @Override
+    public String getCurrencyNamePlural() throws ProviderFunctionalityNotFoundException {
+        if (!isAvailable()) {
+            throw new ProviderFunctionalityNotFoundException(
+                    "EconomyProvider",
+                    "getCurrencyNamePlural",
+                    "Vault Economy nicht verfügbar"
+            );
+        }
+
+        return vaultEconomy.currencyNamePlural();
     }
 }

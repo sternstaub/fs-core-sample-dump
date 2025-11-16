@@ -2,6 +2,7 @@ package de.fallenstar.core.provider.impl;
 
 import de.fallenstar.core.exception.ProviderFunctionalityNotFoundException;
 import de.fallenstar.core.provider.EconomyProvider;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import java.util.UUID;
 
@@ -15,7 +16,7 @@ import java.util.UUID;
  * Vorteil: Kein Null-Checking nötig, explizites Fehlerhandling
  *
  * @author FallenStar
- * @version 1.0
+ * @version 2.0
  */
 public class NoOpEconomyProvider implements EconomyProvider {
 
@@ -82,6 +83,76 @@ public class NoOpEconomyProvider implements EconomyProvider {
         throw new ProviderFunctionalityNotFoundException(
             PROVIDER_NAME,
             "depositFaction",
+            REASON
+        );
+    }
+
+    @Override
+    public boolean setBalance(Player player, double amount)
+            throws ProviderFunctionalityNotFoundException {
+        throw new ProviderFunctionalityNotFoundException(
+            PROVIDER_NAME,
+            "setBalance",
+            REASON
+        );
+    }
+
+    @Override
+    public boolean hasAccount(OfflinePlayer player)
+            throws ProviderFunctionalityNotFoundException {
+        throw new ProviderFunctionalityNotFoundException(
+            PROVIDER_NAME,
+            "hasAccount",
+            REASON
+        );
+    }
+
+    @Override
+    public boolean createAccount(OfflinePlayer player)
+            throws ProviderFunctionalityNotFoundException {
+        throw new ProviderFunctionalityNotFoundException(
+            PROVIDER_NAME,
+            "createAccount",
+            REASON
+        );
+    }
+
+    @Override
+    public String format(double amount)
+            throws ProviderFunctionalityNotFoundException {
+        throw new ProviderFunctionalityNotFoundException(
+            PROVIDER_NAME,
+            "format",
+            REASON
+        );
+    }
+
+    @Override
+    public String getEconomyName()
+            throws ProviderFunctionalityNotFoundException {
+        throw new ProviderFunctionalityNotFoundException(
+            PROVIDER_NAME,
+            "getEconomyName",
+            REASON
+        );
+    }
+
+    @Override
+    public String getCurrencyNameSingular()
+            throws ProviderFunctionalityNotFoundException {
+        throw new ProviderFunctionalityNotFoundException(
+            PROVIDER_NAME,
+            "getCurrencyNameSingular",
+            REASON
+        );
+    }
+
+    @Override
+    public String getCurrencyNamePlural()
+            throws ProviderFunctionalityNotFoundException {
+        throw new ProviderFunctionalityNotFoundException(
+            PROVIDER_NAME,
+            "getCurrencyNamePlural",
             REASON
         );
     }

@@ -7,6 +7,7 @@ import de.fallenstar.core.registry.ProviderRegistry;
 import de.fallenstar.economy.command.EconomyAdminHandler;
 import de.fallenstar.economy.manager.CurrencyManager;
 import de.fallenstar.economy.model.CurrencyItemSet;
+import de.fallenstar.economy.pricing.ItemBasePriceProvider;
 import de.fallenstar.economy.provider.VaultEconomyProvider;
 import de.fallenstar.items.manager.SpecialItemManager;
 import org.bukkit.event.EventHandler;
@@ -21,6 +22,7 @@ import org.bukkit.plugin.java.JavaPlugin;
  * - Münzsystem (Bronze/Silber/Gold)
  * - Wechselkurse und Preisberechnungen
  * - Vault-Integration
+ * - Item-Basispreise (für Handelsgilden)
  *
  * Abhängigkeiten:
  * - FallenStar-Core (ProviderRegistry)
@@ -28,18 +30,22 @@ import org.bukkit.plugin.java.JavaPlugin;
  * - Vault (Economy-API)
  *
  * @author FallenStar
- * @version 1.0
+ * @version 2.0
  */
 public class EconomyModule extends JavaPlugin implements Listener {
 
     private ProviderRegistry providers;
     private CurrencyManager currencyManager;
+    private ItemBasePriceProvider priceProvider;
     private SpecialItemManager itemManager;
     private VaultEconomyProvider economyProvider;
 
     @Override
     public void onEnable() {
         getLogger().info("FallenStar Economy Modul wird gestartet...");
+
+        // Config speichern (falls nicht vorhanden)
+        saveDefaultConfig();
 
         // Event-Listener registrieren
         getServer().getPluginManager().registerEvents(this, this);
@@ -126,7 +132,13 @@ public class EconomyModule extends JavaPlugin implements Listener {
         // Initialisiere CurrencyManager
         this.currencyManager = new CurrencyManager(getLogger(), itemManager);
 
+        // Initialisiere ItemBasePriceProvider
+        this.priceProvider = new ItemBasePriceProvider(getLogger());
+        priceProvider.loadFromConfig(getConfig());
+
         getLogger().info("✓ Manager initialisiert");
+        getLogger().info("  - Item-Basispreise: " + priceProvider.getVanillaPriceCount() +
+                " Vanilla, " + priceProvider.getCustomPriceCount() + " Custom");
     }
 
     /**
@@ -191,6 +203,15 @@ public class EconomyModule extends JavaPlugin implements Listener {
      */
     public CurrencyManager getCurrencyManager() {
         return currencyManager;
+    }
+
+    /**
+     * Gibt den ItemBasePriceProvider zurück.
+     *
+     * @return ItemBasePriceProvider
+     */
+    public ItemBasePriceProvider getPriceProvider() {
+        return priceProvider;
     }
 
     /**
