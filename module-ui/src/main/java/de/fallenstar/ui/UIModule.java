@@ -118,7 +118,7 @@ public class UIModule extends JavaPlugin implements Listener {
         getLogger().info("Registriere UIs in UIRegistry...");
 
         // ConfirmationUI registrieren
-        uiRegistry.registerTestUI(
+        uiRegistry.registerUI(
                 "confirm",
                 "Bestätigungs-Dialog (Ja/Nein)",
                 "Generisches Ja/Nein Confirmation UI mit UI-Buttons",
@@ -131,7 +131,7 @@ public class UIModule extends JavaPlugin implements Listener {
         getLogger().info("✓ ConfirmationUI registriert (ID: confirm)");
 
         // SimpleTradeUI registrieren
-        uiRegistry.registerTestUI(
+        uiRegistry.registerUI(
                 "trade",
                 "Händler-Demo (Vanilla Items)",
                 "Einfaches Trading-UI mit Vanilla-Items",
