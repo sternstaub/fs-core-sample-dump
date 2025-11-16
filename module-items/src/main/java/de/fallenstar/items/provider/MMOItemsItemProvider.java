@@ -32,7 +32,6 @@ import java.util.stream.Collectors;
 public class MMOItemsItemProvider implements ItemProvider {
 
     private final Logger logger;
-    private final MMOItems mmoItemsPlugin;
 
     // Cache für Kategorien (wird bei Bedarf aktualisiert)
     private Set<String> cachedCategories;
@@ -42,7 +41,6 @@ public class MMOItemsItemProvider implements ItemProvider {
 
     public MMOItemsItemProvider(Logger logger) {
         this.logger = logger;
-        this.mmoItemsPlugin = (MMOItems) Bukkit.getPluginManager().getPlugin("MMOItems");
         this.cachedCategories = new HashSet<>();
         this.categoryItemsCache = new HashMap<>();
         this.lastCacheUpdate = 0;
@@ -50,8 +48,8 @@ public class MMOItemsItemProvider implements ItemProvider {
 
     @Override
     public boolean isAvailable() {
-        // Plugin loaded = enabled (isEnabled() wurde in 6.10+ entfernt)
-        return mmoItemsPlugin != null;
+        // Prüfe ob MMOItems-Plugin geladen ist (vermeidet MMOPlugin-Dependency)
+        return Bukkit.getPluginManager().getPlugin("MMOItems") != null;
     }
 
     @Override
