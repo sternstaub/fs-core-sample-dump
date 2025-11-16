@@ -24,7 +24,6 @@
             <groupId>de.fallenstar</groupId>
             <artifactId>fallenstar-core</artifactId>
             <version>${project.version}</version>
-            <scope>provided</scope>
         </dependency>
 
         <!-- Paper API -->
