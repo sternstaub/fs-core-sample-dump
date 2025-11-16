@@ -141,7 +141,8 @@ public class PlotPriceCommand {
      */
     private void handleSetPrice(Player player, Plot plot) {
         // Aktiviere Interaktionsmodus
-        String plotKey = plot.getX() + "," + plot.getZ();
+        Location loc = plot.getLocation();
+        String plotKey = loc.getBlockX() + "," + loc.getBlockZ();
         activePriceSetMode.put(player.getUniqueId(), plotKey);
 
         player.sendMessage("§a§lPreis-Setzungs-Modus aktiviert!");
