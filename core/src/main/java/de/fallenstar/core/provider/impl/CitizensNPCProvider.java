@@ -57,9 +57,10 @@ public class CitizensNPCProvider implements NPCProvider, Listener {
             // Erstelle NPC als PLAYER-Entity
             NPC npc = registry.createNPC(EntityType.PLAYER, name);
 
-            // Setze Skin wenn angegeben
+            // Setze Skin wenn angegeben (über getName setzen)
+            // Citizens verwendet automatisch den Skin des Spielernamens
             if (skin != null && !skin.isEmpty()) {
-                npc.data().set(NPC.Metadata.SKIN_TEXTURE, skin);
+                npc.setName(skin);
             }
 
             // Spawne NPC an Location
@@ -112,8 +113,21 @@ public class CitizensNPCProvider implements NPCProvider, Listener {
             );
         }
 
-        // Teleportiere NPC
-        return npc.teleport(location, org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.PLUGIN);
+        // Teleportiere NPC (gibt void zurück, daher true wenn keine Exception)
+        try {
+            if (npc.isSpawned()) {
+                npc.teleport(location, org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.PLUGIN);
+            } else {
+                npc.spawn(location);
+            }
+            return true;
+        } catch (Exception e) {
+            throw new ProviderFunctionalityNotFoundException(
+                "NPCProvider",
+                "teleportNPC",
+                "Failed to teleport NPC: " + e.getMessage()
+            );
+        }
     }
 
     @Override
@@ -146,8 +160,9 @@ public class CitizensNPCProvider implements NPCProvider, Listener {
             );
         }
 
-        // Setze Skin
-        npc.data().set(NPC.Metadata.SKIN_TEXTURE, skin);
+        // Setze Skin über Namen
+        // Citizens verwendet automatisch den Skin des Spielernamens
+        npc.setName(skin);
 
         return true;
     }
