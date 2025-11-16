@@ -87,10 +87,13 @@ A **modular Minecraft plugin system** for Paper 1.21.1 with provider-based archi
 
 - **Version:** 1.0-SNAPSHOT
 - **Phase:** Aktive Entwicklung
-- **Completion:** ~40% (Core ✅ + Plots ✅ + NPCs 🔨)
-- **Nächster Sprint:** Sprint 5-6 - FallenStar Items
-- **Aktuell in Arbeit:** Sprint 11-12 - FallenStar NPCs
+- **Completion:** ~15% (Core ✅ + Plots ✅)
+- **Nächster Sprint:** Sprint 1-2 Erweiterung - UI Provider Interface in Core
+- **Dann:** Sprint 5-6 - UI-Modul (natives Rendering)
 - **Wichtige Architektur:** Provider-Implementierungen in Modulen, Core nur Interfaces!
+- **Neue Planung:** 20 Sprints (40 Wochen) mit UI-System, Chat, Auth, WebHooks
+- **Storage-Modul:** ✅ Entfernt (redundant, in Plots integriert)
+- **Denizen-Ersatz:** 📋 Geplant (natives NPC-System mit UI)
 
 ---
 
@@ -114,6 +117,8 @@ fs-core-sample-dump/
 │   │   │   │   ├── NPCProvider.java
 │   │   │   │   ├── ItemProvider.java
 │   │   │   │   ├── ChatProvider.java
+│   │   │   │   ├── UIProvider.java            # 📋 NEU: UI-Provider-Interface
+│   │   │   │   ├── AuthProvider.java          # 📋 NEU: Auth-Provider-Interface
 │   │   │   │   ├── NetworkProvider.java
 │   │   │   │   ├── Plot.java                  # Data model
 │   │   │   │   └── impl/                      # NUR NoOp-Implementierungen!
@@ -121,13 +126,26 @@ fs-core-sample-dump/
 │   │   │   │       ├── NoOpEconomyProvider.java
 │   │   │   │       ├── NoOpNPCProvider.java
 │   │   │   │       ├── NoOpItemProvider.java
-│   │   │   │       └── NoOpChatProvider.java
+│   │   │   │       ├── NoOpChatProvider.java
+│   │   │   │       ├── NoOpUIProvider.java    # 📋 NEU
+│   │   │   │       ├── NoOpAuthProvider.java  # 📋 NEU
+│   │   │   │       └── NativeTextUIProvider.java  # 📋 NEU: Native Fallback
 │   │   │   ├── registry/
 │   │   │   │   └── ProviderRegistry.java      # Auto-detects providers
 │   │   │   ├── exception/
 │   │   │   │   └── ProviderFunctionalityNotFoundException.java
 │   │   │   ├── event/
 │   │   │   │   └── ProvidersReadyEvent.java
+│   │   │   ├── ui/                            # 📋 NEU: UI-Kontext-Klassen
+│   │   │   │   ├── context/
+│   │   │   │   │   ├── TradeContext.java
+│   │   │   │   │   ├── DialogContext.java
+│   │   │   │   │   ├── StorageContext.java
+│   │   │   │   │   └── TownContext.java
+│   │   │   │   └── components/
+│   │   │   │       ├── Menu.java
+│   │   │   │       ├── Dialog.java
+│   │   │   │       └── Form.java
 │   │   │   └── database/
 │   │   │       ├── DataStore.java             # Interface
 │   │   │       └── impl/                      # (missing implementations)
@@ -135,7 +153,7 @@ fs-core-sample-dump/
 │   │       ├── plugin.yml
 │   │       └── config.yml
 │
-├── module-plots/                    # FallenStar Plots (Sprint 3-4)
+├── module-plots/                    # FallenStar Plots (Sprint 3-4) ✅
 │   ├── pom.xml                      # Plot-System + Storage-Integration
 │   ├── src/main/java/de/fallenstar/plots/
 │   │   ├── PlotsModule.java                   # Main class
@@ -144,7 +162,13 @@ fs-core-sample-dump/
 │   │   ├── command/                           # Plot-Befehle
 │   │   ├── manager/                           # Plot- und Storage-Manager
 │   │   ├── model/                             # Plot-Datenmodelle
-│   │   └── listener/                          # Event-Handler
+│   │   ├── listener/                          # Event-Handler
+│   │   └── storage/                           # ✅ Storage-System (ex-module-storage)
+│   │       ├── command/                       # Storage-Befehle
+│   │       ├── manager/                       # Storage-Manager
+│   │       ├── model/                         # Storage-Datenmodelle
+│   │       ├── provider/                      # PlotStorageProvider
+│   │       └── listener/                      # Storage-Events
 │   └── src/main/resources/
 │       ├── plugin.yml
 │       └── config.yml
@@ -209,23 +233,28 @@ fs-core-sample-dump/
 ### Module Dependency Graph
 
 ```
-Core (Foundation - NO business logic, nur Interfaces + NoOp)
+Core (UI Provider Interface + Native Fallback + alle Interfaces)
  ↑
- ├── Plots            (Plot-System + Storage, Towny → TownyPlotProvider)
- ├── Items            (Custom Items, MMOItems → MMOItemsItemProvider)
- ├── Economy          (Weltwirtschaft, Vault → VaultEconomyProvider)
+ ├── UI               (Natives UI-Rendering, registriert NativeUIProvider)
+ ├── Plots            (Plot-System + Storage ✅, Towny → TownyPlotProvider)
+ ├── Items            (Custom Items, MMOItems, nutzt UIProvider)
+ ├── Economy          (Weltwirtschaft, Vault, nutzt UIProvider)
  ├── WorldAnchors     (Schnellreisen, POIs, Wegpunkte)
- └── NPCs             (NPC-System, Citizens → CitizensNPCProvider)
+ ├── NPCs             (NPC-System, Denizen-Ersatz, nutzt UIProvider + PlotProvider)
+ ├── Chat             (Matrix-Bridge → MatrixChatProvider)
+ ├── Auth             (Keycloak → KeycloakAuthProvider)
+ └── WebHooks         (Wiki/Forum-Integration)
 ```
 
 **Important:**
 - Modules **ONLY** depend on Core, never on each other
 - Modules communicate via Core's Provider-Interfaces
 - Each module provides its own Provider-Implementation
-- Core enthält NUR Interfaces und NoOp-Implementierungen
+- Core enthält NUR Interfaces + NoOp-Implementierungen + NativeTextUIProvider (Fallback)
 - Konkrete Provider-Implementierungen liegen in den Modulen
+- **Storage-Modul** ❌ entfernt, Funktionalität in **Plots-Modul** integriert
 
-**Beispiel:** NPCs-Modul nutzt PlotProvider (Core-Interface), nicht Towny-API direkt!
+**Beispiel:** NPCs-Modul nutzt PlotProvider + UIProvider (Core-Interfaces), nicht Towny/Denizen direkt!
 
 ---
 
@@ -439,23 +468,35 @@ public class ProviderRegistry {
 
 ### Sprint-Based Development
 
-Das Projekt folgt einem überarbeiteten 12-Sprint-Fahrplan:
+Das Projekt folgt einem 20-Sprint-Fahrplan (40 Wochen):
 
-| Sprint | Module | Duration | Status |
-|--------|--------|----------|--------|
-| 1-2 | Core | 2 Wochen | Abgeschlossen ✅ |
-| 3-4 | FallenStar Plots | 2 Wochen | Abgeschlossen ✅ |
-| 5-6 | FallenStar Items | 2 Wochen | Geplant 📋 |
-| 7-8 | FallenStar Economy | 2 Wochen | Geplant 📋 |
-| 9-10 | FallenStar WorldAnchors | 2 Wochen | Geplant 📋 |
-| 11-12 | FallenStar NPCs | 2 Wochen | In Arbeit 🔨 |
+| Sprint | Module | Duration | Status | Beschreibung |
+|--------|--------|----------|--------|--------------|
+| **1-2** | **Core + UI Provider Interface** | 2 Wochen | ✅ / 📋 | Core abgeschlossen, UI Provider Interface hinzufügen |
+| **3-4** | **Plots (inkl. Storage)** | 2 Wochen | ✅ | Plot-System + Storage-Integration (fertig) |
+| **5-6** | **UI-Modul** | 2 Wochen | 📋 | Natives UI-Rendering (Text, Chat, Inventory, Books) |
+| **7-8** | **Items** | 2 Wochen | 📋 | Custom Items mit UI-Integration |
+| **9-10** | **Economy** | 2 Wochen | 📋 | Weltwirtschaft mit UI-Integration |
+| **11-12** | **WorldAnchors** | 2 Wochen | 📋 | Schnellreisen, POIs, Wegpunkte |
+| **13-14** | **NPCs** | 2 Wochen | 📋 | NPC-System mit UI, Denizen-Ersatz |
+| **15-16** | **Chat** | 2 Wochen | 📋 | Matrix-Bridge, globaler Chat |
+| **17-18** | **Auth** | 2 Wochen | 📋 | Keycloak-Integration, SSO |
+| **19-20** | **WebHooks** | 2 Wochen | 📋 | Wiki/Forum-Integration |
+
+**Legende:**
+- ✅ Abgeschlossen
+- 🔨 In Arbeit
+- 📋 Geplant
 
 **Wichtige Architektur-Änderungen:**
-- **Core** enthält nur Interfaces + NoOp-Implementierungen
+- **Core** enthält nur Interfaces + NoOp-Implementierungen + natives UI-Fallback
 - **Provider-Implementierungen** liegen in den jeweiligen Modulen
 - **Module** kommunizieren NUR über Core-Interfaces
-- **Storage-Modul** wurde in **Plots** integriert
-- **Items-Modul** vor Economy eingefügt (Sprint 5-6)
+- **Storage-Modul** ❌ entfernt (redundant, in Plots integriert)
+- **UI-Provider-System** ✅ neu (Interface + NativeTextUIProvider in Core)
+- **Denizen-Ersatz** 📋 natives NPC-Dialog-System im NPCs-Modul
+- **Neue Module:** UI (Sprint 5-6), Chat (15-16), Auth (17-18), WebHooks (19-20)
+- **Sprint-Umplanung:** Items verschoben von 5-6 → 7-8, Economy 7-8 → 9-10, etc.
 
 ### Working on a Sprint
 
