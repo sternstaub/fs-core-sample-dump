@@ -149,6 +149,33 @@ public class PlotsAdminHandler implements AdminSubcommandHandler {
                     .append(Component.text(plot.getLocation().getBlockX() + ", " +
                             plot.getLocation().getBlockY() + ", " +
                             plot.getLocation().getBlockZ(), NamedTextColor.WHITE)));
+
+            // Storage-Informationen anzeigen (falls verfügbar)
+            if (storageProvider != null) {
+                try {
+                    PlotStorage plotStorage = storageProvider.getPlotStorage(plot);
+                    java.util.Collection<?> chests = plotStorage.getAllChests();
+                    Set<Material> materials = plotStorage.getAllMaterials();
+
+                    player.sendMessage(Component.empty());
+                    player.sendMessage(Component.text("  Storage:", NamedTextColor.YELLOW));
+                    player.sendMessage(Component.text("    Truhen: ", NamedTextColor.GRAY)
+                            .append(Component.text(String.valueOf(chests.size()), NamedTextColor.WHITE)));
+                    player.sendMessage(Component.text("    Material-Typen: ", NamedTextColor.GRAY)
+                            .append(Component.text(String.valueOf(materials.size()), NamedTextColor.WHITE)));
+
+                    if (!materials.isEmpty()) {
+                        player.sendMessage(Component.text("    Tipp: ", NamedTextColor.GRAY)
+                                .append(Component.text("/fscore admin plots storage view", NamedTextColor.GOLD))
+                                .append(Component.text(" für Details", NamedTextColor.GRAY)));
+                    }
+                } catch (Exception storageError) {
+                    player.sendMessage(Component.empty());
+                    player.sendMessage(Component.text("  Storage: ", NamedTextColor.GRAY)
+                            .append(Component.text("Nicht verfügbar", NamedTextColor.RED)));
+                }
+            }
+
             player.sendMessage(Component.empty());
             player.sendMessage(Component.text("  Hinweis:", NamedTextColor.YELLOW)
                     .append(Component.text(" Verwende ", NamedTextColor.GRAY))
