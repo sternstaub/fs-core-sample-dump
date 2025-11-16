@@ -1,88 +1,57 @@
 # FallenStar Items Module
 
-**MMOItems Integration Module (Sprint 5-6)**
+**Sprint 5-6** - MMOItems Integration Module ✅
 
-## Übersicht
+## Überblick
 
-Das Items-Modul ist ein Wrapper für das MMOItems-Plugin und stellt eine einheitliche Abstraktion für Custom-Items im FallenStar-System bereit.
+Das Items-Modul ist ein Wrapper für MMOItems 6.10+, der eine einheitliche Abstraktionsebene für Custom-Items im FallenStar-System bereitstellt.
+
+### Hauptmerkmale
+
+- ✅ **Reflection-basierte MMOItems-Integration** (keine MMOPlugin-Dependency!)
+- ✅ **Type-basierte Kategorisierung** (Ersatz für entfernte `getTags()`-API)
+- ✅ **Automatische Preisberechnung** basierend auf Item-Types
+- ✅ **Spezial-Items**: Währungs-Items (Münzen), UI-Buttons
+- ✅ **Test-UIs**: ItemBrowserUI, TestTradeUI
+- ✅ **UIRegistry-Integration** für `/fscore admin gui`
+
+## Status
+
+**✅ ERFOLGREICH DEPLOYED**
+
+Server-Logs bestätigen erfolgreiche Initialisierung:
+```
+[FallenStar-Items] ✓ MMOItems API initialized via reflection
+[FallenStar-Items] ✓ MMOItemsItemProvider initialized
+[FallenStar-Items] ✓ Test-UIs registered
+[FallenStar-Items] ✓ Items Module enabled!
+```
 
 ## Features
 
-✅ **MMOItems-API-Wrapper**
-- Vollständige Implementierung des ItemProvider-Interfaces
-- Unterstützung für alle MMOItems-Types
-- Error-Handling und Logging
+### Commands
+- `/items browse` - Item-Browser UI
+- `/items info` - Item-Info anzeigen
+- `/items reload` - Cache invalidieren
 
-✅ **Spezial-Items**
-- Münz-Items für Economy-System
-- UI-Button-Items für UI-Modul
-- Kategorisierung über MMOItems-Tags
+### UIs (via /fscore admin gui)
+- **Item Browser** - Kategorie-basierter Item-Browser
+- **Trade Test UI** - Vanilla Trading Demo
 
-✅ **Admin-Commands**
-- `/fsitems currency <player> <type> <amount>` - Gebe Münzen
-- `/fsitems info` - Zeigt Custom-Item-Info
-- `/fsitems reload` - Lädt Config neu
+### Spezial-Items
+- Währungen: bronze, silver, gold (BRONZE_COIN, SILVER_COIN, GOLD_COIN)
+- UI-Buttons: next, back, confirm, cancel, info
 
-## Dependencies
+## Build Info
 
-- **FallenStar-Core** (erforderlich)
-- **MMOItems** (erforderlich)
+**Dependencies:**
+- MMOItems-API 6.10.1-SNAPSHOT (Phoenix)
+- MythicLib-dist 1.6.2-SNAPSHOT
 
-## Installation
-
-1. Stelle sicher, dass FallenStar-Core installiert ist
-2. Stelle sicher, dass MMOItems installiert ist
-3. Kopiere `FallenStar-Items-1.0.jar` nach `plugins/`
-4. Starte Server neu
-
-## Verwendung
-
-### Für Admins
-
-```bash
-# Gebe 100 Gold-Münzen an Spieler
-/fsitems currency <Spieler> gold 100
-
-# Info über gehaltenes Item
-/fsitems info
-```
-
-### Für Entwickler
-
-```java
-// Hole ItemProvider vom Core
-ItemProvider items = core.getProviderRegistry().getItemProvider();
-
-// Erstelle Custom-Item
-Optional<ItemStack> sword = items.createItem("SWORD", "FLAMING_BLADE", 1);
-
-// Erstelle Münz-Item
-SpecialItemManager special = itemsModule.getSpecialItemManager();
-Optional<ItemStack> coins = special.createCurrency("gold", 50);
-```
-
-## Spezial-Items
-
-### Münzen (Currency)
-
-- **bronze** - Bronze-Münze (Wert: 1)
-- **silver** - Silber-Münze (Wert: 10)
-- **gold** - Gold-Münze (Wert: 100)
-
-### UI-Buttons
-
-- **next** - Weiter-Button
-- **back** - Zurück-Button
-- **confirm** - Bestätigen-Button
-- **cancel** - Abbrechen-Button
-- **info** - Info-Button
-
-## Konfiguration
-
-Siehe `config.yml` für Item-IDs und Werte.
+**Reflection-Pattern:** Vermeidet MMOPlugin-Dependency zur Compile-Zeit!
 
 ---
 
 **Version:** 1.0-SNAPSHOT  
-**Sprint:** 5-6  
-**Status:** Implementiert ✅
+**Status:** ✅ Production Ready  
+**Last Updated:** 2025-11-16
