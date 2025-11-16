@@ -78,10 +78,13 @@ public class ItemsModule extends JavaPlugin implements Listener {
             getLogger().info("  Currency items (coins) will still work!");
         }
 
-        // Erstelle SpecialItemManager (Vanilla Items, KEINE MMOItems-Dependency!)
-        // Läuft IMMER, auch ohne MMOItems
-        specialItemManager = new SpecialItemManager(this, getLogger());
-        getLogger().info("✓ SpecialItemManager initialized (Vanilla Currency Items)");
+        // Erstelle SpecialItemManager v3.0 (generisches SpecialItem-System)
+        // Unterstützt Vanilla SpecialItems + MMOItems (optional)
+        specialItemManager = new SpecialItemManager(this, getLogger(), itemProvider);
+        getLogger().info("✓ SpecialItemManager v3.0 initialized (Generisches SpecialItem-System)");
+
+        // Registriere Basiswährung "Sterne"
+        registerBaseCurrency();
 
         // Registriere Commands
         registerCommands();
@@ -153,6 +156,67 @@ public class ItemsModule extends JavaPlugin implements Listener {
             getLogger().info("✗ Test-UIs not registered (MMOItems not available)");
             getLogger().info("  Vanilla currency items still work in other UIs!");
         }
+    }
+
+    /**
+     * Registriert die Basiswährung "Sterne" (Bronze/Silber/Gold).
+     *
+     * Diese Methode registriert die drei Tier-Items der Basis-Währung:
+     * - Bronzestern (1er Münze, Wert: 1)
+     * - Silberstern (10er Münze, Wert: 10)
+     * - Goldstern (100er Münze, Wert: 100)
+     *
+     * Diese werden später vom Economy-Modul als CurrencyItemSet verwendet.
+     */
+    private void registerBaseCurrency() {
+        getLogger().info("Registriere Basiswährung 'Sterne'...");
+
+        // Bronzestern (1er Münze)
+        specialItemManager.registerVanillaItem(
+                "bronze_stern",
+                Material.GOLD_NUGGET,
+                1,  // Custom Model Data
+                net.kyori.adventure.text.Component.text("Bronzestern")
+                        .color(net.kyori.adventure.text.format.NamedTextColor.GOLD)
+                        .decoration(net.kyori.adventure.text.format.TextDecoration.BOLD, true),
+                java.util.List.of(
+                        net.kyori.adventure.text.Component.text("Wert: 1", net.kyori.adventure.text.format.NamedTextColor.GRAY),
+                        net.kyori.adventure.text.Component.empty(),
+                        net.kyori.adventure.text.Component.text("Basiswährung des Reiches", net.kyori.adventure.text.format.NamedTextColor.DARK_GRAY)
+                )
+        );
+
+        // Silberstern (10er Münze)
+        specialItemManager.registerVanillaItem(
+                "silver_stern",
+                Material.GOLD_NUGGET,
+                2,  // Custom Model Data
+                net.kyori.adventure.text.Component.text("Silberstern")
+                        .color(net.kyori.adventure.text.format.NamedTextColor.AQUA)
+                        .decoration(net.kyori.adventure.text.format.TextDecoration.BOLD, true),
+                java.util.List.of(
+                        net.kyori.adventure.text.Component.text("Wert: 10", net.kyori.adventure.text.format.NamedTextColor.GRAY),
+                        net.kyori.adventure.text.Component.empty(),
+                        net.kyori.adventure.text.Component.text("Handelswährung des Reiches", net.kyori.adventure.text.format.NamedTextColor.DARK_GRAY)
+                )
+        );
+
+        // Goldstern (100er Münze)
+        specialItemManager.registerVanillaItem(
+                "gold_stern",
+                Material.GOLD_INGOT,
+                1,  // Custom Model Data
+                net.kyori.adventure.text.Component.text("Goldstern")
+                        .color(net.kyori.adventure.text.format.NamedTextColor.YELLOW)
+                        .decoration(net.kyori.adventure.text.format.TextDecoration.BOLD, true),
+                java.util.List.of(
+                        net.kyori.adventure.text.Component.text("Wert: 100", net.kyori.adventure.text.format.NamedTextColor.GRAY),
+                        net.kyori.adventure.text.Component.empty(),
+                        net.kyori.adventure.text.Component.text("Edelwährung des Reiches", net.kyori.adventure.text.format.NamedTextColor.DARK_GRAY)
+                )
+        );
+
+        getLogger().info("✓ Basiswährung 'Sterne' registriert (bronze_stern, silver_stern, gold_stern)");
     }
 
     @Override
