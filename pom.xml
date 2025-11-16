@@ -17,13 +17,17 @@
     <!-- Module -->
     <modules>
         <module>core</module>
-        <module>module-storage</module>
         <module>module-plots</module>
         <module>module-npcs</module>
         <module>module-economy</module>
         <!-- Other modules will be added as they are implemented
-        <module>module-merchants</module>
+        <module>module-ui</module>
+        <module>module-items</module>
         <module>module-worldanchors</module>
+        <module>module-chat</module>
+        <module>module-auth</module>
+        <module>module-webhooks</module>
+        <module>module-merchants</module>
         <module>module-adminshops</module>
         -->
     </modules>
