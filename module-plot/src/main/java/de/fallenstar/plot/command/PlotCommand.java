@@ -153,13 +153,19 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
+        // Cast zu JavaPlugin um getCommand() nutzen zu können
+        if (!(storagePlugin instanceof org.bukkit.plugin.java.JavaPlugin javaPlugin)) {
+            player.sendMessage("§cStorage-Plugin ist kein JavaPlugin!");
+            return true;
+        }
+
         // Hole den passenden Command-Executor vom Storage-Plugin
         org.bukkit.command.PluginCommand pluginCommand = null;
 
         switch (storageSubcmd) {
-            case "list" -> pluginCommand = storagePlugin.getCommand("storage-list");
-            case "info" -> pluginCommand = storagePlugin.getCommand("storage-info");
-            case "setreceiver" -> pluginCommand = storagePlugin.getCommand("storage-setreceiver");
+            case "list" -> pluginCommand = javaPlugin.getCommand("storage-list");
+            case "info" -> pluginCommand = javaPlugin.getCommand("storage-info");
+            case "setreceiver" -> pluginCommand = javaPlugin.getCommand("storage-setreceiver");
             default -> {
                 player.sendMessage("§cUnbekannter Storage-Subcommand: " + storageSubcmd);
                 return true;
