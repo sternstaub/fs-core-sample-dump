@@ -50,6 +50,7 @@ public class PlotModule extends JavaPlugin implements Listener {
 
     private PlotStorageProvider storageProvider;
     private StorageManager storageManager;
+    private de.fallenstar.plot.command.PlotCommand plotCommand;
 
     private boolean plotSystemEnabled = false;
     private boolean townSystemEnabled = false;
@@ -217,13 +218,36 @@ public class PlotModule extends JavaPlugin implements Listener {
         registerCommands();
         registerAdminCommands();
 
+        // Registriere Listener
+        registerListeners();
+
         // Initialer Status-Log
         getLogger().info("=== Plot Module Initialized ===");
         getLogger().info("  Plot-System: " + (plotSystemEnabled ? "enabled" : "disabled"));
         getLogger().info("  Town-System: " + (townSystemEnabled ? "enabled" : "disabled"));
         getLogger().info("  NPC-System: " + (npcSystemEnabled ? "enabled" : "disabled"));
         getLogger().info("  Storage-System: " + (storageSystemEnabled ? "enabled" : "disabled"));
-        getLogger().info("  Commands: /plot info, /plot storage, /plot npc");
+        getLogger().info("  Commands: /plot info, /plot storage, /plot npc, /plot gui, /plot price");
+    }
+
+    /**
+     * Registriert alle Listener.
+     */
+    private void registerListeners() {
+        // Registriere PriceSetListener (für Handelsgilde-Preisverwaltung)
+        if (plotCommand != null) {
+            de.fallenstar.plot.listener.PriceSetListener priceSetListener =
+                new de.fallenstar.plot.listener.PriceSetListener(
+                    getLogger(),
+                    providers,
+                    plotCommand.getPriceCommand()
+                );
+
+            getServer().getPluginManager().registerEvents(priceSetListener, this);
+            getLogger().info("✓ PriceSetListener registriert");
+        } else {
+            getLogger().warning("✗ PlotCommand nicht verfügbar - PriceSetListener konnte nicht registriert werden");
+        }
     }
 
     /**
@@ -291,7 +315,7 @@ public class PlotModule extends JavaPlugin implements Listener {
      * Registriert alle Commands.
      */
     private void registerCommands() {
-        PlotCommand plotCommand = new PlotCommand(
+        this.plotCommand = new de.fallenstar.plot.command.PlotCommand(
             this,
             providers,
             plotTypeRegistry,

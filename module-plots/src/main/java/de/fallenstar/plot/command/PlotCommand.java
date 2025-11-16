@@ -46,6 +46,7 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
     // Subcommands
     private final PlotInfoCommand infoCommand;
     private final PlotNpcCommand npcCommand;
+    private final PlotPriceCommand priceCommand;
     private final StorageListCommand storageListCommand;
     private final StorageInfoCommand storageInfoCommand;
     private final StorageSetReceiverCommand storageSetReceiverCommand;
@@ -85,6 +86,7 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
         // Subcommands initialisieren
         this.infoCommand = new PlotInfoCommand(providers, plotTypeRegistry);
         this.npcCommand = new PlotNpcCommand(plugin, providers, plotTypeRegistry);
+        this.priceCommand = new PlotPriceCommand(providers);
 
         // Storage-Commands initialisieren (wenn Storage aktiviert)
         if (storageSystemEnabled && storageProvider != null && storageManager != null) {
@@ -96,6 +98,15 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
             this.storageInfoCommand = null;
             this.storageSetReceiverCommand = null;
         }
+    }
+
+    /**
+     * Gibt den PlotPriceCommand zurück (für Listener-Registrierung).
+     *
+     * @return PlotPriceCommand
+     */
+    public PlotPriceCommand getPriceCommand() {
+        return priceCommand;
     }
 
     @Override
@@ -140,11 +151,11 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
             }
 
             case "gui" -> {
-                // ROADMAP: GUI-Integration für Plot-Verwaltung
-                // Wird später mit UI-Modul implementiert (ohne harte Abhängigkeit)
-                player.sendMessage("§e/plot gui §7ist noch nicht implementiert!");
-                player.sendMessage("§7Roadmap: UI-basierte Plot-Verwaltung (zukünftige Sprints)");
-                return true;
+                return handleGuiCommand(player, subArgs);
+            }
+
+            case "price" -> {
+                return priceCommand.execute(player, subArgs);
             }
 
             case "help" -> {
@@ -221,6 +232,148 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
     }
 
     /**
+     * Handhabt GUI-Commands - öffnet grundstückstyp-abhängige UIs.
+     *
+     * @param player Der Spieler
+     * @param args GUI-Subcommand Args
+     * @return true wenn erfolgreich
+     */
+    private boolean handleGuiCommand(Player player, String[] args) {
+        if (!plotSystemEnabled) {
+            player.sendMessage("§cPlot-System ist nicht verfügbar!");
+            return true;
+        }
+
+        // Hole UIProvider
+        var uiProvider = providers.getUIProvider();
+        if (uiProvider == null || !uiProvider.isAvailable()) {
+            player.sendMessage("§cUI-System ist nicht verfügbar!");
+            return true;
+        }
+
+        // Hole aktuellen Plot
+        var plotProvider = providers.getPlotProvider();
+        try {
+            var plot = plotProvider.getPlot(player.getLocation());
+            if (plot == null) {
+                player.sendMessage("§cDu stehst nicht auf einem Grundstück!");
+                return true;
+            }
+
+            // Öffne grundstückstyp-spezifische UI
+            String plotType = plot.getType();
+            switch (plotType.toLowerCase()) {
+                case "handelsgilde" -> openHandelsgildeUI(player, uiProvider);
+                case "botschaft" -> openBotschaftUI(player, uiProvider);
+                default -> openDefaultPlotUI(player, uiProvider, plot);
+            }
+
+            return true;
+
+        } catch (Exception e) {
+            player.sendMessage("§cFehler beim Abrufen der Plot-Informationen: " + e.getMessage());
+            return true;
+        }
+    }
+
+    /**
+     * Öffnet die Handelsgilde-UI.
+     *
+     * @param player Der Spieler
+     * @param uiProvider UIProvider-Instanz
+     */
+    private void openHandelsgildeUI(Player player, de.fallenstar.core.provider.UIProvider uiProvider) {
+        var menu = new de.fallenstar.core.ui.UIMenu(
+            "Handelsgilde - Verwaltung",
+            "Optionen für Handelsgilde-Grundstücke"
+        );
+
+        // Button: Handelspreis festlegen
+        menu.addButton(de.fallenstar.core.ui.UIButton.of(
+            "set_price",
+            "Handelspreis festlegen",
+            "/plot price set"
+        ));
+
+        // Button: Preisliste anzeigen
+        menu.addButton(de.fallenstar.core.ui.UIButton.of(
+            "list_prices",
+            "Preisliste anzeigen",
+            "/plot price list"
+        ));
+
+        // Button: Handelsgilde-Infos
+        menu.addButton(de.fallenstar.core.ui.UIButton.of(
+            "info",
+            "Grundstücks-Info",
+            "/plot info"
+        ));
+
+        uiProvider.showMenu(player, menu);
+    }
+
+    /**
+     * Öffnet die Botschaft-UI (Placeholder).
+     *
+     * @param player Der Spieler
+     * @param uiProvider UIProvider-Instanz
+     */
+    private void openBotschaftUI(Player player, de.fallenstar.core.provider.UIProvider uiProvider) {
+        var menu = new de.fallenstar.core.ui.UIMenu(
+            "Botschaft - Verwaltung",
+            "Optionen für Botschafts-Grundstücke"
+        );
+
+        menu.addButton(de.fallenstar.core.ui.UIButton.of(
+            "info",
+            "Grundstücks-Info",
+            "/plot info"
+        ));
+
+        player.sendMessage("§7[Roadmap] Botschaft-UI noch nicht vollständig implementiert");
+        uiProvider.showMenu(player, menu);
+    }
+
+    /**
+     * Öffnet die Default-Plot-UI.
+     *
+     * @param player Der Spieler
+     * @param uiProvider UIProvider-Instanz
+     * @param plot Der Plot
+     */
+    private void openDefaultPlotUI(Player player, de.fallenstar.core.provider.UIProvider uiProvider,
+                                     de.fallenstar.core.provider.Plot plot) {
+        var menu = new de.fallenstar.core.ui.UIMenu(
+            "Plot-Verwaltung",
+            "Grundstück: " + plot.getType()
+        );
+
+        menu.addButton(de.fallenstar.core.ui.UIButton.of(
+            "info",
+            "Grundstücks-Info",
+            "/plot info"
+        ));
+
+        if (storageSystemEnabled) {
+            menu.addButton(de.fallenstar.core.ui.UIButton.of(
+                "storage",
+                "Storage-Verwaltung",
+                "/plot storage list"
+            ));
+        }
+
+        if (npcSystemEnabled) {
+            menu.addButton(de.fallenstar.core.ui.UIButton.of(
+                "npc",
+                "NPC-Verwaltung",
+                "/plot npc list"
+            ));
+        }
+
+        uiProvider.showMenu(player, menu);
+    }
+
+    /**
      * Sendet Hilfe-Nachricht an Spieler.
      *
      * @param player Der Spieler
@@ -245,8 +398,12 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
             player.sendMessage("§7/plot npc §8[deaktiviert - kein NPC-Plugin]");
         }
 
-        // GUI-Command (Roadmap)
-        player.sendMessage("§7/plot gui §8[Roadmap - zukünftige Sprints]");
+        // GUI-Command
+        player.sendMessage("§e/plot gui §7- Öffnet grundstückstypabhängige GUI");
+
+        // Price-Command (nur auf Handelsgilde)
+        player.sendMessage("§e/plot price set §7- Handelspreis festlegen §8[Handelsgilde]");
+        player.sendMessage("§e/plot price list §7- Preisliste anzeigen §8[Handelsgilde]");
 
         player.sendMessage("§8§m-----------------------------");
     }
@@ -266,7 +423,8 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
             if (npcSystemEnabled) {
                 completions.add("npc");
             }
-            completions.add("gui");  // Roadmap - zukünftige Implementierung
+            completions.add("gui");
+            completions.add("price");  // Handelsgilde-Preisverwaltung
             completions.add("help");
 
         } else if (args.length == 2) {
@@ -287,6 +445,10 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
                         completions.add("remove");
                         completions.add("list");
                     }
+                }
+                case "price" -> {
+                    completions.add("set");
+                    completions.add("list");
                 }
             }
         }

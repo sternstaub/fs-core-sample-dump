@@ -31,6 +31,7 @@ public class ProviderRegistry {
     private ItemProvider itemProvider;
     private ChatProvider chatProvider;
     private NetworkProvider networkProvider;
+    private UIProvider uiProvider;
     private UIRegistry uiRegistry;
 
     /**
@@ -133,6 +134,11 @@ public class ProviderRegistry {
         networkProvider = new NoOpNetworkProvider();
         logger.info("○ Network provider: NoOp (standalone server mode)");
 
+        // UI Provider - NativeTextUIProvider als Fallback
+        uiProvider = new NativeTextUIProvider();
+        logger.info("✓ UI Provider: NativeTextUIProvider (Chat-basierte Fallback-UI)");
+        logger.info("  Hinweis: UI-Modul kann Inventory-basierte UI bereitstellen");
+
         // UI Registry - Zentrale Registry für Test-UIs
         uiRegistry = new UIRegistry(logger);
         logger.info("✓ UI Registry initialized");
@@ -156,6 +162,7 @@ public class ProviderRegistry {
     public ItemProvider getItemProvider() { return itemProvider; }
     public ChatProvider getChatProvider() { return chatProvider; }
     public NetworkProvider getNetworkProvider() { return networkProvider; }
+    public UIProvider getUIProvider() { return uiProvider; }
     public UIRegistry getUIRegistry() { return uiRegistry; }
 
     /**
@@ -198,5 +205,10 @@ public class ProviderRegistry {
     public void setNetworkProvider(NetworkProvider networkProvider) {
         this.networkProvider = networkProvider;
         logger.info("✓ NetworkProvider updated: " + networkProvider.getClass().getSimpleName());
+    }
+
+    public void setUIProvider(UIProvider uiProvider) {
+        this.uiProvider = uiProvider;
+        logger.info("✓ UIProvider updated: " + uiProvider.getClass().getSimpleName());
     }
 }
