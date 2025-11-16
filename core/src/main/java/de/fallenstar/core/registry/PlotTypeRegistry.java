@@ -59,8 +59,11 @@ public class PlotTypeRegistry {
         validPlotTypes.add("farm");
         validPlotTypes.add("bank");
 
+        // Custom-Typen für FallenStar
+        validPlotTypes.add("botschaft");
+
         // Standard-NPC-Zuordnungen
-        defaultNPCTypes.put("embassy", "ambassador");
+        defaultNPCTypes.put("botschaft", "ambassador");
         defaultNPCTypes.put("bank", "banker");
 
         logger.info("PlotTypeRegistry initialized with " + validPlotTypes.size() + " plot types");

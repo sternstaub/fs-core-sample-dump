@@ -151,6 +151,9 @@ public class PlotModule extends JavaPlugin implements Listener {
     private void initializeModule() {
         getLogger().info("Initialisiere Plot-System...");
 
+        // Registriere Custom-Plot-Typen in Towny
+        registerCustomPlotTypes();
+
         // Registriere Commands
         registerCommands();
 
@@ -160,6 +163,40 @@ public class PlotModule extends JavaPlugin implements Listener {
         getLogger().info("  Town-System: " + (townSystemEnabled ? "enabled" : "disabled"));
         getLogger().info("  NPC-System: " + (npcSystemEnabled ? "enabled" : "disabled"));
         getLogger().info("  Commands: /plot info, /plot storage, /plot npc");
+    }
+
+    /**
+     * Registriert Custom-Plot-Typen in Towny.
+     */
+    private void registerCustomPlotTypes() {
+        try {
+            // Prüfe ob Towny verfügbar ist
+            if (getServer().getPluginManager().getPlugin("Towny") == null &&
+                getServer().getPluginManager().getPlugin("TownyAdvanced") == null) {
+                getLogger().info("○ Towny nicht gefunden - Custom-Plot-Typen nicht registriert");
+                return;
+            }
+
+            // Importiere Towny-Klassen
+            Class<?> townyUniverseClass = Class.forName("com.palmergames.bukkit.towny.TownyUniverse");
+            Object townyUniverse = townyUniverseClass.getMethod("getInstance").invoke(null);
+
+            // Hole Registered Status Map
+            Object registeredStatus = townyUniverseClass.getMethod("getRegisteredStatus").invoke(townyUniverse);
+
+            // Registriere "botschaft" Plot-Typ
+            Class<?> townBlockTypeClass = Class.forName("com.palmergames.bukkit.towny.object.TownBlockType");
+            Object botschaftType = townBlockTypeClass.getMethod("register", String.class, String.class)
+                .invoke(null, "botschaft", "Botschaft");
+
+            getLogger().info("✓ Custom-Plot-Typ 'botschaft' in Towny registriert");
+
+        } catch (ClassNotFoundException e) {
+            getLogger().warning("✗ Towny-Klassen nicht gefunden - Custom-Plot-Typen nicht registriert");
+        } catch (Exception e) {
+            getLogger().warning("✗ Fehler beim Registrieren der Custom-Plot-Typen: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     /**
