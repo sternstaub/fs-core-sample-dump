@@ -18,7 +18,10 @@
     <modules>
         <module>core</module>
         <module>module-storage</module>
+        <module>module-plot</module>
         <!-- Other modules will be added as they are implemented
+        <module>module-npc</module>
+        <module>module-coin</module>
         <module>module-merchants</module>
         <module>module-travel</module>
         <module>module-adminshops</module>
