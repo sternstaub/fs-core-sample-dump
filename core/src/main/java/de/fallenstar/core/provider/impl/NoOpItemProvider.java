@@ -39,6 +39,26 @@ public class NoOpItemProvider implements ItemProvider {
     }
 
     @Override
+    public Optional<ItemStack> createItem(String itemId, int amount)
+            throws ProviderFunctionalityNotFoundException {
+        throw new ProviderFunctionalityNotFoundException(
+            PROVIDER_NAME,
+            "createItem",
+            REASON
+        );
+    }
+
+    @Override
+    public Optional<ItemStack> createItem(String type, String itemId, int amount)
+            throws ProviderFunctionalityNotFoundException {
+        throw new ProviderFunctionalityNotFoundException(
+            PROVIDER_NAME,
+            "createItem",
+            REASON
+        );
+    }
+
+    @Override
     public Optional<String> getItemId(ItemStack itemStack)
             throws ProviderFunctionalityNotFoundException {
         throw new ProviderFunctionalityNotFoundException(
@@ -94,6 +114,76 @@ public class NoOpItemProvider implements ItemProvider {
         throw new ProviderFunctionalityNotFoundException(
             PROVIDER_NAME,
             "getSuggestedPrice",
+            REASON
+        );
+    }
+
+    @Override
+    public Optional<String> getItemType(String itemId)
+            throws ProviderFunctionalityNotFoundException {
+        throw new ProviderFunctionalityNotFoundException(
+            PROVIDER_NAME,
+            "getItemType",
+            REASON
+        );
+    }
+
+    @Override
+    public Optional<String> getItemType(ItemStack itemStack)
+            throws ProviderFunctionalityNotFoundException {
+        throw new ProviderFunctionalityNotFoundException(
+            PROVIDER_NAME,
+            "getItemType",
+            REASON
+        );
+    }
+
+    @Override
+    public List<String> getAllTypes()
+            throws ProviderFunctionalityNotFoundException {
+        throw new ProviderFunctionalityNotFoundException(
+            PROVIDER_NAME,
+            "getAllTypes",
+            REASON
+        );
+    }
+
+    @Override
+    public List<String> getItemsByType(String type)
+            throws ProviderFunctionalityNotFoundException {
+        throw new ProviderFunctionalityNotFoundException(
+            PROVIDER_NAME,
+            "getItemsByType",
+            REASON
+        );
+    }
+
+    @Override
+    public List<String> getAllItemIds()
+            throws ProviderFunctionalityNotFoundException {
+        throw new ProviderFunctionalityNotFoundException(
+            PROVIDER_NAME,
+            "getAllItemIds",
+            REASON
+        );
+    }
+
+    @Override
+    public boolean itemExists(String itemId)
+            throws ProviderFunctionalityNotFoundException {
+        throw new ProviderFunctionalityNotFoundException(
+            PROVIDER_NAME,
+            "itemExists",
+            REASON
+        );
+    }
+
+    @Override
+    public boolean itemExists(String type, String itemId)
+            throws ProviderFunctionalityNotFoundException {
+        throw new ProviderFunctionalityNotFoundException(
+            PROVIDER_NAME,
+            "itemExists",
             REASON
         );
     }

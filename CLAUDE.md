@@ -87,13 +87,14 @@ A **modular Minecraft plugin system** for Paper 1.21.1 with provider-based archi
 
 - **Version:** 1.0-SNAPSHOT
 - **Phase:** Aktive Entwicklung
-- **Completion:** ~15% (Core ✅ + Plots ✅)
-- **Nächster Sprint:** Sprint 1-2 Erweiterung - UI Provider Interface in Core
-- **Dann:** Sprint 5-6 - UI-Modul (natives Rendering)
+- **Completion:** ~20% (Core ✅ + Plots ✅ + UI-Framework ✅)
+- **Aktueller Sprint:** Sprint 1-2 ✅ abgeschlossen (UI-Framework + Admin-Commands)
+- **Nächster Sprint:** Sprint 5-6 - Items-Modul (MMOItems-Wrapper)
 - **Wichtige Architektur:** Provider-Implementierungen in Modulen, Core nur Interfaces!
-- **Neue Planung:** 20 Sprints (40 Wochen) mit UI-System, Chat, Auth, WebHooks
+- **Planung:** 20 Sprints (40 Wochen) mit Items, UI, Economy, Chat, Auth, WebHooks
 - **Storage-Modul:** ✅ Entfernt (redundant, in Plots integriert)
-- **Denizen-Ersatz:** 📋 Geplant (natives NPC-System mit UI)
+- **UI-Framework:** ✅ Basis-Klassen implementiert (BaseUI, SmallChestUI, etc.)
+- **ItemProvider:** ✅ Interface erweitert, bereit für MMOItems-Integration
 
 ---
 
@@ -233,14 +234,14 @@ fs-core-sample-dump/
 ### Module Dependency Graph
 
 ```
-Core (UI Provider Interface + Native Fallback + alle Interfaces)
+Core (UI-Framework + alle Provider-Interfaces + NoOp-Implementierungen)
  ↑
- ├── UI               (Natives UI-Rendering, registriert NativeUIProvider)
  ├── Plots            (Plot-System + Storage ✅, Towny → TownyPlotProvider)
- ├── Items            (Custom Items, MMOItems, nutzt UIProvider)
- ├── Economy          (Weltwirtschaft, Vault, nutzt UIProvider)
+ ├── Items            (MMOItems-Wrapper ✅, registriert MMOItemsItemProvider)
+ ├── UI               (Konkrete UIs: TradeUI, AmbassadorUI, nutzt ItemProvider)
+ ├── Economy          (Weltwirtschaft, Vault, nutzt ItemProvider + UI)
  ├── WorldAnchors     (Schnellreisen, POIs, Wegpunkte)
- ├── NPCs             (NPC-System, Denizen-Ersatz, nutzt UIProvider + PlotProvider)
+ ├── NPCs             (NPC-System, Denizen-Ersatz, nutzt ItemProvider + PlotProvider + UI)
  ├── Chat             (Matrix-Bridge → MatrixChatProvider)
  ├── Auth             (Keycloak → KeycloakAuthProvider)
  └── WebHooks         (Wiki/Forum-Integration)
@@ -472,10 +473,10 @@ Das Projekt folgt einem 20-Sprint-Fahrplan (40 Wochen):
 
 | Sprint | Module | Duration | Status | Beschreibung |
 |--------|--------|----------|--------|--------------|
-| **1-2** | **Core + UI Provider Interface** | 2 Wochen | ✅ / 📋 | Core abgeschlossen, UI Provider Interface hinzufügen |
+| **1-2** | **Core + UI Framework** | 2 Wochen | ✅ | Core + UI-Basis-Klassen + Admin-Commands |
 | **3-4** | **Plots (inkl. Storage)** | 2 Wochen | ✅ | Plot-System + Storage-Integration (fertig) |
-| **5-6** | **UI-Modul** | 2 Wochen | 📋 | Natives UI-Rendering (Text, Chat, Inventory, Books) |
-| **7-8** | **Items** | 2 Wochen | 📋 | Custom Items mit UI-Integration |
+| **5-6** | **Items (MMOItems-Wrapper)** | 2 Wochen | 📋 | ItemProvider + MMOItems-Integration |
+| **7-8** | **UI-Modul** | 2 Wochen | 📋 | Konkrete UIs (TradeUI, AmbassadorUI, etc.) |
 | **9-10** | **Economy** | 2 Wochen | 📋 | Weltwirtschaft mit UI-Integration |
 | **11-12** | **WorldAnchors** | 2 Wochen | 📋 | Schnellreisen, POIs, Wegpunkte |
 | **13-14** | **NPCs** | 2 Wochen | 📋 | NPC-System mit UI, Denizen-Ersatz |
@@ -489,14 +490,15 @@ Das Projekt folgt einem 20-Sprint-Fahrplan (40 Wochen):
 - 📋 Geplant
 
 **Wichtige Architektur-Änderungen:**
-- **Core** enthält nur Interfaces + NoOp-Implementierungen + natives UI-Fallback
+- **Core** enthält nur Interfaces + NoOp-Implementierungen + UI-Framework-Basis-Klassen
 - **Provider-Implementierungen** liegen in den jeweiligen Modulen
 - **Module** kommunizieren NUR über Core-Interfaces
 - **Storage-Modul** ❌ entfernt (redundant, in Plots integriert)
-- **UI-Provider-System** ✅ neu (Interface + NativeTextUIProvider in Core)
+- **UI-Framework** ✅ neu (BaseUI, SmallChestUI, LargeChestUI, SignUI, AnvilUI, BookUI)
+- **Admin-Command-System** ✅ neu (/fscore admin gui für UI-Tests)
 - **Denizen-Ersatz** 📋 natives NPC-Dialog-System im NPCs-Modul
-- **Neue Module:** UI (Sprint 5-6), Chat (15-16), Auth (17-18), WebHooks (19-20)
-- **Sprint-Umplanung:** Items verschoben von 5-6 → 7-8, Economy 7-8 → 9-10, etc.
+- **Sprint-Umplanung:** Items VOR UI-Modul (5-6), UI-Modul nach Items (7-8)
+- **Begründung:** Trading-UIs benötigen Custom-Item-Support (MMOItems)
 
 ### Working on a Sprint
 

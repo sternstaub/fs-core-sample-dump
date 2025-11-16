@@ -32,14 +32,39 @@ public interface ItemProvider {
     
     /**
      * Erstellt ein Custom-Item anhand seiner ID.
-     * 
+     *
      * @param itemId Item-ID (z.B. "MYTHIC_SWORD", "legendary_armor")
      * @return Optional<ItemStack> - leer wenn Item nicht existiert
      * @throws ProviderFunctionalityNotFoundException wenn nicht verfügbar
      */
-    Optional<ItemStack> createItem(String itemId) 
+    Optional<ItemStack> createItem(String itemId)
             throws ProviderFunctionalityNotFoundException;
-    
+
+    /**
+     * Erstellt ein Custom-Item anhand seiner ID mit spezifischer Anzahl.
+     *
+     * @param itemId Item-ID (z.B. "MYTHIC_SWORD", "legendary_armor")
+     * @param amount Anzahl (Stack-Size)
+     * @return Optional<ItemStack> - leer wenn Item nicht existiert
+     * @throws ProviderFunctionalityNotFoundException wenn nicht verfügbar
+     */
+    Optional<ItemStack> createItem(String itemId, int amount)
+            throws ProviderFunctionalityNotFoundException;
+
+    /**
+     * Erstellt ein Custom-Item anhand seines Typs und seiner ID.
+     *
+     * Für MMOItems: Type = SWORD, BOW, ARMOR, etc., ID = spezifisches Item
+     *
+     * @param type Item-Type (z.B. "SWORD", "BOW")
+     * @param itemId Item-ID innerhalb des Typs
+     * @param amount Anzahl (Stack-Size)
+     * @return Optional<ItemStack> - leer wenn Item nicht existiert
+     * @throws ProviderFunctionalityNotFoundException wenn nicht verfügbar
+     */
+    Optional<ItemStack> createItem(String type, String itemId, int amount)
+            throws ProviderFunctionalityNotFoundException;
+
     /**
      * Gibt die Item-ID eines ItemStacks zurück.
      * 
@@ -93,14 +118,87 @@ public interface ItemProvider {
     
     /**
      * Gibt einen Richtwert für den Preis eines Items zurück.
-     * 
+     *
      * Basiert auf Item-Stats, Seltenheit, etc.
      * Nur als Vorschlag - finale Preise werden von Admins/System festgelegt.
-     * 
+     *
      * @param itemId Item-ID
      * @return Optional<Double> - Empfohlener Preis oder leer
      * @throws ProviderFunctionalityNotFoundException wenn nicht verfügbar
      */
-    Optional<Double> getSuggestedPrice(String itemId) 
+    Optional<Double> getSuggestedPrice(String itemId)
+            throws ProviderFunctionalityNotFoundException;
+
+    /**
+     * Gibt den Item-Type eines Items zurück.
+     *
+     * Für MMOItems: SWORD, BOW, ARMOR, CONSUMABLE, etc.
+     *
+     * @param itemId Item-ID
+     * @return Optional<String> - Item-Type oder leer
+     * @throws ProviderFunctionalityNotFoundException wenn nicht verfügbar
+     */
+    Optional<String> getItemType(String itemId)
+            throws ProviderFunctionalityNotFoundException;
+
+    /**
+     * Gibt den Item-Type eines ItemStacks zurück.
+     *
+     * @param itemStack Das Item
+     * @return Optional<String> - Item-Type oder leer
+     * @throws ProviderFunctionalityNotFoundException wenn nicht verfügbar
+     */
+    Optional<String> getItemType(ItemStack itemStack)
+            throws ProviderFunctionalityNotFoundException;
+
+    /**
+     * Gibt alle verfügbaren Item-Types zurück.
+     *
+     * Für MMOItems: Liste aller registrierten Types (SWORD, BOW, etc.)
+     *
+     * @return Liste von Type-Namen
+     * @throws ProviderFunctionalityNotFoundException wenn nicht verfügbar
+     */
+    List<String> getAllTypes()
+            throws ProviderFunctionalityNotFoundException;
+
+    /**
+     * Gibt alle Items eines bestimmten Types zurück.
+     *
+     * @param type Item-Type (z.B. "SWORD", "BOW")
+     * @return Liste von Item-IDs dieses Types
+     * @throws ProviderFunctionalityNotFoundException wenn nicht verfügbar
+     */
+    List<String> getItemsByType(String type)
+            throws ProviderFunctionalityNotFoundException;
+
+    /**
+     * Gibt alle verfügbaren Item-IDs zurück.
+     *
+     * @return Liste aller registrierten Item-IDs
+     * @throws ProviderFunctionalityNotFoundException wenn nicht verfügbar
+     */
+    List<String> getAllItemIds()
+            throws ProviderFunctionalityNotFoundException;
+
+    /**
+     * Prüft ob ein Item mit dieser ID existiert.
+     *
+     * @param itemId Item-ID
+     * @return true wenn Item existiert
+     * @throws ProviderFunctionalityNotFoundException wenn nicht verfügbar
+     */
+    boolean itemExists(String itemId)
+            throws ProviderFunctionalityNotFoundException;
+
+    /**
+     * Prüft ob ein Item mit diesem Type und dieser ID existiert.
+     *
+     * @param type Item-Type
+     * @param itemId Item-ID
+     * @return true wenn Item existiert
+     * @throws ProviderFunctionalityNotFoundException wenn nicht verfügbar
+     */
+    boolean itemExists(String type, String itemId)
             throws ProviderFunctionalityNotFoundException;
 }
