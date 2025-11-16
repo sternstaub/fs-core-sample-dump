@@ -488,6 +488,195 @@ public class ProviderRegistry {
 }
 ```
 
+### 6. Data Persistence Pattern (WICHTIG!)
+
+**Regel:** Alle Module müssen ihre Daten persistent speichern!
+
+**Problem:** In-Memory-Datenstrukturen gehen bei Server-Neustarts verloren.
+
+**Lösung:** Bidirektionale Config-Integration mit `loadFromConfig()` und `saveToConfig()`.
+
+#### Standard-Pattern für Persistierung:
+
+```java
+public class DataManager {
+    private final Logger logger;
+    private final Map<String, SomeData> dataMap;  // In-Memory Cache
+
+    /**
+     * Lädt Daten aus der Config.
+     *
+     * Wird beim Modul-Start aufgerufen (onEnable oder onProvidersReady).
+     */
+    public void loadFromConfig(FileConfiguration config) {
+        ConfigurationSection section = config.getConfigurationSection("data-section");
+        if (section == null) {
+            logger.warning("Keine Daten in config.yml gefunden");
+            initializeDefaults();
+            return;
+        }
+
+        // Parse Config und fülle dataMap
+        for (String key : section.getKeys(false)) {
+            SomeData data = parseData(section, key);
+            dataMap.put(key, data);
+        }
+
+        logger.info("Daten geladen: " + dataMap.size() + " Einträge");
+    }
+
+    /**
+     * Speichert Daten zurück in die Config.
+     *
+     * WICHTIG: Muss nach JEDER Daten-Änderung aufgerufen werden!
+     */
+    public void saveToConfig(FileConfiguration config) {
+        // Lösche alte Daten
+        config.set("data-section", null);
+
+        // Schreibe alle Daten
+        for (Map.Entry<String, SomeData> entry : dataMap.entrySet()) {
+            String key = entry.getKey();
+            SomeData data = entry.getValue();
+
+            config.set("data-section." + key + ".field1", data.getField1());
+            config.set("data-section." + key + ".field2", data.getField2());
+        }
+
+        logger.info("Daten gespeichert: " + dataMap.size() + " Einträge");
+    }
+}
+```
+
+#### Modul-Integration:
+
+```java
+public class MyModule extends JavaPlugin {
+    private DataManager dataManager;
+
+    @Override
+    public void onEnable() {
+        saveDefaultConfig();  // Erstelle config.yml falls nicht vorhanden
+
+        dataManager = new DataManager(getLogger());
+        dataManager.loadFromConfig(getConfig());  // Lade Daten
+    }
+
+    /**
+     * Speichert die Config auf Festplatte.
+     *
+     * MUSS nach JEDER Daten-Änderung aufgerufen werden!
+     */
+    public void saveConfiguration() {
+        dataManager.saveToConfig(getConfig());  // In-Memory → Config
+        saveConfig();  // Config → Festplatte (Bukkit API)
+        getLogger().fine("Config gespeichert");
+    }
+
+    // Getter für andere Module (via Reflection)
+    public DataManager getDataManager() {
+        return dataManager;
+    }
+}
+```
+
+#### Usage in Commands/Listeners:
+
+```java
+public class SomeCommand {
+    private final MyModule plugin;
+    private final DataManager dataManager;
+
+    public void execute(Player player, String[] args) {
+        // Ändere Daten
+        dataManager.setSomeData("key", newData);
+
+        // WICHTIG: Sofort speichern!
+        plugin.saveConfiguration();
+
+        player.sendMessage("§aDaten gespeichert!");
+    }
+}
+```
+
+#### Best Practices:
+
+1. ✅ **Immer bidirektional:** `loadFromConfig()` UND `saveToConfig()`
+2. ✅ **Sofort speichern:** Nach JEDER Daten-Änderung `saveConfiguration()` aufrufen
+3. ✅ **Defaults definieren:** `initializeDefaults()` wenn Config leer
+4. ✅ **Fehlerbehandlung:** Try-catch bei Config-Parsing
+5. ✅ **Logging:** Info bei Load/Save, Warning bei Fehlern
+6. ✅ **Validierung:** Prüfe Daten-Integrität beim Laden
+
+#### Häufige Fehler:
+
+❌ **Nur laden, nicht speichern:**
+```java
+// FALSCH: Daten gehen bei Neustart verloren!
+public void setData(String key, Data data) {
+    dataMap.put(key, data);  // Nur In-Memory
+    // Fehlt: saveConfiguration()
+}
+```
+
+❌ **Speichern ohne saveConfig():**
+```java
+// FALSCH: Config bleibt nur im RAM!
+public void saveConfiguration() {
+    dataManager.saveToConfig(getConfig());
+    // Fehlt: saveConfig() für Festplatte!
+}
+```
+
+❌ **Speichern nur bei onDisable():**
+```java
+// FALSCH: Bei Server-Crash gehen Daten verloren!
+@Override
+public void onDisable() {
+    saveConfiguration();  // Zu spät!
+}
+```
+
+✅ **Richtig:**
+```java
+// Speichere SOFORT nach jeder Änderung
+public void setData(String key, Data data) {
+    dataMap.put(key, data);
+    plugin.saveConfiguration();  // Sofort auf Festplatte!
+}
+```
+
+#### Beispiel-Implementierungen im Projekt:
+
+- **ItemBasePriceProvider** (Economy-Modul):
+  - `loadFromConfig()` - Zeile 82-129
+  - `saveToConfig()` - Zeile 347-372
+  - `EconomyModule.saveConfiguration()` - Zeile 243-251
+
+- **PlotStorageData** (Plots-Modul):
+  - Speichert Plot-Storage-Materialien persistent
+  - Integration mit Towny Plot-Data
+
+#### Config-Struktur-Empfehlung:
+
+```yaml
+# config.yml - Strukturiertes Format
+data-manager:
+  defaults:
+    some-value: 1.0
+
+  entries:
+    entry-1:
+      field1: "value1"
+      field2: 100
+      field3: true
+
+    entry-2:
+      field1: "value2"
+      field2: 200
+      field3: false
+```
+
 ---
 
 ## Development Workflow
