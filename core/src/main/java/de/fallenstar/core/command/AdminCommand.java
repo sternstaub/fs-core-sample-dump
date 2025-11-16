@@ -322,14 +322,97 @@ public class AdminCommand {
      * @param player Spieler
      */
     private void handleStorageView(Player player) {
-        player.sendMessage(Component.text("╔═══════════════════════════════════════╗", NamedTextColor.GOLD));
-        player.sendMessage(Component.text("║  Plot-Storage Materialien            ║", NamedTextColor.GOLD));
-        player.sendMessage(Component.text("╚═══════════════════════════════════════╝", NamedTextColor.GOLD));
-        player.sendMessage(Component.empty());
-        player.sendMessage(Component.text("Diese Funktion wird vom Plot-Modul bereitgestellt.", NamedTextColor.YELLOW));
-        player.sendMessage(Component.text("Verwende: ", NamedTextColor.GRAY)
-                .append(Component.text("/plot storage", NamedTextColor.GOLD))
-                .append(Component.text(" für vollständige Storage-Funktionalität", NamedTextColor.GRAY)));
+        try {
+            // Hole Plot an Spieler-Position
+            de.fallenstar.core.provider.PlotProvider plotProvider = plugin.getProviderRegistry().getPlotProvider();
+
+            if (!plotProvider.isAvailable()) {
+                player.sendMessage(Component.text("✗ Plot-System nicht verfügbar!", NamedTextColor.RED));
+                return;
+            }
+
+            de.fallenstar.core.provider.Plot plot = plotProvider.getPlot(player.getLocation());
+
+            if (plot == null) {
+                player.sendMessage(Component.text("✗ Du stehst nicht auf einem Grundstück!", NamedTextColor.RED));
+                return;
+            }
+
+            // Hole Plots-Modul
+            org.bukkit.plugin.Plugin plotsModule = plugin.getServer().getPluginManager().getPlugin("FallenStar-Plots");
+            if (plotsModule == null) {
+                player.sendMessage(Component.text("✗ Plots-Modul nicht geladen!", NamedTextColor.RED));
+                return;
+            }
+
+            // Reflection: PlotStorageProvider holen
+            java.lang.reflect.Method getStorageProvider = plotsModule.getClass().getMethod("getStorageProvider");
+            Object storageProvider = getStorageProvider.invoke(plotsModule);
+
+            if (storageProvider == null) {
+                player.sendMessage(Component.text("✗ Storage-System nicht verfügbar!", NamedTextColor.RED));
+                return;
+            }
+
+            // Reflection: PlotStorage holen
+            java.lang.reflect.Method getPlotStorage = storageProvider.getClass().getMethod(
+                    "getPlotStorage",
+                    de.fallenstar.core.provider.Plot.class
+            );
+            Object plotStorage = getPlotStorage.invoke(storageProvider, plot);
+
+            // Reflection: getAllMaterials()
+            java.lang.reflect.Method getAllMaterials = plotStorage.getClass().getMethod("getAllMaterials");
+            Set<?> materials = (Set<?>) getAllMaterials.invoke(plotStorage);
+
+            // Reflection: getAllChests()
+            java.lang.reflect.Method getAllChests = plotStorage.getClass().getMethod("getAllChests");
+            Set<?> chests = (Set<?>) getAllChests.invoke(plotStorage);
+
+            if (materials.isEmpty()) {
+                player.sendMessage(Component.text("✗ Keine Materialien auf diesem Grundstück gefunden!", NamedTextColor.YELLOW));
+                player.sendMessage(Component.text("  Plot: ", NamedTextColor.GRAY)
+                        .append(Component.text(plot.getIdentifier(), NamedTextColor.WHITE)));
+                player.sendMessage(Component.text("  Tipp: Verwende ", NamedTextColor.GRAY)
+                        .append(Component.text("/fscore admin plots storage scan", NamedTextColor.GOLD))
+                        .append(Component.text(" zum Scannen", NamedTextColor.GRAY)));
+                return;
+            }
+
+            // Zeige Header
+            player.sendMessage(Component.text("╔═══════════════════════════════════════╗", NamedTextColor.GOLD));
+            player.sendMessage(Component.text("║  Plot-Storage Materialien            ║", NamedTextColor.GOLD));
+            player.sendMessage(Component.text("╚═══════════════════════════════════════╝", NamedTextColor.GOLD));
+            player.sendMessage(Component.empty());
+            player.sendMessage(Component.text("Plot: ", NamedTextColor.GRAY)
+                    .append(Component.text(plot.getIdentifier(), NamedTextColor.WHITE)));
+            player.sendMessage(Component.text("Truhen: ", NamedTextColor.GRAY)
+                    .append(Component.text(String.valueOf(chests.size()), NamedTextColor.WHITE)));
+            player.sendMessage(Component.empty());
+
+            // Reflection: getTotalAmount()
+            java.lang.reflect.Method getTotalAmount = plotStorage.getClass().getMethod("getTotalAmount", org.bukkit.Material.class);
+
+            // Zeige alle Materialien
+            int totalTypes = 0;
+            for (Object materialObj : materials) {
+                org.bukkit.Material material = (org.bukkit.Material) materialObj;
+                Integer amount = (Integer) getTotalAmount.invoke(plotStorage, material);
+
+                player.sendMessage(Component.text("  " + material.name() + ": ", NamedTextColor.WHITE)
+                        .append(Component.text(String.valueOf(amount), NamedTextColor.GREEN)));
+                totalTypes++;
+            }
+
+            player.sendMessage(Component.empty());
+            player.sendMessage(Component.text("Gesamt: ", NamedTextColor.GRAY)
+                    .append(Component.text(totalTypes + " Material-Typen", NamedTextColor.WHITE)));
+
+        } catch (Exception e) {
+            player.sendMessage(Component.text("✗ Fehler beim Abrufen des Storage: " + e.getMessage(), NamedTextColor.RED));
+            plugin.getLogger().warning("Error in /fscore admin plots storage view: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -338,14 +421,86 @@ public class AdminCommand {
      * @param player Spieler
      */
     private void handleStorageScan(Player player) {
-        player.sendMessage(Component.text("╔═══════════════════════════════════════╗", NamedTextColor.GOLD));
-        player.sendMessage(Component.text("║  Plot-Storage Scan                    ║", NamedTextColor.GOLD));
-        player.sendMessage(Component.text("╚═══════════════════════════════════════╝", NamedTextColor.GOLD));
-        player.sendMessage(Component.empty());
-        player.sendMessage(Component.text("Diese Funktion wird vom Plot-Modul bereitgestellt.", NamedTextColor.YELLOW));
-        player.sendMessage(Component.text("Verwende: ", NamedTextColor.GRAY)
-                .append(Component.text("/plot storage", NamedTextColor.GOLD))
-                .append(Component.text(" für vollständige Storage-Funktionalität", NamedTextColor.GRAY)));
+        try {
+            // Hole Plot an Spieler-Position
+            de.fallenstar.core.provider.PlotProvider plotProvider = plugin.getProviderRegistry().getPlotProvider();
+
+            if (!plotProvider.isAvailable()) {
+                player.sendMessage(Component.text("✗ Plot-System nicht verfügbar!", NamedTextColor.RED));
+                return;
+            }
+
+            de.fallenstar.core.provider.Plot plot = plotProvider.getPlot(player.getLocation());
+
+            if (plot == null) {
+                player.sendMessage(Component.text("✗ Du stehst nicht auf einem Grundstück!", NamedTextColor.RED));
+                return;
+            }
+
+            // Hole Plots-Modul
+            org.bukkit.plugin.Plugin plotsModule = plugin.getServer().getPluginManager().getPlugin("FallenStar-Plots");
+            if (plotsModule == null) {
+                player.sendMessage(Component.text("✗ Plots-Modul nicht geladen!", NamedTextColor.RED));
+                return;
+            }
+
+            player.sendMessage(Component.text("╔═══════════════════════════════════════╗", NamedTextColor.GOLD));
+            player.sendMessage(Component.text("║  Plot-Storage Scan                    ║", NamedTextColor.GOLD));
+            player.sendMessage(Component.text("╚═══════════════════════════════════════╝", NamedTextColor.GOLD));
+            player.sendMessage(Component.empty());
+            player.sendMessage(Component.text("Scanne Plot: ", NamedTextColor.GRAY)
+                    .append(Component.text(plot.getIdentifier(), NamedTextColor.WHITE)));
+            player.sendMessage(Component.empty());
+
+            // Reflection: PlotStorageProvider holen
+            java.lang.reflect.Method getStorageProvider = plotsModule.getClass().getMethod("getStorageProvider");
+            Object storageProvider = getStorageProvider.invoke(plotsModule);
+
+            if (storageProvider == null) {
+                player.sendMessage(Component.text("✗ Storage-System nicht verfügbar!", NamedTextColor.RED));
+                return;
+            }
+
+            // Reflection: PlotStorage holen
+            java.lang.reflect.Method getPlotStorage = storageProvider.getClass().getMethod(
+                    "getPlotStorage",
+                    de.fallenstar.core.provider.Plot.class
+            );
+            Object plotStorage = getPlotStorage.invoke(storageProvider, plot);
+
+            // Reflection: ChestScanService holen
+            java.lang.reflect.Method getScanService = plotsModule.getClass().getMethod("getScanService");
+            Object scanService = getScanService.invoke(plotsModule);
+
+            if (scanService == null) {
+                player.sendMessage(Component.text("✗ Scan-Service nicht verfügbar!", NamedTextColor.RED));
+                return;
+            }
+
+            // Reflection: scanPlot() aufrufen
+            java.lang.reflect.Method scanPlot = scanService.getClass().getMethod(
+                    "scanPlot",
+                    de.fallenstar.core.provider.Plot.class,
+                    plotStorage.getClass()
+            );
+
+            player.sendMessage(Component.text("Scanne Truhen...", NamedTextColor.YELLOW));
+
+            Integer chestCount = (Integer) scanPlot.invoke(scanService, plot, plotStorage);
+
+            player.sendMessage(Component.text("✓ Scan abgeschlossen!", NamedTextColor.GREEN));
+            player.sendMessage(Component.text("  Gefundene Truhen: ", NamedTextColor.GRAY)
+                    .append(Component.text(String.valueOf(chestCount), NamedTextColor.WHITE)));
+            player.sendMessage(Component.empty());
+            player.sendMessage(Component.text("Verwende ", NamedTextColor.GRAY)
+                    .append(Component.text("/fscore admin plots storage view", NamedTextColor.GOLD))
+                    .append(Component.text(" zum Anzeigen", NamedTextColor.GRAY)));
+
+        } catch (Exception e) {
+            player.sendMessage(Component.text("✗ Fehler beim Scannen: " + e.getMessage(), NamedTextColor.RED));
+            plugin.getLogger().warning("Error in /fscore admin plots storage scan: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     /**

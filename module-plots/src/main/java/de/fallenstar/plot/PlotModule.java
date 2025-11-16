@@ -339,4 +339,24 @@ public class PlotModule extends JavaPlugin implements Listener {
     public PlotStorageProvider getStorageProvider() {
         return storageProvider;
     }
+
+    /**
+     * Gibt den ChestScanService zurück (über StorageManager).
+     *
+     * @return ChestScanService oder null
+     */
+    public de.fallenstar.plot.storage.manager.ChestScanService getScanService() {
+        if (storageManager != null) {
+            // Reflection: hole scanService vom StorageManager
+            try {
+                java.lang.reflect.Field scanServiceField = storageManager.getClass().getDeclaredField("scanService");
+                scanServiceField.setAccessible(true);
+                return (de.fallenstar.plot.storage.manager.ChestScanService) scanServiceField.get(storageManager);
+            } catch (Exception e) {
+                getLogger().warning("Fehler beim Abrufen des ChestScanService: " + e.getMessage());
+                return null;
+            }
+        }
+        return null;
+    }
 }
