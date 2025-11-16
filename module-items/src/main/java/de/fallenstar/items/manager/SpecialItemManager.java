@@ -198,7 +198,12 @@ public class SpecialItemManager {
 
         // Prüfe MMOItem
         if (mmoItemsProvider != null) {
-            return mmoItemsProvider.isCustomItem(item);
+            try {
+                return mmoItemsProvider.isCustomItem(item);
+            } catch (Exception e) {
+                // MMOItems-Fehler ignorieren (Graceful Degradation)
+                return false;
+            }
         }
 
         return false;
@@ -223,16 +228,23 @@ public class SpecialItemManager {
         }
 
         // Prüfe MMOItem
-        if (mmoItemsProvider != null && mmoItemsProvider.isCustomItem(item)) {
-            return mmoItemsProvider.getItemId(item).map(mmoId -> {
-                // Finde SpecialItem-Definition mit dieser MMO-ID
-                for (SpecialItemDefinition def : registeredItems.values()) {
-                    if (def.isMMOItem() && mmoId.equals(def.mmoId())) {
-                        return def.id();
-                    }
+        if (mmoItemsProvider != null) {
+            try {
+                if (mmoItemsProvider.isCustomItem(item)) {
+                    return mmoItemsProvider.getItemId(item).map(mmoId -> {
+                        // Finde SpecialItem-Definition mit dieser MMO-ID
+                        for (SpecialItemDefinition def : registeredItems.values()) {
+                            if (def.isMMOItem() && mmoId.equals(def.mmoId())) {
+                                return def.id();
+                            }
+                        }
+                        return "mmoitems:" + mmoId; // Fallback: MMOItems-ID direkt
+                    });
                 }
-                return "mmoitems:" + mmoId; // Fallback: MMOItems-ID direkt
-            });
+            } catch (Exception e) {
+                // MMOItems-Fehler ignorieren (Graceful Degradation)
+                logger.fine("Fehler beim Abrufen der MMOItem-ID: " + e.getMessage());
+            }
         }
 
         return Optional.empty();
