@@ -266,14 +266,19 @@ public class AdminCommand {
             player.sendMessage(Component.text("║  Plot-Informationen                   ║", NamedTextColor.AQUA));
             player.sendMessage(Component.text("╚═══════════════════════════════════════╝", NamedTextColor.AQUA));
             player.sendMessage(Component.empty());
-            player.sendMessage(Component.text("  Typ: ", NamedTextColor.GRAY)
-                    .append(Component.text(plot.type(), NamedTextColor.WHITE)));
-            player.sendMessage(Component.text("  Besitzer: ", NamedTextColor.GRAY)
-                    .append(Component.text(plot.owner() != null ? plot.owner() : "Keiner", NamedTextColor.WHITE)));
-            player.sendMessage(Component.text("  Town: ", NamedTextColor.GRAY)
-                    .append(Component.text(plot.townName() != null ? plot.townName() : "Keine", NamedTextColor.WHITE)));
+            player.sendMessage(Component.text("  ID: ", NamedTextColor.GRAY)
+                    .append(Component.text(plot.getUuid().toString().substring(0, 8) + "...", NamedTextColor.WHITE)));
+            player.sendMessage(Component.text("  Identifier: ", NamedTextColor.GRAY)
+                    .append(Component.text(plot.getIdentifier(), NamedTextColor.WHITE)));
             player.sendMessage(Component.text("  Koordinaten: ", NamedTextColor.GRAY)
-                    .append(Component.text(plot.x() + ", " + plot.z(), NamedTextColor.WHITE)));
+                    .append(Component.text(plot.getLocation().getBlockX() + ", " +
+                            plot.getLocation().getBlockY() + ", " +
+                            plot.getLocation().getBlockZ(), NamedTextColor.WHITE)));
+            player.sendMessage(Component.empty());
+            player.sendMessage(Component.text("  Hinweis:", NamedTextColor.YELLOW)
+                    .append(Component.text(" Verwende ", NamedTextColor.GRAY))
+                    .append(Component.text("/plot info", NamedTextColor.GOLD))
+                    .append(Component.text(" für detaillierte Infos", NamedTextColor.GRAY)));
 
         } catch (Exception e) {
             player.sendMessage(Component.text("✗ Fehler beim Abrufen der Plot-Info: " + e.getMessage(), NamedTextColor.RED));
