@@ -3,14 +3,16 @@ package de.fallenstar.items.provider;
 import de.fallenstar.core.exception.ProviderFunctionalityNotFoundException;
 import de.fallenstar.core.provider.ItemProvider;
 import io.lumine.mythic.lib.api.item.NBTItem;
-import net.Indyuce.mmoitems.MMOItems;
 import net.Indyuce.mmoitems.api.Type;
 import net.Indyuce.mmoitems.api.item.mmoitem.MMOItem;
 import net.Indyuce.mmoitems.api.item.template.MMOItemTemplate;
 import net.Indyuce.mmoitems.stat.data.DoubleData;
 import org.bukkit.Bukkit;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.Plugin;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -32,6 +34,9 @@ import java.util.stream.Collectors;
 public class MMOItemsItemProvider implements ItemProvider {
 
     private final Logger logger;
+    private Object mmoItemsInstance; // MMOItems plugin instance (via reflection)
+    private Object typeManager;      // TypeManager instance
+    private Object templateManager;  // TemplateManager instance
 
     // Cache für Kategorien (wird bei Bedarf aktualisiert)
     private Set<String> cachedCategories;
@@ -44,6 +49,92 @@ public class MMOItemsItemProvider implements ItemProvider {
         this.cachedCategories = new HashSet<>();
         this.categoryItemsCache = new HashMap<>();
         this.lastCacheUpdate = 0;
+        initializeReflection();
+    }
+
+    /**
+     * Initialisiert Reflection-Zugriff auf MMOItems API.
+     * Vermeidet direkte Klassenreferenzen auf MMOItems (wegen MMOPlugin-Dependency).
+     */
+    private void initializeReflection() {
+        try {
+            Plugin plugin = Bukkit.getPluginManager().getPlugin("MMOItems");
+            if (plugin == null) {
+                logger.warning("MMOItems plugin not found!");
+                return;
+            }
+
+            // Hole statisches 'plugin' Feld via Reflection
+            Class<?> mmoItemsClass = plugin.getClass();
+            Field pluginField = mmoItemsClass.getField("plugin");
+            mmoItemsInstance = pluginField.get(null);
+
+            // Hole TypeManager
+            Method getTypesMethod = mmoItemsInstance.getClass().getMethod("getTypes");
+            typeManager = getTypesMethod.invoke(mmoItemsInstance);
+
+            // Hole TemplateManager
+            Method getTemplatesMethod = mmoItemsInstance.getClass().getMethod("getTemplates");
+            templateManager = getTemplatesMethod.invoke(mmoItemsInstance);
+
+            logger.info("✓ MMOItems API initialized via reflection");
+        } catch (Exception e) {
+            logger.severe("Failed to initialize MMOItems via reflection: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Holt alle Types via Reflection.
+     */
+    @SuppressWarnings("unchecked")
+    private Collection<Type> getAllMMOTypes() {
+        try {
+            Method getAllMethod = typeManager.getClass().getMethod("getAll");
+            return (Collection<Type>) getAllMethod.invoke(typeManager);
+        } catch (Exception e) {
+            logger.warning("Failed to get all types: " + e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+    /**
+     * Holt einen Type nach ID via Reflection.
+     */
+    private Type getType(String typeId) {
+        try {
+            Method getMethod = typeManager.getClass().getMethod("get", String.class);
+            return (Type) getMethod.invoke(typeManager, typeId);
+        } catch (Exception e) {
+            logger.warning("Failed to get type '" + typeId + "': " + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Holt ein Template via Reflection.
+     */
+    private MMOItemTemplate getTemplate(Type type, String itemId) {
+        try {
+            Method getTemplateMethod = templateManager.getClass().getMethod("getTemplate", Type.class, String.class);
+            return (MMOItemTemplate) getTemplateMethod.invoke(templateManager, type, itemId);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * Holt alle Templates eines Types via Reflection.
+     */
+    @SuppressWarnings("unchecked")
+    private Collection<MMOItemTemplate> getTemplates(Type type) {
+        try {
+            Method getTemplatesMethod = templateManager.getClass().getMethod("getTemplates", Type.class);
+            return (Collection<MMOItemTemplate>) getTemplatesMethod.invoke(templateManager, type);
+        } catch (Exception e) {
+            logger.warning("Failed to get templates for type: " + e.getMessage());
+            return Collections.emptyList();
+        }
     }
 
     @Override
@@ -60,7 +151,7 @@ public class MMOItemsItemProvider implements ItemProvider {
     @Override
     public Optional<ItemStack> createItem(String itemId, int amount) throws ProviderFunctionalityNotFoundException {
         // Versuche alle Types durchzugehen
-        for (Type type : MMOItems.plugin.getTypes().getAll()) {
+        for (Type type : getAllMMOTypes()) {
             Optional<ItemStack> result = createItem(type.getId(), itemId, amount);
             if (result.isPresent()) {
                 return result;
@@ -73,13 +164,13 @@ public class MMOItemsItemProvider implements ItemProvider {
     public Optional<ItemStack> createItem(String type, String itemId, int amount)
             throws ProviderFunctionalityNotFoundException {
         try {
-            Type mmoType = MMOItems.plugin.getTypes().get(type);
+            Type mmoType = getType(type);
             if (mmoType == null) {
                 logger.warning("Unknown MMOItems type: " + type);
                 return Optional.empty();
             }
 
-            MMOItemTemplate template = MMOItems.plugin.getTemplates().getTemplate(mmoType, itemId);
+            MMOItemTemplate template = getTemplate(mmoType, itemId);
             if (template == null) {
                 return Optional.empty();
             }
@@ -129,8 +220,8 @@ public class MMOItemsItemProvider implements ItemProvider {
     @Override
     public Optional<String> getItemCategory(String itemId) throws ProviderFunctionalityNotFoundException {
         // Suche Item und verwende Type als Kategorie (getTags() entfernt in 6.10+)
-        for (Type type : MMOItems.plugin.getTypes().getAll()) {
-            MMOItemTemplate template = MMOItems.plugin.getTemplates().getTemplate(type, itemId);
+        for (Type type : getAllMMOTypes()) {
+            MMOItemTemplate template = getTemplate(type, itemId);
             if (template != null) {
                 // Verwende Type-Namen als Kategorie
                 return Optional.of(type.getName().toUpperCase());
@@ -142,8 +233,8 @@ public class MMOItemsItemProvider implements ItemProvider {
     @Override
     public Optional<Double> getSuggestedPrice(String itemId) throws ProviderFunctionalityNotFoundException {
         // Suche Item und berechne Preis basierend auf Stats
-        for (Type type : MMOItems.plugin.getTypes().getAll()) {
-            MMOItemTemplate template = MMOItems.plugin.getTemplates().getTemplate(type, itemId);
+        for (Type type : getAllMMOTypes()) {
+            MMOItemTemplate template = getTemplate(type, itemId);
             if (template != null) {
                 return Optional.of(calculateSuggestedPrice(template, type));
             }
@@ -165,11 +256,11 @@ public class MMOItemsItemProvider implements ItemProvider {
         categoryItemsCache.clear();
 
         // Durchlaufe alle Items und sammle Kategorien (Type-basiert, getTags() entfernt in 6.10+)
-        for (Type type : MMOItems.plugin.getTypes().getAll()) {
+        for (Type type : getAllMMOTypes()) {
             String category = type.getName().toUpperCase();
             cachedCategories.add(category);
 
-            for (MMOItemTemplate template : MMOItems.plugin.getTemplates().getTemplates(type)) {
+            for (MMOItemTemplate template : getTemplates(type)) {
                 try {
                     categoryItemsCache
                         .computeIfAbsent(category, k -> new HashSet<>())
@@ -257,8 +348,8 @@ public class MMOItemsItemProvider implements ItemProvider {
 
     @Override
     public Optional<String> getItemType(String itemId) throws ProviderFunctionalityNotFoundException {
-        for (Type type : MMOItems.plugin.getTypes().getAll()) {
-            if (MMOItems.plugin.getTemplates().getTemplate(type, itemId) != null) {
+        for (Type type : getAllMMOTypes()) {
+            if (getTemplate(type, itemId) != null) {
                 return Optional.of(type.getId());
             }
         }
@@ -277,19 +368,19 @@ public class MMOItemsItemProvider implements ItemProvider {
 
     @Override
     public List<String> getAllTypes() throws ProviderFunctionalityNotFoundException {
-        return MMOItems.plugin.getTypes().getAll().stream()
+        return getAllMMOTypes().stream()
             .map(Type::getId)
             .collect(Collectors.toList());
     }
 
     @Override
     public List<String> getItemsByType(String type) throws ProviderFunctionalityNotFoundException {
-        Type mmoType = MMOItems.plugin.getTypes().get(type);
+        Type mmoType = getType(type);
         if (mmoType == null) {
             return Collections.emptyList();
         }
 
-        return MMOItems.plugin.getTemplates().getTemplates(mmoType).stream()
+        return getTemplates(mmoType).stream()
             .map(MMOItemTemplate::getId)
             .collect(Collectors.toList());
     }
@@ -297,7 +388,7 @@ public class MMOItemsItemProvider implements ItemProvider {
     @Override
     public List<String> getAllItemIds() throws ProviderFunctionalityNotFoundException {
         List<String> allIds = new ArrayList<>();
-        for (Type type : MMOItems.plugin.getTypes().getAll()) {
+        for (Type type : getAllMMOTypes()) {
             allIds.addAll(getItemsByType(type.getId()));
         }
         return allIds;
