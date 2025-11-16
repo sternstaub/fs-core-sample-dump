@@ -151,9 +151,6 @@ public class PlotModule extends JavaPlugin implements Listener {
     private void initializeModule() {
         getLogger().info("Initialisiere Plot-System...");
 
-        // Registriere Custom-Plot-Typen in Towny
-        registerCustomPlotTypes();
-
         // Registriere Commands
         registerCommands();
 
@@ -166,37 +163,34 @@ public class PlotModule extends JavaPlugin implements Listener {
     }
 
     /**
-     * Registriert Custom-Plot-Typen in Towny.
+     * Event-Handler für Towny TownBlockTypeRegisterEvent.
+     * Registriert den Custom-Plot-Typ "botschaft".
      */
-    private void registerCustomPlotTypes() {
-        try {
-            // Prüfe ob Towny verfügbar ist
-            if (getServer().getPluginManager().getPlugin("Towny") == null &&
-                getServer().getPluginManager().getPlugin("TownyAdvanced") == null) {
-                getLogger().info("○ Towny nicht gefunden - Custom-Plot-Typen nicht registriert");
-                return;
-            }
+    @EventHandler
+    public void onTownBlockTypeRegister(org.bukkit.event.Event event) {
+        // Prüfe ob es das richtige Event ist (via Reflection für optionale Dependency)
+        if (!event.getClass().getName().equals("com.palmergames.bukkit.towny.event.TownBlockTypeRegisterEvent")) {
+            return;
+        }
 
-            // Registriere "botschaft" Plot-Typ über TownBlockTypeHandler
-            Class<?> townBlockTypeHandlerClass = Class.forName("com.palmergames.bukkit.towny.object.TownBlockTypeHandler");
+        try {
+            // Erstelle TownBlockType für "botschaft"
             Class<?> townBlockTypeClass = Class.forName("com.palmergames.bukkit.towny.object.TownBlockType");
 
-            // TownBlockTypeHandler.registerCustomType(name, displayName)
-            townBlockTypeHandlerClass.getMethod("registerCustomType", String.class, String.class)
-                .invoke(null, "botschaft", "Botschaft");
+            // TownBlockType(name, formattedName)
+            Object botschaftType = townBlockTypeClass
+                .getConstructor(String.class, String.class)
+                .newInstance("botschaft", "Botschaft");
+
+            // Registriere über TownBlockTypeHandler.registerType()
+            Class<?> handlerClass = Class.forName("com.palmergames.bukkit.towny.object.TownBlockTypeHandler");
+            handlerClass.getMethod("registerType", townBlockTypeClass)
+                .invoke(null, botschaftType);
 
             getLogger().info("✓ Custom-Plot-Typ 'botschaft' in Towny registriert");
 
-        } catch (ClassNotFoundException e) {
-            getLogger().warning("✗ Towny-Klassen nicht gefunden - Custom-Plot-Typen nicht registriert");
-            getLogger().warning("  Klasse nicht gefunden: " + e.getMessage());
-        } catch (NoSuchMethodException e) {
-            getLogger().warning("✗ TownBlockTypeHandler.registerCustomType() Methode nicht gefunden");
-            getLogger().warning("  Methode: " + e.getMessage());
-            getLogger().warning("  Verwende stattdessen Standard-Typen wie 'embassy'");
         } catch (Exception e) {
-            getLogger().warning("✗ Fehler beim Registrieren der Custom-Plot-Typen: " + e.getClass().getSimpleName());
-            getLogger().warning("  " + e.getMessage());
+            getLogger().warning("✗ Fehler beim Registrieren von 'botschaft': " + e.getMessage());
         }
     }
 
