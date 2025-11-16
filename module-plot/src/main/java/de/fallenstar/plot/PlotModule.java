@@ -36,10 +36,12 @@ public class PlotModule extends JavaPlugin implements Listener {
     private ProviderRegistry providers;
     private PlotTypeRegistry plotTypeRegistry;
     private FallenStarCore corePlugin;
+    private org.bukkit.plugin.Plugin storagePlugin;
 
     private boolean plotSystemEnabled = false;
     private boolean townSystemEnabled = false;
     private boolean npcSystemEnabled = false;
+    private boolean storageSystemEnabled = false;
 
     @Override
     public void onEnable() {
@@ -84,6 +86,9 @@ public class PlotModule extends JavaPlugin implements Listener {
 
         // OPTIONALE Features prüfen
         checkOptionalFeatures();
+
+        // Storage-Plugin holen
+        checkStoragePlugin();
 
         // Module vollständig initialisieren
         initializeModule();
@@ -146,6 +151,20 @@ public class PlotModule extends JavaPlugin implements Listener {
     }
 
     /**
+     * Prüft ob Storage-Plugin verfügbar ist.
+     */
+    private void checkStoragePlugin() {
+        storagePlugin = getServer().getPluginManager().getPlugin("FallenStar-Storage");
+        if (storagePlugin != null && storagePlugin.isEnabled()) {
+            storageSystemEnabled = true;
+            getLogger().info("✓ Storage-Plugin gefunden - /plot storage verfügbar");
+        } else {
+            storageSystemEnabled = false;
+            getLogger().info("○ Storage-Plugin nicht gefunden - /plot storage deaktiviert");
+        }
+    }
+
+    /**
      * Initialisiert das Modul mit aktivierten Features.
      */
     private void initializeModule() {
@@ -159,6 +178,7 @@ public class PlotModule extends JavaPlugin implements Listener {
         getLogger().info("  Plot-System: " + (plotSystemEnabled ? "enabled" : "disabled"));
         getLogger().info("  Town-System: " + (townSystemEnabled ? "enabled" : "disabled"));
         getLogger().info("  NPC-System: " + (npcSystemEnabled ? "enabled" : "disabled"));
+        getLogger().info("  Storage-System: " + (storageSystemEnabled ? "enabled" : "disabled"));
         getLogger().info("  Commands: /plot info, /plot storage, /plot npc");
     }
 
@@ -204,7 +224,8 @@ public class PlotModule extends JavaPlugin implements Listener {
             plotTypeRegistry,
             plotSystemEnabled,
             townSystemEnabled,
-            npcSystemEnabled
+            npcSystemEnabled,
+            storageSystemEnabled
         );
 
         getCommand("plot").setExecutor(plotCommand);
@@ -247,5 +268,14 @@ public class PlotModule extends JavaPlugin implements Listener {
      */
     public boolean isNpcSystemEnabled() {
         return npcSystemEnabled;
+    }
+
+    /**
+     * Gibt das Storage-Plugin zurück.
+     *
+     * @return Storage-Plugin oder null
+     */
+    public org.bukkit.plugin.Plugin getStoragePlugin() {
+        return storagePlugin;
     }
 }

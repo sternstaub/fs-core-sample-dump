@@ -36,6 +36,7 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
     private final boolean plotSystemEnabled;
     private final boolean townSystemEnabled;
     private final boolean npcSystemEnabled;
+    private final boolean storageSystemEnabled;
 
     // Subcommands
     private final PlotInfoCommand infoCommand;
@@ -50,6 +51,7 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
      * @param plotSystemEnabled Ob Plot-System aktiviert
      * @param townSystemEnabled Ob Town-System aktiviert
      * @param npcSystemEnabled Ob NPC-System aktiviert
+     * @param storageSystemEnabled Ob Storage-System aktiviert
      */
     public PlotCommand(
             PlotModule plugin,
@@ -57,7 +59,8 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
             PlotTypeRegistry plotTypeRegistry,
             boolean plotSystemEnabled,
             boolean townSystemEnabled,
-            boolean npcSystemEnabled
+            boolean npcSystemEnabled,
+            boolean storageSystemEnabled
     ) {
         this.plugin = plugin;
         this.providers = providers;
@@ -65,6 +68,7 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
         this.plotSystemEnabled = plotSystemEnabled;
         this.townSystemEnabled = townSystemEnabled;
         this.npcSystemEnabled = npcSystemEnabled;
+        this.storageSystemEnabled = storageSystemEnabled;
 
         // Subcommands initialisieren
         this.infoCommand = new PlotInfoCommand(providers, plotTypeRegistry);
@@ -97,9 +101,11 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
             }
 
             case "storage" -> {
-                // TODO: Storage-Commands aus module-storage integrieren
-                player.sendMessage("§eStorage-Commands werden noch integriert...");
-                return true;
+                if (!storageSystemEnabled) {
+                    player.sendMessage("§cStorage-System ist nicht verfügbar (Storage-Plugin nicht geladen)!");
+                    return true;
+                }
+                return delegateToStorageCommand(player, subArgs);
             }
 
             case "npc" -> {
@@ -124,6 +130,53 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
     }
 
     /**
+     * Delegiert Storage-Commands an das Storage-Plugin.
+     *
+     * @param player Der Spieler
+     * @param args Storage-Subcommand Args
+     * @return true wenn erfolgreich
+     */
+    private boolean delegateToStorageCommand(Player player, String[] args) {
+        if (args.length == 0) {
+            player.sendMessage("§cBitte wähle einen Storage-Subcommand:");
+            player.sendMessage("§e/plot storage list §7- Zeigt alle Materialien");
+            player.sendMessage("§e/plot storage info <material> §7- Zeigt Material-Details");
+            player.sendMessage("§e/plot storage setreceiver §7- Setzt Empfangskiste");
+            return true;
+        }
+
+        String storageSubcmd = args[0].toLowerCase();
+        org.bukkit.plugin.Plugin storagePlugin = plugin.getStoragePlugin();
+
+        if (storagePlugin == null) {
+            player.sendMessage("§cStorage-Plugin nicht gefunden!");
+            return true;
+        }
+
+        // Hole den passenden Command-Executor vom Storage-Plugin
+        org.bukkit.command.PluginCommand pluginCommand = null;
+
+        switch (storageSubcmd) {
+            case "list" -> pluginCommand = storagePlugin.getCommand("storage-list");
+            case "info" -> pluginCommand = storagePlugin.getCommand("storage-info");
+            case "setreceiver" -> pluginCommand = storagePlugin.getCommand("storage-setreceiver");
+            default -> {
+                player.sendMessage("§cUnbekannter Storage-Subcommand: " + storageSubcmd);
+                return true;
+            }
+        }
+
+        if (pluginCommand == null || pluginCommand.getExecutor() == null) {
+            player.sendMessage("§cStorage-Command nicht verfügbar!");
+            return true;
+        }
+
+        // Delegiere an Storage-Command
+        String[] storageArgs = Arrays.copyOfRange(args, 1, args.length);
+        return pluginCommand.getExecutor().onCommand(player, pluginCommand, storageSubcmd, storageArgs);
+    }
+
+    /**
      * Sendet Hilfe-Nachricht an Spieler.
      *
      * @param player Der Spieler
@@ -131,7 +184,14 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
     private void sendHelp(Player player) {
         player.sendMessage("§8§m---------§r §6Plot Commands §8§m---------");
         player.sendMessage("§e/plot info §7- Zeigt Plot-Informationen");
-        player.sendMessage("§e/plot storage view §7- Zeigt Storage-Übersicht");
+
+        if (storageSystemEnabled) {
+            player.sendMessage("§e/plot storage list §7- Zeigt Storage-Übersicht");
+            player.sendMessage("§e/plot storage info <material> §7- Material-Details");
+            player.sendMessage("§e/plot storage setreceiver §7- Empfangskiste setzen");
+        } else {
+            player.sendMessage("§7/plot storage §8[deaktiviert - Storage-Plugin fehlt]");
+        }
 
         if (npcSystemEnabled) {
             player.sendMessage("§e/plot npc spawn §7- Spawnt NPC auf Plot");
@@ -153,7 +213,9 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
         if (args.length == 1) {
             // Hauptcommands
             completions.add("info");
-            completions.add("storage");
+            if (storageSystemEnabled) {
+                completions.add("storage");
+            }
             if (npcSystemEnabled) {
                 completions.add("npc");
             }
@@ -165,9 +227,11 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
 
             switch (subCommand) {
                 case "storage" -> {
-                    completions.add("view");
-                    completions.add("list");
-                    completions.add("setreceiver");
+                    if (storageSystemEnabled) {
+                        completions.add("list");
+                        completions.add("info");
+                        completions.add("setreceiver");
+                    }
                 }
                 case "npc" -> {
                     if (npcSystemEnabled) {

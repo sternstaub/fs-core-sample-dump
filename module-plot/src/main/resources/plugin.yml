@@ -7,7 +7,7 @@ description: Plot management and NPC spawning system
 
 # Abhängigkeiten
 depend: [FallenStar-Core]
-softdepend: [Towny, Citizens]
+softdepend: [Towny, Citizens, FallenStar-Storage]
 
 # Commands
 commands:
