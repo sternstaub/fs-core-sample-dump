@@ -627,6 +627,287 @@ public class CraftingManager {
 
 ---
 
+## Spezial-Items für System-Funktionen
+
+Das Items-Modul verwaltet nicht nur normale Custom-Items, sondern auch **Spezial-Items** für System-Funktionen:
+
+### 1. **Münz-Items** (Economy-Integration)
+
+Münzen werden als Custom-Items erstellt und im Economy-Modul verwendet:
+
+**MMOItems-Typ:** `CURRENCY` oder `MATERIAL`
+
+**Kategorien:**
+- `CURRENCY_COIN` - Standard-Münzen
+- `CURRENCY_SPECIAL` - Spezial-Währungen
+
+**Beispiel-Items:**
+```java
+// Bronze-Münze (Typ: MATERIAL, ID: BRONZE_COIN)
+items.createItem("MATERIAL", "BRONZE_COIN", 1)
+
+// Silber-Münze
+items.createItem("MATERIAL", "SILVER_COIN", 1)
+
+// Gold-Münze
+items.createItem("MATERIAL", "GOLD_COIN", 1)
+
+// Edelstein (Spezial-Währung)
+items.createItem("MATERIAL", "EMERALD_GEM", 1)
+```
+
+**Economy-Modul Integration:**
+```java
+// Economy-Modul holt Münz-Items vom ItemProvider
+ItemStack coins = itemProvider.createItem("MATERIAL", "GOLD_COIN", amount).orElse(null);
+player.getInventory().addItem(coins);
+```
+
+**Kategorisierung:**
+```java
+// Alle Münz-Items abrufen
+List<String> currencyItems = itemProvider.getItemsByCategory("CURRENCY_COIN");
+// → ["BRONZE_COIN", "SILVER_COIN", "GOLD_COIN"]
+```
+
+---
+
+### 2. **UI-Button-Items** (UI-Modul Integration)
+
+Items die als anklickbare Buttons in UIs verwendet werden:
+
+**MMOItems-Typ:** `MISC` oder `ACCESSORY`
+
+**Kategorien:**
+- `UI_BUTTON` - Allgemeine UI-Buttons
+- `UI_NAVIGATION` - Navigations-Buttons
+- `UI_ACTION` - Aktions-Buttons
+
+**Beispiel-Items:**
+```java
+// Weiter-Button (Pfeil nach rechts)
+items.createItem("MISC", "UI_BUTTON_NEXT", 1)
+
+// Zurück-Button (Pfeil nach links)
+items.createItem("MISC", "UI_BUTTON_BACK", 1)
+
+// Bestätigen-Button (grüner Haken)
+items.createItem("MISC", "UI_BUTTON_CONFIRM", 1)
+
+// Abbrechen-Button (rotes X)
+items.createItem("MISC", "UI_BUTTON_CANCEL", 1)
+
+// Info-Button (Buch)
+items.createItem("MISC", "UI_BUTTON_INFO", 1)
+
+// Botschafts-Icon (Fahne)
+items.createItem("MISC", "UI_ICON_EMBASSY", 1)
+
+// Händler-Icon (Smaragd)
+items.createItem("MISC", "UI_ICON_TRADER", 1)
+```
+
+**UI-Modul Integration:**
+```java
+public class AmbassadorUI extends SmallChestUI {
+
+    private final ItemProvider itemProvider;
+
+    public AmbassadorUI(ItemProvider itemProvider) {
+        super("§6Botschafter");
+        this.itemProvider = itemProvider;
+
+        // Verwende UI-Button-Item als Icon
+        ItemStack embassyIcon = itemProvider.createItem("MISC", "UI_ICON_EMBASSY", 1)
+            .orElse(new ItemStack(Material.WHITE_BANNER));
+
+        setItem(13, embassyIcon, player -> {
+            // Botschafts-Aktion
+        });
+
+        // Zurück-Button
+        ItemStack backButton = itemProvider.createItem("MISC", "UI_BUTTON_BACK", 1)
+            .orElse(new ItemStack(Material.ARROW));
+
+        setItem(18, backButton, player -> close(player));
+    }
+}
+```
+
+---
+
+### 3. **Spezial-Item-Verwaltung**
+
+**Manager-Klasse für Spezial-Items:**
+
+```java
+public class SpecialItemManager {
+
+    private final ItemProvider itemProvider;
+    private final Map<String, String> currencyItemIds;
+    private final Map<String, String> uiButtonItemIds;
+
+    public SpecialItemManager(ItemProvider itemProvider) {
+        this.itemProvider = itemProvider;
+        this.currencyItemIds = new HashMap<>();
+        this.uiButtonItemIds = new HashMap<>();
+
+        // Initialisiere Münz-Items
+        initializeCurrencyItems();
+
+        // Initialisiere UI-Buttons
+        initializeUIButtons();
+    }
+
+    private void initializeCurrencyItems() {
+        currencyItemIds.put("bronze", "BRONZE_COIN");
+        currencyItemIds.put("silver", "SILVER_COIN");
+        currencyItemIds.put("gold", "GOLD_COIN");
+    }
+
+    private void initializeUIButtons() {
+        uiButtonItemIds.put("next", "UI_BUTTON_NEXT");
+        uiButtonItemIds.put("back", "UI_BUTTON_BACK");
+        uiButtonItemIds.put("confirm", "UI_BUTTON_CONFIRM");
+        uiButtonItemIds.put("cancel", "UI_BUTTON_CANCEL");
+    }
+
+    /**
+     * Erstellt ein Münz-Item.
+     */
+    public Optional<ItemStack> createCurrency(String currencyType, int amount) {
+        String itemId = currencyItemIds.get(currencyType);
+        if (itemId == null) {
+            return Optional.empty();
+        }
+        return itemProvider.createItem("MATERIAL", itemId, amount);
+    }
+
+    /**
+     * Erstellt ein UI-Button-Item.
+     */
+    public Optional<ItemStack> createUIButton(String buttonType) {
+        String itemId = uiButtonItemIds.get(buttonType);
+        if (itemId == null) {
+            return Optional.empty();
+        }
+        return itemProvider.createItem("MISC", itemId, 1);
+    }
+
+    /**
+     * Prüft ob ein ItemStack ein Münz-Item ist.
+     */
+    public boolean isCurrencyItem(ItemStack itemStack) {
+        if (!itemProvider.isCustomItem(itemStack)) {
+            return false;
+        }
+
+        Optional<String> itemId = itemProvider.getItemId(itemStack);
+        return itemId.isPresent() && currencyItemIds.containsValue(itemId.get());
+    }
+
+    /**
+     * Gibt den Währungstyp eines Münz-Items zurück.
+     */
+    public Optional<String> getCurrencyType(ItemStack itemStack) {
+        Optional<String> itemId = itemProvider.getItemId(itemStack);
+        if (itemId.isEmpty()) {
+            return Optional.empty();
+        }
+
+        return currencyItemIds.entrySet().stream()
+            .filter(entry -> entry.getValue().equals(itemId.get()))
+            .map(Map.Entry::getKey)
+            .findFirst();
+    }
+}
+```
+
+---
+
+### 4. **MMOItems-Kategorien für Spezial-Items**
+
+**In MMOItems konfigurieren:**
+
+```yaml
+# MMOItems/item/MATERIAL.yml
+BRONZE_COIN:
+  material: GOLD_NUGGET
+  display-name: '&6Bronze-Münze'
+  lore:
+  - '&7Grundwährung des Reiches'
+  - '&7Wert: 1'
+  custom-model-data: 1001
+  item-particles:
+    type: SIMPLE
+    particle: GOLD
+  disable-crafting: true
+  disable-smelting: true
+  tier: COMMON
+  # WICHTIG: Kategorie für Spezial-Items
+  tags:
+  - CURRENCY_COIN
+  - SYSTEM_ITEM
+
+SILVER_COIN:
+  material: IRON_INGOT
+  display-name: '&fSilber-Münze'
+  lore:
+  - '&7Handelswährung'
+  - '&7Wert: 10 Bronze'
+  custom-model-data: 1002
+  disable-crafting: true
+  disable-smelting: true
+  tier: UNCOMMON
+  tags:
+  - CURRENCY_COIN
+  - SYSTEM_ITEM
+
+# MMOItems/item/MISC.yml
+UI_BUTTON_NEXT:
+  material: ARROW
+  display-name: '&aWeiter →'
+  lore:
+  - '&7Zur nächsten Seite'
+  custom-model-data: 2001
+  hide-enchants: true
+  disable-interaction: true
+  tags:
+  - UI_BUTTON
+  - UI_NAVIGATION
+  - SYSTEM_ITEM
+```
+
+---
+
+### 5. **Spezial-Item-Commands**
+
+```java
+// In ItemsCommand.java
+public void handleCreateCurrency(CommandSender sender, String[] args) {
+    // /fsitems currency <player> <type> <amount>
+    if (args.length < 4) {
+        sender.sendMessage("§cUsage: /fsitems currency <player> <type> <amount>");
+        return;
+    }
+
+    Player target = Bukkit.getPlayer(args[1]);
+    String currencyType = args[2];
+    int amount = Integer.parseInt(args[3]);
+
+    Optional<ItemStack> currency = specialItemManager.createCurrency(currencyType, amount);
+
+    if (currency.isPresent()) {
+        target.getInventory().addItem(currency.get());
+        sender.sendMessage("§a" + amount + "x " + currencyType + " Münzen an " + target.getName() + " gegeben");
+    } else {
+        sender.sendMessage("§cUnbekannter Währungstyp: " + currencyType);
+    }
+}
+```
+
+---
+
 ## Features des Items-Moduls
 
 ### ✅ Implementierte Features (Sprint 5-6)

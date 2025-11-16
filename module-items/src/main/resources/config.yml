@@ -1,0 +1,29 @@
+# FallenStar Items Module Configuration
+
+# Currency items configuration
+currency:
+  bronze:
+    item-id: BRONZE_COIN
+    type: MATERIAL
+    value: 1
+  silver:
+    item-id: SILVER_COIN
+    type: MATERIAL
+    value: 10
+  gold:
+    item-id: GOLD_COIN
+    type: MATERIAL
+    value: 100
+
+# UI button items configuration
+ui-buttons:
+  next: UI_BUTTON_NEXT
+  back: UI_BUTTON_BACK
+  confirm: UI_BUTTON_CONFIRM
+  cancel: UI_BUTTON_CANCEL
+  info: UI_BUTTON_INFO
+
+# UI icons configuration
+ui-icons:
+  embassy: UI_ICON_EMBASSY
+  trader: UI_ICON_TRADER
