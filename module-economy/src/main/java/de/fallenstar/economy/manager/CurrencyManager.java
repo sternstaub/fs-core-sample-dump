@@ -298,7 +298,7 @@ public class CurrencyManager {
         CurrencyItemSet.InventoryCoinResult coinResult = currency.findCoinsInInventory(
                 player.getInventory(),
                 tier,
-                (stack, itemId) -> itemManager.isSpecialItem(stack, itemId)
+                (stack, itemId) -> itemManager.isSpecialItem(stack)
         );
 
         if (!coinResult.hasCoins()) {
