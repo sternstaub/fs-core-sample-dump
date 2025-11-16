@@ -371,12 +371,53 @@ public class PlotPriceCommand {
     /**
      * Entfernt eine Session.
      *
+     * @param sessionId Session-ID
+     */
+    public void removeSession(UUID sessionId) {
+        PriceEditorContext context = activeSessions.remove(sessionId);
+        if (context != null) {
+            // Entferne auch Player-Session-Mapping
+            playerSessions.values().removeIf(id -> id.equals(sessionId));
+        }
+    }
+
+    /**
+     * Handhabt Preis-Bestätigung für eine Session.
+     *
      * @param player Der Spieler
      * @param sessionId Session-ID
      */
+    public void handleConfirmPrice(Player player, UUID sessionId) {
+        PriceEditorContext context = activeSessions.get(sessionId);
+        if (context == null) {
+            player.sendMessage("§cSession nicht gefunden!");
+            return;
+        }
+
+        // Speichere Preis
+        boolean success = savePriceToProvider(context);
+
+        if (success) {
+            player.sendMessage("§a✓ Preis gespeichert: " + context.getCurrentPrice() + " Sterne");
+            player.sendMessage("§7Item: §e" + getItemDisplayName(context.getItem()));
+        } else {
+            player.sendMessage("§cFehler beim Speichern des Preises!");
+        }
+
+        // Entferne Session
+        removeSession(sessionId);
+    }
+
+    /**
+     * Entfernt eine Session (alte Signatur für Kompatibilität).
+     *
+     * @param player Der Spieler
+     * @param sessionId Session-ID
+     * @deprecated Nutze stattdessen removeSession(UUID sessionId)
+     */
+    @Deprecated
     private void removeSession(Player player, UUID sessionId) {
-        activeSessions.remove(sessionId);
-        playerSessions.remove(player.getUniqueId());
+        removeSession(sessionId);
     }
 
     /**
@@ -444,6 +485,19 @@ public class PlotPriceCommand {
             e.printStackTrace();
             return false;
         }
+    }
+
+    /**
+     * Gibt den Anzeigenamen eines Items zurück.
+     *
+     * @param item ItemStack
+     * @return Display-Name
+     */
+    private String getItemDisplayName(ItemStack item) {
+        if (item.hasItemMeta() && item.getItemMeta().hasDisplayName()) {
+            return item.getItemMeta().getDisplayName();
+        }
+        return item.getType().name();
     }
 
     /**
