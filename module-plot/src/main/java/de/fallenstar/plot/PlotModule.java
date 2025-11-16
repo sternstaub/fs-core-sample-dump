@@ -177,25 +177,24 @@ public class PlotModule extends JavaPlugin implements Listener {
                 return;
             }
 
-            // Importiere Towny-Klassen
-            Class<?> townyUniverseClass = Class.forName("com.palmergames.bukkit.towny.TownyUniverse");
-            Object townyUniverse = townyUniverseClass.getMethod("getInstance").invoke(null);
-
-            // Hole Registered Status Map
-            Object registeredStatus = townyUniverseClass.getMethod("getRegisteredStatus").invoke(townyUniverse);
-
-            // Registriere "botschaft" Plot-Typ
+            // Registriere "botschaft" Plot-Typ über TownBlockType
             Class<?> townBlockTypeClass = Class.forName("com.palmergames.bukkit.towny.object.TownBlockType");
-            Object botschaftType = townBlockTypeClass.getMethod("register", String.class, String.class)
+
+            // TownBlockType.register(name, displayName) - statische Methode
+            townBlockTypeClass.getMethod("register", String.class, String.class)
                 .invoke(null, "botschaft", "Botschaft");
 
             getLogger().info("✓ Custom-Plot-Typ 'botschaft' in Towny registriert");
 
         } catch (ClassNotFoundException e) {
             getLogger().warning("✗ Towny-Klassen nicht gefunden - Custom-Plot-Typen nicht registriert");
+        } catch (NoSuchMethodException e) {
+            getLogger().warning("✗ TownBlockType.register() Methode nicht gefunden");
+            getLogger().warning("  Towny unterstützt möglicherweise keine Custom-Plot-Typen");
+            getLogger().warning("  Verwende stattdessen Standard-Typen wie 'embassy'");
         } catch (Exception e) {
             getLogger().warning("✗ Fehler beim Registrieren der Custom-Plot-Typen: " + e.getMessage());
-            e.printStackTrace();
+            // Kein Stack-Trace, um Logs sauber zu halten
         }
     }
 
