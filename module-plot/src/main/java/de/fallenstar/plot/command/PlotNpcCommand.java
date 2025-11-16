@@ -128,7 +128,7 @@ public class PlotNpcCommand {
             );
 
             // Registriere NPC für Plot
-            plotTypeRegistry.registerNPCForPlot(plot.getPlotId(), npcId);
+            plotTypeRegistry.registerNPCForPlot(plot.getUuid(), npcId);
 
             player.sendMessage("§aNPC vom Typ '§e" + npcType + "§a' wurde gespawnt!");
             player.sendMessage("§7Das NPC-Modul wird den NPC konfigurieren...");
@@ -164,7 +164,7 @@ public class PlotNpcCommand {
             }
 
             // Hole NPCs auf Plot
-            List<UUID> npcs = plotTypeRegistry.getNPCsForPlot(plot.getPlotId());
+            List<UUID> npcs = plotTypeRegistry.getNPCsForPlot(plot.getUuid());
 
             if (npcs.isEmpty()) {
                 player.sendMessage("§cAuf diesem Plot sind keine NPCs!");
@@ -176,7 +176,7 @@ public class PlotNpcCommand {
             for (UUID npcId : npcs) {
                 try {
                     if (npcProvider.removeNPC(npcId)) {
-                        plotTypeRegistry.unregisterNPCForPlot(plot.getPlotId(), npcId);
+                        plotTypeRegistry.unregisterNPCForPlot(plot.getUuid(), npcId);
                         removed++;
                     }
                 } catch (Exception e) {
@@ -206,7 +206,7 @@ public class PlotNpcCommand {
      */
     private boolean handleList(Player player, Plot plot) {
         // Hole NPCs auf Plot
-        List<UUID> npcs = plotTypeRegistry.getNPCsForPlot(plot.getPlotId());
+        List<UUID> npcs = plotTypeRegistry.getNPCsForPlot(plot.getUuid());
 
         if (npcs.isEmpty()) {
             player.sendMessage("§7Auf diesem Plot sind keine NPCs.");

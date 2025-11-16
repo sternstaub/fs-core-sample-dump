@@ -61,7 +61,7 @@ public class PlotInfoCommand {
             boolean hasAdmin = plotProvider.hasAdminRights(player, plot);
 
             // NPCs auf Plot
-            List<UUID> npcs = plotTypeRegistry.getNPCsForPlot(plot.getPlotId());
+            List<UUID> npcs = plotTypeRegistry.getNPCsForPlot(plot.getUuid());
 
             // Informationen anzeigen
             player.sendMessage("§8§m---------§r §6Plot Info §8§m---------");
