@@ -139,6 +139,14 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
                 return npcCommand.execute(player, subArgs);
             }
 
+            case "gui" -> {
+                // ROADMAP: GUI-Integration für Plot-Verwaltung
+                // Wird später mit UI-Modul implementiert (ohne harte Abhängigkeit)
+                player.sendMessage("§e/plot gui §7ist noch nicht implementiert!");
+                player.sendMessage("§7Roadmap: UI-basierte Plot-Verwaltung (zukünftige Sprints)");
+                return true;
+            }
+
             case "help" -> {
                 sendHelp(player);
                 return true;
@@ -237,6 +245,9 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
             player.sendMessage("§7/plot npc §8[deaktiviert - kein NPC-Plugin]");
         }
 
+        // GUI-Command (Roadmap)
+        player.sendMessage("§7/plot gui §8[Roadmap - zukünftige Sprints]");
+
         player.sendMessage("§8§m-----------------------------");
     }
 
@@ -255,6 +266,7 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
             if (npcSystemEnabled) {
                 completions.add("npc");
             }
+            completions.add("gui");  // Roadmap - zukünftige Implementierung
             completions.add("help");
 
         } else if (args.length == 2) {
