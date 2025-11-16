@@ -51,13 +51,24 @@ public class ItemBrowserUI extends LargeChestUI {
         clearItems();
         setTitle("§6Item Browser - Kategorien");
 
-        List<String> categories = itemProvider.getCategories();
+        List<String> categories;
+        try {
+            categories = itemProvider.getCategories();
+        } catch (Exception e) {
+            player.sendMessage(Component.text("✗ Fehler beim Laden der Kategorien", NamedTextColor.RED));
+            return;
+        }
 
         int slot = 0;
         for (String category : categories) {
             if (slot >= ITEMS_PER_PAGE) break;
 
-            List<String> itemIds = itemProvider.getItemsByCategory(category);
+            List<String> itemIds;
+            try {
+                itemIds = itemProvider.getItemsByCategory(category);
+            } catch (Exception e) {
+                continue;
+            }
 
             ItemStack icon = new ItemStack(Material.CHEST);
             ItemMeta meta = icon.getItemMeta();
@@ -97,7 +108,13 @@ public class ItemBrowserUI extends LargeChestUI {
         clearItems();
         setTitle("§6" + currentCategory + " (Seite " + (currentPage + 1) + ")");
 
-        List<String> itemIds = itemProvider.getItemsByCategory(currentCategory);
+        List<String> itemIds;
+        try {
+            itemIds = itemProvider.getItemsByCategory(currentCategory);
+        } catch (Exception e) {
+            player.sendMessage(Component.text("✗ Fehler beim Laden der Items", NamedTextColor.RED));
+            return;
+        }
 
         int startIndex = currentPage * ITEMS_PER_PAGE;
         int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, itemIds.size());
@@ -105,35 +122,48 @@ public class ItemBrowserUI extends LargeChestUI {
         int slot = 0;
         for (int i = startIndex; i < endIndex; i++) {
             String itemId = itemIds.get(i);
+            final int finalSlot = slot; // Final Variable für Lambda
 
-            itemProvider.getItemType(itemId).ifPresent(type -> {
-                itemProvider.createItem(type, itemId, 1).ifPresent(itemStack -> {
-                    // Erweitere Lore mit zusätzlichen Infos
-                    ItemMeta meta = itemStack.getItemMeta();
-                    List<Component> lore = meta.hasLore() ? new ArrayList<>(meta.lore()) : new ArrayList<>();
-                    lore.add(Component.empty());
-                    lore.add(Component.text("Type: " + type, NamedTextColor.GRAY));
-                    lore.add(Component.text("ID: " + itemId, NamedTextColor.GRAY));
+            try {
+                itemProvider.getItemType(itemId).ifPresent(type -> {
+                    try {
+                        itemProvider.createItem(type, itemId, 1).ifPresent(itemStack -> {
+                            // Erweitere Lore mit zusätzlichen Infos
+                            ItemMeta meta = itemStack.getItemMeta();
+                            List<Component> lore = meta.hasLore() ? new ArrayList<>(meta.lore()) : new ArrayList<>();
+                            lore.add(Component.empty());
+                            lore.add(Component.text("Type: " + type, NamedTextColor.GRAY));
+                            lore.add(Component.text("ID: " + itemId, NamedTextColor.GRAY));
 
-                    // Preis anzeigen
-                    itemProvider.getSuggestedPrice(itemId).ifPresent(price -> {
-                        if (price > 0) {
-                            lore.add(Component.text("Preis: " + price + " Münzen", NamedTextColor.GOLD));
-                        } else {
-                            lore.add(Component.text("Nicht handelbar", NamedTextColor.RED));
-                        }
-                    });
+                            // Preis anzeigen
+                            try {
+                                itemProvider.getSuggestedPrice(itemId).ifPresent(price -> {
+                                    if (price > 0) {
+                                        lore.add(Component.text("Preis: " + price + " Münzen", NamedTextColor.GOLD));
+                                    } else {
+                                        lore.add(Component.text("Nicht handelbar", NamedTextColor.RED));
+                                    }
+                                });
+                            } catch (Exception e) {
+                                // Preis nicht verfügbar
+                            }
 
-                    lore.add(Component.empty());
-                    lore.add(Component.text("» Klicke zum Erhalten (Test)", NamedTextColor.YELLOW));
-                    meta.lore(lore);
-                    itemStack.setItemMeta(meta);
+                            lore.add(Component.empty());
+                            lore.add(Component.text("» Klicke zum Erhalten (Test)", NamedTextColor.YELLOW));
+                            meta.lore(lore);
+                            itemStack.setItemMeta(meta);
 
-                    setItem(slot, itemStack, p -> {
-                        giveItem(p, type, itemId);
-                    });
+                            setItem(finalSlot, itemStack, p -> {
+                                giveItem(p, type, itemId);
+                            });
+                        });
+                    } catch (Exception e) {
+                        // Item konnte nicht erstellt werden
+                    }
                 });
-            });
+            } catch (Exception e) {
+                // ItemType konnte nicht geladen werden
+            }
 
             slot++;
         }
@@ -148,10 +178,14 @@ public class ItemBrowserUI extends LargeChestUI {
      * Gibt ein Item an den Spieler.
      */
     private void giveItem(Player player, String type, String itemId) {
-        itemProvider.createItem(type, itemId, 1).ifPresent(item -> {
-            player.getInventory().addItem(item);
-            player.sendMessage(Component.text("✓ Item erhalten: " + itemId, NamedTextColor.GREEN));
-        });
+        try {
+            itemProvider.createItem(type, itemId, 1).ifPresent(item -> {
+                player.getInventory().addItem(item);
+                player.sendMessage(Component.text("✓ Item erhalten: " + itemId, NamedTextColor.GREEN));
+            });
+        } catch (Exception e) {
+            player.sendMessage(Component.text("✗ Fehler beim Erstellen des Items", NamedTextColor.RED));
+        }
     }
 
     /**

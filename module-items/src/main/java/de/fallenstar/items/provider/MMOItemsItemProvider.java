@@ -50,7 +50,8 @@ public class MMOItemsItemProvider implements ItemProvider {
 
     @Override
     public boolean isAvailable() {
-        return mmoItemsPlugin != null && mmoItemsPlugin.isEnabled();
+        // Plugin loaded = enabled (isEnabled() wurde in 6.10+ entfernt)
+        return mmoItemsPlugin != null;
     }
 
     @Override
@@ -129,27 +130,12 @@ public class MMOItemsItemProvider implements ItemProvider {
 
     @Override
     public Optional<String> getItemCategory(String itemId) throws ProviderFunctionalityNotFoundException {
-        // Suche Item und hole erste Tag als Kategorie
+        // Suche Item und verwende Type als Kategorie (getTags() entfernt in 6.10+)
         for (Type type : MMOItems.plugin.getTypes().getAll()) {
             MMOItemTemplate template = MMOItems.plugin.getTemplates().getTemplate(type, itemId);
             if (template != null) {
-                try {
-                    // Hole Tags vom Template
-                    Set<String> tags = template.getTags();
-                    if (tags != null && !tags.isEmpty()) {
-                        // Priorisiere spezifische Kategorien
-                        for (String tag : tags) {
-                            if (tag.startsWith("CURRENCY_") || tag.startsWith("UI_") ||
-                                tag.equals("WEAPON") || tag.equals("ARMOR") || tag.equals("CONSUMABLE")) {
-                                return Optional.of(tag);
-                            }
-                        }
-                        // Fallback: Erste Tag zurückgeben
-                        return Optional.of(tags.iterator().next());
-                    }
-                } catch (Exception e) {
-                    logger.warning("Failed to get tags for item " + itemId + ": " + e.getMessage());
-                }
+                // Verwende Type-Namen als Kategorie
+                return Optional.of(type.getName().toUpperCase());
             }
         }
         return Optional.empty();
@@ -180,21 +166,16 @@ public class MMOItemsItemProvider implements ItemProvider {
         cachedCategories.clear();
         categoryItemsCache.clear();
 
-        // Durchlaufe alle Items und sammle Kategorien (Tags)
+        // Durchlaufe alle Items und sammle Kategorien (Type-basiert, getTags() entfernt in 6.10+)
         for (Type type : MMOItems.plugin.getTypes().getAll()) {
+            String category = type.getName().toUpperCase();
+            cachedCategories.add(category);
+
             for (MMOItemTemplate template : MMOItems.plugin.getTemplates().getTemplates(type)) {
                 try {
-                    Set<String> tags = template.getTags();
-                    if (tags != null) {
-                        for (String tag : tags) {
-                            String category = tag.toUpperCase();
-                            cachedCategories.add(category);
-
-                            categoryItemsCache
-                                .computeIfAbsent(category, k -> new HashSet<>())
-                                .add(template.getId());
-                        }
-                    }
+                    categoryItemsCache
+                        .computeIfAbsent(category, k -> new HashSet<>())
+                        .add(template.getId());
                 } catch (Exception e) {
                     logger.warning("Failed to process tags for " + template.getId());
                 }
@@ -207,61 +188,28 @@ public class MMOItemsItemProvider implements ItemProvider {
     }
 
     /**
-     * Berechnet einen Preisvorschlag basierend auf Item-Stats.
+     * Berechnet einen Preisvorschlag basierend auf Item-Type.
      *
-     * Berücksichtigt:
-     * - Item-Tier (Seltenheit)
-     * - Attribute (Attack Damage, Defense, etc.)
-     * - Type-spezifische Multiplikatoren
+     * Vereinfachte Berechnung für MMOItems 6.10+ API-Kompatibilität.
+     * Stats-Zugriff entfernt da ItemStat API sich geändert hat.
      */
     private double calculateSuggestedPrice(MMOItemTemplate template, Type type) {
         double basePrice = 10.0; // Basis-Preis
 
         try {
-            // Erstelle temporäres MMOItem für Stats-Zugriff
-            MMOItem mmoItem = template.newBuilder().build();
-
-            // Tier-Multiplikator (falls vorhanden)
-            String tier = template.getConfigFile().getConfig().getString("tier", "COMMON");
-            double tierMultiplier = getTierMultiplier(tier);
-            basePrice *= tierMultiplier;
-
             // Type-Multiplikator
             double typeMultiplier = getTypeMultiplier(type.getId());
             basePrice *= typeMultiplier;
 
-            // Stats-basierte Berechnung
-            double statsValue = 0.0;
-
-            // Attack Damage
-            if (mmoItem.hasData(net.Indyuce.mmoitems.api.item.build.ItemStackBuilder.ItemStat.ATTACK_DAMAGE)) {
-                try {
-                    DoubleData attackData = (DoubleData) mmoItem.getData(net.Indyuce.mmoitems.api.item.build.ItemStackBuilder.ItemStat.ATTACK_DAMAGE);
-                    statsValue += attackData.getValue() * 5.0;
-                } catch (Exception ignored) {}
+            // Spezial-Items basierend auf Item-ID
+            String itemId = template.getId().toUpperCase();
+            if (itemId.contains("COIN") || itemId.contains("CURRENCY")) {
+                // Münzen sollten nicht handelbar sein
+                return 0.0;
             }
-
-            // Defense
-            if (mmoItem.hasData(net.Indyuce.mmoitems.api.item.build.ItemStackBuilder.ItemStat.DEFENSE)) {
-                try {
-                    DoubleData defenseData = (DoubleData) mmoItem.getData(net.Indyuce.mmoitems.api.item.build.ItemStackBuilder.ItemStat.DEFENSE);
-                    statsValue += defenseData.getValue() * 3.0;
-                } catch (Exception ignored) {}
-            }
-
-            basePrice += statsValue;
-
-            // Spezial-Items (Münzen, UI-Buttons) haben feste Preise
-            Set<String> tags = template.getTags();
-            if (tags != null) {
-                if (tags.contains("CURRENCY_COIN")) {
-                    // Münzen sollten nicht handelbar sein
-                    return 0.0;
-                }
-                if (tags.contains("UI_BUTTON") || tags.contains("SYSTEM_ITEM")) {
-                    // System-Items sollten nicht handelbar sein
-                    return 0.0;
-                }
+            if (itemId.contains("UI_") || itemId.contains("BUTTON") || itemId.contains("SYSTEM")) {
+                // System-Items sollten nicht handelbar sein
+                return 0.0;
             }
 
         } catch (Exception e) {
