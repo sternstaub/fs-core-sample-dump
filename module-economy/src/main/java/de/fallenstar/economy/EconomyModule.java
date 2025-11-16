@@ -88,8 +88,16 @@ public class EconomyModule extends JavaPlugin implements Listener {
 
         getLogger().info("✓ Economy-Modul erfolgreich initialisiert!");
         getLogger().info("  - Registrierte Währungen: " + currencyManager.getCurrencyCount());
-        getLogger().info("  - Economy Provider: " + (economyProvider.isAvailable() ?
-                economyProvider.getEconomyName() : "Nicht verfügbar"));
+
+        String economyProviderName = "Nicht verfügbar";
+        if (economyProvider.isAvailable()) {
+            try {
+                economyProviderName = economyProvider.getEconomyName();
+            } catch (Exception e) {
+                economyProviderName = "Fehler: " + e.getMessage();
+            }
+        }
+        getLogger().info("  - Economy Provider: " + economyProviderName);
     }
 
     /**
@@ -152,7 +160,11 @@ public class EconomyModule extends JavaPlugin implements Listener {
         providers.setEconomyProvider(economyProvider);
 
         if (economyProvider.isAvailable()) {
-            getLogger().info("✓ VaultEconomyProvider registriert: " + economyProvider.getEconomyName());
+            try {
+                getLogger().info("✓ VaultEconomyProvider registriert: " + economyProvider.getEconomyName());
+            } catch (Exception e) {
+                getLogger().info("✓ VaultEconomyProvider registriert (Name nicht abrufbar)");
+            }
         } else {
             getLogger().warning("✗ VaultEconomyProvider nicht verfügbar (Vault-Plugin fehlt?)");
         }
