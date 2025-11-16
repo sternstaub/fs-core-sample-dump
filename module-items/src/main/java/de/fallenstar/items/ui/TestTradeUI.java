@@ -136,36 +136,45 @@ public class TestTradeUI extends SmallChestUI {
         }
 
         // Output: Custom Item
-        itemProvider.createItem(outputType, outputId, 1).ifPresentOrElse(
-                output -> {
-                    ItemStack display = output.clone();
-                    ItemMeta meta = display.getItemMeta();
-                    List<Component> lore = meta.hasLore() ? new java.util.ArrayList<>(meta.lore()) : new java.util.ArrayList<>();
-                    lore.add(Component.empty());
-                    lore.add(Component.text("Output", NamedTextColor.GREEN));
-                    lore.add(Component.empty());
-                    lore.add(Component.text("» Klicke zum Handeln", NamedTextColor.AQUA));
-                    meta.lore(lore);
-                    display.setItemMeta(meta);
-                    setItem(baseSlot + 2, display, player -> {
-                        attemptTrade(player, currencyType, currencyAmount,
-                                extraInputMaterial, extraInputAmount,
-                                outputType, outputId);
-                    });
-                },
-                () -> {
-                    // Item nicht gefunden
-                    ItemStack error = new ItemStack(Material.BARRIER);
-                    ItemMeta meta = error.getItemMeta();
-                    meta.displayName(Component.text("Item nicht gefunden!", NamedTextColor.RED));
-                    meta.lore(List.of(
-                            Component.text("Type: " + outputType, NamedTextColor.GRAY),
+        try {
+            itemProvider.createItem(outputType, outputId, 1).ifPresentOrElse(
+                    output -> {
+                        ItemStack display = output.clone();
+                        ItemMeta meta = display.getItemMeta();
+                        List<Component> lore = meta.hasLore() ? new java.util.ArrayList<>(meta.lore()) : new java.util.ArrayList<>();
+                        lore.add(Component.empty());
+                        lore.add(Component.text("Output", NamedTextColor.GREEN));
+                        lore.add(Component.empty());
+                        lore.add(Component.text("» Klicke zum Handeln", NamedTextColor.AQUA));
+                        meta.lore(lore);
+                        display.setItemMeta(meta);
+                        setItem(baseSlot + 2, display, player -> {
+                            attemptTrade(player, currencyType, currencyAmount,
+                                    extraInputMaterial, extraInputAmount,
+                                    outputType, outputId);
+                        });
+                    },
+                    () -> {
+                        // Item nicht gefunden
+                        ItemStack error = new ItemStack(Material.BARRIER);
+                        ItemMeta meta = error.getItemMeta();
+                        meta.displayName(Component.text("Item nicht gefunden!", NamedTextColor.RED));
+                        meta.lore(List.of(
+                                Component.text("Type: " + outputType, NamedTextColor.GRAY),
                             Component.text("ID: " + outputId, NamedTextColor.GRAY)
                     ));
                     error.setItemMeta(meta);
                     setItem(baseSlot + 2, error, null);
                 }
-        );
+            );
+        } catch (Exception e) {
+            // Fallback bei Provider-Fehler
+            ItemStack error = new ItemStack(Material.BARRIER);
+            ItemMeta meta = error.getItemMeta();
+            meta.displayName(Component.text("Fehler beim Laden!", NamedTextColor.RED));
+            error.setItemMeta(meta);
+            setItem(baseSlot + 2, error, null);
+        }
     }
 
     /**
@@ -190,11 +199,15 @@ public class TestTradeUI extends SmallChestUI {
         // TODO: Echte Item-Entfernung implementieren
 
         // Gebe Output
-        itemProvider.createItem(outputType, outputId, 1).ifPresent(output -> {
-            player.getInventory().addItem(output);
-            player.sendMessage(Component.text("✓ Handel erfolgreich!", NamedTextColor.GREEN));
-            player.sendMessage(Component.text("  → Erhalten: " + outputId, NamedTextColor.GRAY));
-        });
+        try {
+            itemProvider.createItem(outputType, outputId, 1).ifPresent(output -> {
+                player.getInventory().addItem(output);
+                player.sendMessage(Component.text("✓ Handel erfolgreich!", NamedTextColor.GREEN));
+                player.sendMessage(Component.text("  → Erhalten: " + outputId, NamedTextColor.GRAY));
+            });
+        } catch (Exception e) {
+            player.sendMessage(Component.text("✗ Fehler beim Erstellen des Items!", NamedTextColor.RED));
+        }
 
         close(player);
     }
