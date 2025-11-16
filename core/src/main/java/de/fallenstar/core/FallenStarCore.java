@@ -6,6 +6,7 @@ import de.fallenstar.core.database.impl.MySQLDataStore;
 import de.fallenstar.core.database.impl.PostgreSQLDataStore;
 import de.fallenstar.core.database.impl.SQLiteDataStore;
 import de.fallenstar.core.event.ProvidersReadyEvent;
+import de.fallenstar.core.registry.PlotTypeRegistry;
 import de.fallenstar.core.registry.ProviderRegistry;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -28,8 +29,9 @@ import org.bukkit.plugin.java.JavaPlugin;
  * @version 1.0
  */
 public class FallenStarCore extends JavaPlugin {
-    
+
     private ProviderRegistry providerRegistry;
+    private PlotTypeRegistry plotTypeRegistry;
     private DataStore dataStore;
     
     @Override
@@ -118,6 +120,10 @@ public class FallenStarCore extends JavaPlugin {
     private void initializeProviders() {
         providerRegistry = new ProviderRegistry(this, getLogger());
         providerRegistry.detectAndRegister();
+
+        // PlotTypeRegistry initialisieren
+        plotTypeRegistry = new PlotTypeRegistry(getLogger());
+        getLogger().info("✓ PlotTypeRegistry initialized");
     }
     
     /**
@@ -146,20 +152,31 @@ public class FallenStarCore extends JavaPlugin {
     
     /**
      * API-Methode: Gibt die Provider-Registry zurück.
-     * 
+     *
      * Wird von Modulen genutzt um Provider zu erhalten.
-     * 
+     *
      * @return ProviderRegistry
      */
     public ProviderRegistry getProviderRegistry() {
         return providerRegistry;
     }
-    
+
+    /**
+     * API-Methode: Gibt die PlotTypeRegistry zurück.
+     *
+     * Wird von Modulen genutzt um Plot-Typen zu verwalten.
+     *
+     * @return PlotTypeRegistry
+     */
+    public PlotTypeRegistry getPlotTypeRegistry() {
+        return plotTypeRegistry;
+    }
+
     /**
      * API-Methode: Gibt den DataStore zurück.
-     * 
+     *
      * Wird von Modulen genutzt um Daten zu speichern/laden.
-     * 
+     *
      * @return DataStore
      */
     public DataStore getDataStore() {

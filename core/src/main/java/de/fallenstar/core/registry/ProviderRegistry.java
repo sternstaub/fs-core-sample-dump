@@ -25,6 +25,7 @@ public class ProviderRegistry {
     private final Plugin plugin;
 
     private PlotProvider plotProvider;
+    private TownProvider townProvider;
     private EconomyProvider economyProvider;
     private NPCProvider npcProvider;
     private ItemProvider itemProvider;
@@ -64,6 +65,15 @@ public class ProviderRegistry {
         } else {
             plotProvider = new NoOpPlotProvider();
             logger.info("○ No plot plugin found - plot features disabled");
+        }
+
+        // Town Provider - Towny support
+        if (isPluginEnabled("Towny") || isPluginEnabled("TownyAdvanced")) {
+            townProvider = new TownyTownProvider();
+            logger.info("✓ Towny detected - TownyTownProvider registered");
+        } else {
+            townProvider = new NoOpTownProvider();
+            logger.info("○ No town plugin found - town features disabled");
         }
 
         // Economy Provider - NoOp (Vault support can be added later)
@@ -113,6 +123,7 @@ public class ProviderRegistry {
     
     // Getter für Provider
     public PlotProvider getPlotProvider() { return plotProvider; }
+    public TownProvider getTownProvider() { return townProvider; }
     public EconomyProvider getEconomyProvider() { return economyProvider; }
     public NPCProvider getNpcProvider() { return npcProvider; }
     public ItemProvider getItemProvider() { return itemProvider; }
