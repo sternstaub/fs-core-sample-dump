@@ -30,11 +30,11 @@ mvn clean package
 
 | Modul | Status | Beschreibung |
 |-------|--------|--------------|
-| [Core](core/) | ⚙️ Foundation | Provider-System, APIs |
-| [Storage](module-storage/) | 📦 Sprint 3 | Truhen-Verwaltung |
-| [Merchants](module-merchants/) | 🤝 Sprint 4-5 | NPC-Handel |
-| [TravelSystem](module-travel/) | 🚢 Sprint 8-9 | Reisende Händler |
-| [AdminShops](module-adminshops/) | 🏪 Sprint 6-7 | Template-basierte Shops |
+| [Core](core/) | ✅ Abgeschlossen | Provider-System, APIs, Foundation |
+| [FallenStar Plots](module-plots/) | ✅ Abgeschlossen | Plot-System + Storage, Towny-Bridge |
+| [FallenStar Economy](module-economy/) | 📋 Geplant | Weltwirtschaft, Münzgeld, Preisberechnungen |
+| [FallenStar WorldAnchors](module-worldanchors/) | 📋 Geplant | Schnellreisen, POIs, Wegpunkte |
+| [FallenStar NPCs](module-npcs/) | 🔨 In Arbeit | NPC-System, Citizens-Integration |
 
 ---
 
@@ -74,18 +74,21 @@ mvn clean package
 
 ## 📊 Projekt-Status
 
-**Phase:** 📝 Planung / Sample-Entwicklung  
+**Phase:** 🚀 Aktive Entwicklung
 **Version:** 1.0-SNAPSHOT
 
 **Fertiggestellt:**
-- ✅ Architektur-Design
-- ✅ Provider-System
-- ✅ Sample-Code (Core + Storage)
-- ✅ Dokumentation
-- ✅ Sprint-Planung
+- ✅ Architektur-Design & Provider-System
+- ✅ Core-Plugin vollständig implementiert
+- ✅ FallenStar Plots (inkl. Storage-Integration)
+- ✅ Dokumentation & Sprint-Planung
 
 **In Arbeit:**
-- 🔨 Core-Implementierung (Sprint 1)
+- 🔨 FallenStar NPCs (Sprint 9-10)
+
+**Geplant:**
+- 📋 FallenStar Economy (Sprint 5-6)
+- 📋 FallenStar WorldAnchors (Sprint 7-8)
 
 ---
 

@@ -86,9 +86,10 @@ A **modular Minecraft plugin system** for Paper 1.21.1 with provider-based archi
 ### Current Status
 
 - **Version:** 1.0-SNAPSHOT
-- **Phase:** Sample Development / Sprint Planning
-- **Completion:** ~40% (Core samples + Storage module partial)
-- **Next Sprint:** Sprint 1 - Core Implementation
+- **Phase:** Aktive Entwicklung
+- **Completion:** ~50% (Core ✅ + Plots ✅ + NPCs 🔨)
+- **Nächster Sprint:** Sprint 5-6 - FallenStar Economy
+- **Kürzlich geändert:** Modulstruktur überarbeitet (Storage → Plots, TravelSystem → WorldAnchors)
 
 ---
 
@@ -134,22 +135,53 @@ fs-core-sample-dump/
 │   │       ├── plugin.yml
 │   │       └── config.yml
 │
-├── module-storage/                  # Storage Module (Sprint 3)
-│   ├── pom.xml
-│   ├── src/main/java/de/fallenstar/storage/
-│   │   ├── StorageModule.java                 # Main class
-│   │   ├── command/
-│   │   │   └── StorageRegisterCommand.java
-│   │   ├── manager/                           # (to be implemented)
-│   │   ├── model/                             # (to be implemented)
-│   │   └── listener/                          # (to be implemented)
+├── module-plots/                    # FallenStar Plots (Sprint 3-4)
+│   ├── pom.xml                      # Plot-System + Storage-Integration
+│   ├── src/main/java/de/fallenstar/plots/
+│   │   ├── PlotsModule.java                   # Main class
+│   │   ├── command/                           # Plot-Befehle
+│   │   ├── manager/                           # Plot- und Storage-Manager
+│   │   ├── model/                             # Plot-Datenmodelle
+│   │   └── listener/                          # Event-Handler
 │   └── src/main/resources/
 │       ├── plugin.yml
 │       └── config.yml
 │
-├── module-merchants/                # Merchants Module (Sprint 4-5)
-├── module-travel/                   # Travel Module (Sprint 8-9)
-├── module-adminshops/               # AdminShops Module (Sprint 6-7)
+├── module-economy/                  # FallenStar Economy (Sprint 5-6)
+│   ├── pom.xml                      # Weltwirtschaft, Münzgeld, Preise
+│   ├── src/main/java/de/fallenstar/economy/
+│   │   ├── EconomyModule.java                 # Main class
+│   │   ├── command/                           # Wirtschafts-Befehle
+│   │   ├── manager/                           # Wirtschafts-Manager
+│   │   ├── model/                             # Wirtschafts-Modelle
+│   │   └── pricing/                           # Preisberechnungen
+│   └── src/main/resources/
+│       ├── plugin.yml
+│       └── config.yml
+│
+├── module-worldanchors/             # FallenStar WorldAnchors (Sprint 7-8)
+│   ├── pom.xml                      # Schnellreisen, POIs, Wegpunkte
+│   ├── src/main/java/de/fallenstar/worldanchors/
+│   │   ├── WorldAnchorsModule.java            # Main class
+│   │   ├── command/                           # Reise-Befehle
+│   │   ├── manager/                           # Reise-Manager
+│   │   ├── model/                             # POI-Modelle
+│   │   └── task/                              # Reise-Tasks
+│   └── src/main/resources/
+│       ├── plugin.yml
+│       └── config.yml
+│
+├── module-npcs/                     # FallenStar NPCs (Sprint 9-10)
+│   ├── pom.xml                      # NPC-System (Citizens-Integration)
+│   ├── src/main/java/de/fallenstar/npcs/
+│   │   ├── NPCsModule.java                    # Main class
+│   │   ├── command/                           # NPC-Befehle
+│   │   ├── manager/                           # NPC-Manager
+│   │   ├── model/                             # NPC-Modelle
+│   │   └── gui/                               # NPC-Interaktionen
+│   └── src/main/resources/
+│       ├── plugin.yml
+│       └── config.yml
 │
 └── Documentation Files (*.md)
 ```
@@ -159,13 +191,15 @@ fs-core-sample-dump/
 ```
 Core (Foundation - NO business logic)
  ↑
- ├── Storage          (Chest management)
- ├── Merchants        (NPC trading)
- ├── AdminShops       (Template-based shops)
- └── TravelSystem     (Traveling merchants)
+ ├── Plots            (Plot-System + Storage-Integration, Towny-Bridge)
+ ├── Economy          (Weltwirtschaft, Münzgeld, Preisberechnungen)
+ ├── WorldAnchors     (Schnellreisen, POIs, Wegpunkte für Spieler/NPCs)
+ └── NPCs             (NPC-System, Citizens-Integration, Trading)
 ```
 
 **Important:** Modules **ONLY** depend on Core, never on each other.
+
+**Note:** Storage-Funktionalität wurde in das Plots-Modul integriert.
 
 ---
 
@@ -309,16 +343,20 @@ public class ProviderRegistry {
 
 ### Sprint-Based Development
 
-The project follows a 10-sprint roadmap:
+Das Projekt folgt einem überarbeiteten 10-Sprint-Fahrplan:
 
 | Sprint | Module | Duration | Status |
 |--------|--------|----------|--------|
-| 1-2 | Core | 2 weeks | In Planning |
-| 3 | Storage | 1 week | Partial |
-| 4-5 | Merchants | 2 weeks | Planned |
-| 6-7 | AdminShops | 2 weeks | Planned |
-| 8-9 | Travel | 2 weeks | Planned |
-| 10 | Polish | 1 week | Planned |
+| 1-2 | Core | 2 Wochen | Abgeschlossen ✅ |
+| 3-4 | FallenStar Plots | 2 Wochen | Abgeschlossen ✅ |
+| 5-6 | FallenStar Economy | 2 Wochen | Geplant 📋 |
+| 7-8 | FallenStar WorldAnchors | 2 Wochen | Geplant 📋 |
+| 9-10 | FallenStar NPCs | 2 Wochen | In Arbeit 🔨 |
+
+**Hinweis:**
+- **Storage-Modul** wurde gestrichen und in **Plots** integriert
+- **AdminShops** wurde aus dem Plan entfernt
+- **TravelSystem** wurde zu **WorldAnchors** umbenannt
 
 ### Working on a Sprint
 
@@ -702,8 +740,10 @@ mvn clean package
 
 **Build Outputs:**
 - `core/target/FallenStar-Core-1.0.jar`
-- `module-storage/target/FallenStar-Storage-1.0.jar`
-- etc.
+- `module-plots/target/FallenStar-Plots-1.0.jar`
+- `module-economy/target/FallenStar-Economy-1.0.jar`
+- `module-worldanchors/target/FallenStar-WorldAnchors-1.0.jar`
+- `module-npcs/target/FallenStar-NPCs-1.0.jar`
 
 ### Implementing Missing Classes
 
@@ -852,7 +892,7 @@ public void testGracefulDegradation() {
 | `PlotProvider.java` | `core/src/main/java/.../provider/` | Example provider interface |
 | `NoOpPlotProvider.java` | `core/src/main/java/.../provider/impl/` | Example NoOp implementation |
 | `TownyPlotProvider.java` | `core/src/main/java/.../provider/impl/` | Example concrete implementation |
-| `StorageModule.java` | `module-storage/src/main/java/.../storage/` | Example module main class |
+| `PlotsModule.java` | `module-plots/src/main/java/.../plots/` | Example module main class |
 
 ### Build Files
 
@@ -872,9 +912,9 @@ public void testGracefulDegradation() {
 | New NoOp Provider | `NoOpPlotProvider.java` |
 | New Provider Interface | `PlotProvider.java` |
 | New Concrete Provider | `TownyPlotProvider.java` |
-| New Module Main Class | `StorageModule.java` |
-| New Command | `StorageRegisterCommand.java` |
-| New Module README | `module-storage/README.md` |
+| New Module Main Class | `PlotsModule.java` |
+| New Command | Command-Klassen aus `module-plots/` |
+| New Module README | `module-plots/README.md` |
 
 ---
 
@@ -904,14 +944,13 @@ public void testGracefulDegradation() {
 **Break Down Large Tasks:**
 
 ```
-"Implement Storage Module" →
-  1. Implement StorageListCommand
-  2. Implement StorageInfoCommand
-  3. Implement ChestManager
-  4. Implement MaterialTracker
-  5. Implement ChestInteractListener
-  6. Create config.yml
-  7. Test functionality
+"Implement Economy Module" →
+  1. Implement Currency-System (Münzgeld)
+  2. Implement Pricing-Engine (Preisberechnungen)
+  3. Implement World-Economy-Manager (Weltwirtschaft)
+  4. Implement Economy-Commands
+  5. Create config.yml mit Wirtschafts-Parametern
+  6. Test functionality
 ```
 
 ### Code Generation Best Practices
@@ -1014,7 +1053,8 @@ git log --oneline -10
 
 ---
 
-**Last Updated:** 2025-11-15
+**Last Updated:** 2025-11-16
 **Repository:** fs-core-sample-dump
-**Branch:** claude/claude-md-mi0sco9raq2ajdr6-01Tte3UhY6FdvsCXyqqVvJ8k
+**Branch:** claude/restructure-project-modules-018sEM2NT9pJcUDj7CmmeWTC
 **Version:** 1.0-SNAPSHOT
+**Modulstruktur:** Überarbeitet (Storage → Plots integriert, TravelSystem → WorldAnchors, AdminShops entfernt)

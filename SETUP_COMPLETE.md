@@ -5,24 +5,27 @@
 ### ✅ Created Files
 
 **Documentation:**
-- README.md (Main repository overview)
-- REPOSITORY_INDEX.md (Complete structure)
+- README.md (Main repository overview - aktualisiert)
+- REPOSITORY_INDEX.md (Complete structure - aktualisiert)
+- CLAUDE.md (AI Assistant Guide - aktualisiert)
 - CONTRIBUTING.md (Development guidelines)
 - core/README.md
-- module-storage/README.md
-- module-merchants/README.md
-- module-travel/README.md
-- module-adminshops/README.md
+- module-plots/README.md
+- module-npcs/README.md
 
-**Code - Core Plugin (16 Java files):**
+**Code - Core Plugin:**
 - ✅ All Provider Interfaces (7 files)
-- ✅ Provider Implementations (2 files)
-- ✅ Core Classes (5 files)
+- ✅ Provider Implementations (vollständig)
+- ✅ Core Classes (vollständig)
 - ✅ Config Files (2 YAML files)
 
-**Code - Storage Module:**
-- ✅ StorageModule.java
-- ✅ StorageRegisterCommand.java
+**Code - Plots Module:**
+- ✅ PlotsModule.java (vollständig implementiert)
+- ✅ Plot-Commands und Manager
+- ✅ Storage-Integration (migriert von altem Storage-Modul)
+
+**Code - NPCs Module:**
+- 🔨 In aktiver Entwicklung
 
 **Build Files:**
 - ✅ pom.xml (Parent POM)
@@ -31,53 +34,64 @@
 
 ---
 
-## 📊 Statistics
+## 📊 Statistics (aktualisiert)
 
-- **Total Directories:** 42
-- **Java Files:** 16
-- **YAML Files:** 2  
-- **Markdown Files:** 9
-- **Total Lines of Code:** ~1,800 LOC
+- **Module:** 5 (Core + 4 Feature-Module)
+- **Abgeschlossene Module:** 2 (Core, Plots)
+- **In Entwicklung:** 1 (NPCs)
+- **Geplant:** 2 (Economy, WorldAnchors)
+- **Dokumentationsdateien:** Vollständig aktualisiert
 
 ---
 
 ## 🎯 Next Steps
 
-### 1. Review Documentation
+### 1. Review Aktualisierte Dokumentation
 
 ```bash
-# Read these in order:
-cat README.md
-cat REPOSITORY_INDEX.md
-cat core/README.md
+# Wichtigste Dateien lesen:
+cat README.md           # Überarbeitete Modulübersicht
+cat REPOSITORY_INDEX.md # Aktualisierte Struktur
+cat CLAUDE.md          # Aktualisierter AI-Guide
 ```
 
-### 2. Explore Code Structure
+### 2. Explore Aktuelle Code Structure
 
 ```bash
 # Core Provider System
 ls -R core/src/main/java/de/fallenstar/core/provider/
 
-# Storage Module
-ls -R module-storage/src/main/java/de/fallenstar/storage/
+# Plots Module (inkl. Storage)
+ls -R module-plots/src/main/java/de/fallenstar/plots/
+
+# NPCs Module (in Arbeit)
+ls -R module-npcs/src/main/java/de/fallenstar/npcs/
 ```
 
-### 3. Start Development
+### 3. Aktuelle Entwicklungsziele
 
-**Sprint 1:** Core Plugin Implementation
+**Aktuell:** NPCs Module (Sprint 9-10) 🔨
 ```bash
-cd core/
-# Implement missing NoOp providers
-# Implement DataStore (SQLite)
-# Test provider detection
+cd module-npcs/
+# Citizens-Integration finalisieren
+# NPC-Commands implementieren
+# Trade- und Dialogue-System vervollständigen
 ```
 
-**Sprint 3:** Storage Module
+**Nächster Sprint:** Economy Module (Sprint 5-6) 📋
 ```bash
-cd module-storage/
-# Implement remaining commands
-# Implement managers
-# Implement listeners
+cd module-economy/
+# Währungssystem implementieren
+# Preisberechnungen entwickeln
+# Weltwirtschaft-Manager erstellen
+```
+
+**Zukünftig:** WorldAnchors Module (Sprint 7-8) 📋
+```bash
+cd module-worldanchors/
+# Schnellreise-System implementieren
+# POI-System entwickeln
+# Wegpunkte-Mechanik erstellen
 ```
 
 ---
@@ -116,49 +130,60 @@ cp module-*/target/*.jar /path/to/server/plugins/
 ## ✨ What's Working
 
 ### Core Plugin
-✅ Provider interfaces defined  
-✅ ProviderRegistry with auto-detection  
-✅ Exception system  
-✅ Event system  
-✅ DataStore interface  
-✅ Concrete Towny implementation  
+✅ Provider interfaces vollständig definiert
+✅ ProviderRegistry mit vollständiger Auto-Detection
+✅ Exception-System implementiert
+✅ Event-System (ProvidersReadyEvent)
+✅ DataStore-Implementierungen (SQLite/MySQL)
+✅ Alle Provider implementiert (Towny, Vault, Citizens, NoOp-Varianten)
 
-### Storage Module
-✅ Module structure  
-✅ Register command example  
-⚠️ Needs: List/Info commands, Managers, Listeners  
+### Plots Module
+✅ Vollständiges Plot-System
+✅ Towny-Bridge-Integration
+✅ Storage-System integriert (migriert von altem Storage-Modul)
+✅ Plot-Commands vollständig
+✅ Manager und Listener implementiert
+
+### NPCs Module
+🔨 Basis-Struktur vorhanden
+🔨 Citizens-Integration teilweise implementiert
+🔨 Aktive Entwicklung läuft  
 
 ---
 
 ## 🚧 What Needs Implementation
 
-### Core Plugin (Sprint 1-2)
-- [ ] NoOpEconomyProvider
-- [ ] NoOpNPCProvider  
-- [ ] NoOpItemProvider
-- [ ] VaultEconomyProvider
-- [ ] CitizensNPCProvider
-- [ ] SQLiteDataStore
-- [ ] Core POM file
+### Core Plugin
+- ✅ Vollständig implementiert
+- ✅ Alle Provider vorhanden (NoOp + Concrete)
+- ✅ DataStore-Implementierungen (SQLite/MySQL)
 
-### Storage Module (Sprint 3)
-- [ ] StorageListCommand
-- [ ] StorageInfoCommand
-- [ ] ChestManager
-- [ ] MaterialTracker
-- [ ] ChestInteractListener
-- [ ] Storage POM file
-- [ ] plugin.yml
-- [ ] config.yml
+### Plots Module
+- ✅ Vollständig implementiert
+- ✅ Storage-Integration abgeschlossen
+- ✅ Plot-System mit Towny-Bridge
 
-### Merchants Module (Sprint 4-5)
-- [ ] Complete implementation
+### NPCs Module (Sprint 9-10) - In Arbeit 🔨
+- [x] Basis-Struktur vorhanden
+- [ ] Citizens-Integration vervollständigen
+- [ ] NPC-Commands finalisieren
+- [ ] Trade-System implementieren
+- [ ] Dialogue-System implementieren
+- [ ] GUI-Handler vervollständigen
 
-### AdminShops Module (Sprint 6-7)
-- [ ] Complete implementation
+### Economy Module (Sprint 5-6) - Geplant 📋
+- [ ] Currency-System implementieren
+- [ ] Pricing-Engine entwickeln
+- [ ] World-Economy-Manager erstellen
+- [ ] Commands implementieren
+- [ ] Config erstellen
 
-### TravelSystem Module (Sprint 8-9)
-- [ ] Complete implementation
+### WorldAnchors Module (Sprint 7-8) - Geplant 📋
+- [ ] Anchor-System implementieren
+- [ ] POI-System entwickeln
+- [ ] Travel-Mechaniken erstellen
+- [ ] Commands implementieren
+- [ ] Async-Tasks für Bewegungen
 
 ---
 
@@ -184,14 +209,23 @@ cp module-*/target/*.jar /path/to/server/plugins/
 
 ---
 
-## 🎉 You're Ready!
+## 🎉 Repository Aktualisiert!
 
-The repository structure is complete and all sample code is in place.
+Die Projekt-Struktur wurde überarbeitet und an die neuen Anforderungen angepasst.
 
-**Start with Sprint 1: Core Implementation**
+**Wichtige Änderungen:**
+- ✅ **Storage-Modul** wurde in **Plots-Modul** integriert
+- ✅ **AdminShops** wurde entfernt
+- ✅ **TravelSystem** wurde zu **WorldAnchors** umbenannt
+- ✅ Neue Modulstruktur: Core → Plots → Economy → WorldAnchors → NPCs
+
+**Aktueller Fokus:**
+- 🔨 **NPCs Module** (Sprint 9-10) finalisieren
+- 📋 **Economy Module** (Sprint 5-6) als nächstes
+- 📋 **WorldAnchors Module** (Sprint 7-8) danach
 
 Good luck! 🚀
 
 ---
 
-**Questions?** Review REPOSITORY_INDEX.md for complete details.
+**Questions?** Review REPOSITORY_INDEX.md oder CLAUDE.md für vollständige Details.

@@ -61,114 +61,121 @@ FallenStar-Paper-Samples/
 │           ├── plugin.yml
 │           └── config.yml
 │
-├── module-storage/                    ← Storage Module
+├── module-plots/                      ← FallenStar Plots Module
 │   ├── README.md
 │   ├── pom.xml
 │   └── src/main/
-│       ├── java/de/fallenstar/storage/
-│       │   ├── StorageModule.java     ← Haupt-Klasse
+│       ├── java/de/fallenstar/plots/
+│       │   ├── PlotsModule.java       ← Haupt-Klasse
 │       │   │
-│       │   ├── command/               ← Commands
-│       │   │   ├── StorageRegisterCommand.java
-│       │   │   ├── StorageListCommand.java
-│       │   │   └── StorageInfoCommand.java
+│       │   ├── command/               ← Plot-Befehle
+│       │   │   ├── PlotInfoCommand.java
+│       │   │   ├── PlotListCommand.java
+│       │   │   └── StorageCommands...  ← Storage-Integration
 │       │   │
 │       │   ├── manager/               ← Business Logic
-│       │   │   ├── ChestManager.java
+│       │   │   ├── PlotManager.java
+│       │   │   ├── ChestManager.java   ← Von Storage integriert
 │       │   │   └── MaterialTracker.java
 │       │   │
 │       │   ├── model/                 ← Data Models
-│       │   │   ├── RegisteredChest.java
+│       │   │   ├── PlotData.java
 │       │   │   └── StorageData.java
 │       │   │
 │       │   └── listener/              ← Event Handlers
+│       │       ├── PlotEventListener.java
 │       │       └── ChestInteractListener.java
 │       │
 │       └── resources/
 │           ├── plugin.yml
 │           └── config.yml
 │
-├── module-merchants/                  ← Merchants Module
+├── module-economy/                    ← FallenStar Economy Module
 │   ├── README.md
 │   ├── pom.xml
 │   └── src/main/
-│       ├── java/de/fallenstar/merchants/
-│       │   ├── MerchantsModule.java
+│       ├── java/de/fallenstar/economy/
+│       │   ├── EconomyModule.java
 │       │   │
-│       │   ├── command/
-│       │   │   ├── MerchantCreateCommand.java
-│       │   │   ├── MerchantOfferCommand.java
-│       │   │   └── MerchantRemoveCommand.java
+│       │   ├── command/               ← Wirtschafts-Befehle
+│       │   │   ├── CurrencyCommand.java
+│       │   │   ├── PriceCommand.java
+│       │   │   └── BalanceCommand.java
 │       │   │
-│       │   ├── manager/
-│       │   │   ├── MerchantManager.java
-│       │   │   └── TradeManager.java
+│       │   ├── manager/               ← Business Logic
+│       │   │   ├── CurrencyManager.java
+│       │   │   └── WorldEconomyManager.java
 │       │   │
-│       │   ├── model/
-│       │   │   ├── Merchant.java
-│       │   │   └── TradeOffer.java
+│       │   ├── model/                 ← Data Models
+│       │   │   ├── Currency.java
+│       │   │   └── EconomicData.java
 │       │   │
-│       │   └── gui/
-│       │       └── TradeGUI.java
+│       │   └── pricing/               ← Preisberechnungen
+│       │       ├── PricingEngine.java
+│       │       └── MarketCalculator.java
 │       │
 │       └── resources/
 │           ├── plugin.yml
 │           └── config.yml
 │
-├── module-travel/                     ← TravelSystem Module
+├── module-worldanchors/               ← FallenStar WorldAnchors Module
 │   ├── README.md
 │   ├── pom.xml
 │   └── src/main/
-│       ├── java/de/fallenstar/travel/
-│       │   ├── TravelModule.java
+│       ├── java/de/fallenstar/worldanchors/
+│       │   ├── WorldAnchorsModule.java
 │       │   │
-│       │   ├── command/
-│       │   │   ├── ContractCreateCommand.java
-│       │   │   └── ContractListCommand.java
+│       │   ├── command/               ← Reise-Befehle
+│       │   │   ├── AnchorCreateCommand.java
+│       │   │   ├── AnchorListCommand.java
+│       │   │   └── TravelCommand.java
 │       │   │
-│       │   ├── manager/
-│       │   │   ├── ContractManager.java
+│       │   ├── manager/               ← Business Logic
+│       │   │   ├── AnchorManager.java
+│       │   │   ├── POIManager.java
 │       │   │   └── TravelManager.java
 │       │   │
-│       │   ├── model/
-│       │   │   ├── MerchantContract.java
-│       │   │   └── TravelState.java
+│       │   ├── model/                 ← Data Models
+│       │   │   ├── WorldAnchor.java
+│       │   │   ├── PointOfInterest.java
+│       │   │   └── TravelRoute.java
 │       │   │
-│       │   └── task/
+│       │   └── task/                  ← Async Tasks
 │       │       └── TravelTask.java
 │       │
 │       └── resources/
 │           ├── plugin.yml
 │           └── config.yml
 │
-└── module-adminshops/                 ← AdminShops Module
+└── module-npcs/                       ← FallenStar NPCs Module
     ├── README.md
     ├── pom.xml
     └── src/main/
-        ├── java/de/fallenstar/adminshops/
-        │   ├── AdminShopsModule.java
+        ├── java/de/fallenstar/npcs/
+        │   ├── NPCsModule.java
         │   │
-        │   ├── command/
-        │   │   ├── AdminShopCreateCommand.java
-        │   │   └── AdminShopReloadCommand.java
+        │   ├── command/               ← NPC-Befehle
+        │   │   ├── NPCCreateCommand.java
+        │   │   ├── NPCRemoveCommand.java
+        │   │   └── NPCTradeCommand.java
         │   │
-        │   ├── manager/
-        │   │   ├── TemplateManager.java
-        │   │   └── PricingEngine.java
+        │   ├── manager/               ← Business Logic
+        │   │   ├── NPCManager.java
+        │   │   ├── TradeManager.java
+        │   │   └── DialogueManager.java
         │   │
-        │   ├── model/
-        │   │   ├── ShopTemplate.java
-        │   │   └── AdminShop.java
+        │   ├── model/                 ← Data Models
+        │   │   ├── CustomNPC.java
+        │   │   ├── TradeOffer.java
+        │   │   └── NPCDialogue.java
         │   │
-        │   └── config/
-        │       └── TemplateLoader.java
+        │   └── gui/                   ← GUI Handlers
+        │       ├── TradeGUI.java
+        │       └── DialogueGUI.java
         │
         └── resources/
             ├── plugin.yml
-            ├── config.yml
-            └── templates/
-                ├── potion-merchant.yml
-                └── weapon-merchant.yml
+            └── config.yml
 ```
 
 ---
@@ -190,9 +197,10 @@ mvn clean package
 
 Dies erstellt:
 - `core/target/FallenStar-Core-1.0.jar`
-- `module-storage/target/FallenStar-Storage-1.0.jar`
-- `module-merchants/target/FallenStar-Merchants-1.0.jar`
-- etc.
+- `module-plots/target/FallenStar-Plots-1.0.jar`
+- `module-economy/target/FallenStar-Economy-1.0.jar`
+- `module-worldanchors/target/FallenStar-WorldAnchors-1.0.jar`
+- `module-npcs/target/FallenStar-NPCs-1.0.jar`
 
 ### 3. Installation
 
@@ -230,61 +238,64 @@ SQLiteDataStore.java
 MySQLDataStore.java
 ```
 
-#### Storage Module - Zusätzliche Klassen
+#### Plots Module - Teilweise Implementiert
 
 ```java
-// module-storage/src/main/java/de/fallenstar/storage/
+// module-plots/src/main/java/de/fallenstar/plots/
 
-command/StorageListCommand.java
-command/StorageInfoCommand.java
-manager/ChestManager.java
-manager/MaterialTracker.java
-model/RegisteredChest.java
-model/StorageData.java
-listener/ChestInteractListener.java
+// Weitere Plot-Features nach Bedarf
+// Storage-Integration ist bereits vorhanden
 ```
 
-#### Merchants Module - Vollständige Implementation
+#### Economy Module - Vollständige Implementation
 
 ```java
-// module-merchants/src/main/java/de/fallenstar/merchants/
+// module-economy/src/main/java/de/fallenstar/economy/
 
-command/MerchantCreateCommand.java
-command/MerchantOfferCommand.java
-command/MerchantRemoveCommand.java
-manager/MerchantManager.java
-manager/TradeManager.java
-model/Merchant.java
-model/TradeOffer.java
-gui/TradeGUI.java
+command/CurrencyCommand.java
+command/PriceCommand.java
+command/BalanceCommand.java
+manager/CurrencyManager.java
+manager/WorldEconomyManager.java
+model/Currency.java
+model/EconomicData.java
+pricing/PricingEngine.java
+pricing/MarketCalculator.java
 ```
 
-#### Travel Module - Vollständige Implementation
+#### WorldAnchors Module - Vollständige Implementation
 
 ```java
-// module-travel/src/main/java/de/fallenstar/travel/
+// module-worldanchors/src/main/java/de/fallenstar/worldanchors/
 
-command/ContractCreateCommand.java
-command/ContractListCommand.java
-manager/ContractManager.java
+command/AnchorCreateCommand.java
+command/AnchorListCommand.java
+command/TravelCommand.java
+manager/AnchorManager.java
+manager/POIManager.java
 manager/TravelManager.java
-model/MerchantContract.java
-model/TravelState.java (Enum)
+model/WorldAnchor.java
+model/PointOfInterest.java
+model/TravelRoute.java
 task/TravelTask.java
 ```
 
-#### AdminShops Module - Vollständige Implementation
+#### NPCs Module - In Arbeit
 
 ```java
-// module-adminshops/src/main/java/de/fallenstar/adminshops/
+// module-npcs/src/main/java/de/fallenstar/npcs/
 
-command/AdminShopCreateCommand.java
-command/AdminShopReloadCommand.java
-manager/TemplateManager.java
-manager/PricingEngine.java
-model/ShopTemplate.java
-model/AdminShop.java
-config/TemplateLoader.java
+command/NPCCreateCommand.java
+command/NPCRemoveCommand.java
+command/NPCTradeCommand.java
+manager/NPCManager.java
+manager/TradeManager.java
+manager/DialogueManager.java
+model/CustomNPC.java
+model/TradeOffer.java
+model/NPCDialogue.java
+gui/TradeGUI.java
+gui/DialogueGUI.java
 ```
 
 ---
@@ -309,9 +320,13 @@ config/TemplateLoader.java
 - ✅ ProvidersReadyEvent.java
 - ✅ DataStore.java
 
-**Storage Module:**
-- ✅ StorageModule.java
-- ✅ StorageRegisterCommand.java
+**Plots Module:**
+- ✅ PlotsModule.java (vollständig implementiert)
+- ✅ Plot-Commands und Manager
+- ✅ Storage-Integration (von altem Storage-Modul migriert)
+
+**NPCs Module:**
+- 🔨 In aktiver Entwicklung
 
 **Documentation:**
 - ✅ README.md (Root)
@@ -329,43 +344,50 @@ config/TemplateLoader.java
 
 ## 🎯 Nächste Schritte
 
-### Für Sprint 1 (Core Implementation)
+### Aktueller Sprint: NPCs Module (Sprint 9-10) 🔨
 
-1. **Core-Dateien reviewen:**
-   - Provider-Interfaces verstehen
-   - ProviderRegistry-Logic nachvollziehen
-   - Exception-Handling-Pattern verstehen
+1. **NPC-System finalisieren:**
+   - Citizens-Integration vervollständigen
+   - NPC-Commands implementieren
+   - Trade- und Dialogue-System
 
-2. **Fehlende NoOp-Provider erstellen:**
-   - Folge dem Pattern von NoOpPlotProvider
-   - Alle werfen ProviderFunctionalityNotFoundException
+2. **Testing:**
+   - NPC-Erstellung und -Verwaltung
+   - Trading-Funktionalität
+   - Dialog-System
 
-3. **DataStore-Implementationen:**
-   - SQLiteDataStore für MVP
-   - MySQLDataStore für Production (später)
+### Nächster Sprint: Economy Module (Sprint 5-6) 📋
 
-4. **Testing:**
-   - Core-Plugin kompiliert
-   - Provider werden erkannt
-   - ProvidersReadyEvent wird gefeuert
+1. **Währungssystem implementieren:**
+   - Currency-Manager
+   - Münzgeld-Mechaniken
+   - Balance-Tracking
 
-### Für Sprint 3 (Storage Module)
+2. **Preisberechnungen:**
+   - PricingEngine entwickeln
+   - MarketCalculator für dynamische Preise
+   - Weltwirtschaft-System
 
-1. **Storage-Commands implementieren:**
-   - Register, List, Info
-   - Folge dem Pattern von StorageRegisterCommand
-
-2. **Manager-Klassen:**
-   - ChestManager für Truhen-Verwaltung
-   - MaterialTracker für Counting
-
-3. **Event-Listener:**
-   - ChestInteractListener für Sneak+Rechtsklick
+3. **Commands erstellen:**
+   - Currency-, Price-, Balance-Commands
+   - Admin-Tools für Wirtschaftsverwaltung
 
 4. **Testing:**
-   - Truhen registrieren funktioniert
-   - Material-Tracking korrekt
-   - Persistence über Restart
+   - Währungstransaktionen
+   - Preisberechnungen
+   - Integration mit Vault-Provider
+
+### Zukünftig: WorldAnchors Module (Sprint 7-8) 📋
+
+1. **Schnellreise-System:**
+   - WorldAnchors (Ankerpunkte) implementieren
+   - POI-System (Points of Interest)
+   - Wegpunkte auf Straßen
+
+2. **Reise-Mechaniken:**
+   - Spieler-Schnellreisen
+   - NPC-Reisen
+   - TravelTask für asynchrone Bewegungen
 
 ---
 
@@ -374,8 +396,8 @@ config/TemplateLoader.java
 ### Templates nutzen
 
 Jede vorhandene Klasse ist ein Template:
-- `StorageModule.java` → Template für alle Module
-- `StorageRegisterCommand.java` → Template für Commands
+- `PlotsModule.java` → Template für alle Module
+- Command-Klassen aus `module-plots/` → Template für Commands
 - `NoOpPlotProvider.java` → Template für NoOp-Provider
 
 ### Pattern wiederholen
@@ -401,13 +423,16 @@ Jede neue Klasse braucht:
 
 ## 📊 Status
 
-**Repository-Struktur:** ✅ Vollständig definiert  
-**Core Samples:** ✅ 80% erstellt  
-**Module Samples:** ⚠️ 30% erstellt (Storage Module)  
-**Dokumentation:** ✅ 90% erstellt  
+**Repository-Struktur:** ✅ Überarbeitet und aktualisiert
+**Core Plugin:** ✅ Vollständig implementiert
+**Plots Module:** ✅ Vollständig implementiert (inkl. Storage-Integration)
+**NPCs Module:** 🔨 In aktiver Entwicklung
+**Economy Module:** 📋 Geplant für Sprint 5-6
+**WorldAnchors Module:** 📋 Geplant für Sprint 7-8
+**Dokumentation:** ✅ Aktualisiert
 **Build-Files:** ✅ Vollständig
 
-**Nächster Schritt:** Core-Plugin vollständig implementieren (Sprint 1)
+**Nächster Schritt:** NPCs Module finalisieren (Sprint 9-10), dann Economy Module (Sprint 5-6)
 
 ---
 
