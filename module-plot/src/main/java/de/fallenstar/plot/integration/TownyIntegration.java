@@ -3,6 +3,7 @@ package de.fallenstar.plot.integration;
 import com.palmergames.bukkit.towny.event.TownBlockTypeRegisterEvent;
 import com.palmergames.bukkit.towny.object.TownBlockType;
 import com.palmergames.bukkit.towny.object.TownBlockTypeHandler;
+import com.palmergames.bukkit.towny.object.TownBlockData;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -30,8 +31,17 @@ public class TownyIntegration implements Listener {
     @EventHandler
     public void onTownBlockTypeRegister(TownBlockTypeRegisterEvent event) {
         try {
-            // Erstelle TownBlockType für "botschaft"
-            TownBlockType botschaftType = new TownBlockType("botschaft", "Botschaft");
+            // Hole die TownBlockData vom Standard "embassy" Typ als Template
+            TownBlockType embassyType = TownBlockTypeHandler.getType("embassy");
+            if (embassyType == null) {
+                plugin.getLogger().warning("✗ Konnte 'embassy' Typ nicht als Template finden");
+                return;
+            }
+
+            TownBlockData embassyData = embassyType.getData();
+
+            // Erstelle TownBlockType für "botschaft" mit embassy-ähnlichen Eigenschaften
+            TownBlockType botschaftType = new TownBlockType("botschaft", embassyData);
 
             // Registriere über TownBlockTypeHandler
             TownBlockTypeHandler.registerType(botschaftType);
@@ -40,6 +50,7 @@ public class TownyIntegration implements Listener {
 
         } catch (Exception e) {
             plugin.getLogger().warning("✗ Fehler beim Registrieren von 'botschaft': " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }
