@@ -215,7 +215,7 @@ public class CurrencyManager {
      */
     private BigDecimal calculateCoinCost(CurrencyItemSet currency, CurrencyItemSet.CurrencyTier tier) {
         // Tier-Wert (1, 10, 100)
-        BigDecimal tierValue = BigDecimal.valueOf(tier.getTierValue());
+        BigDecimal tierValue = BigDecimal.valueOf(currency.getTierValue(tier));
 
         // Wechselkurs zur Basiswährung
         BigDecimal exchangeRate = currency.exchangeRate();
