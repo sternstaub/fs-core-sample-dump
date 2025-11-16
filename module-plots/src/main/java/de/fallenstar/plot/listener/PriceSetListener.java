@@ -191,8 +191,9 @@ public class PriceSetListener implements Listener {
             var getSpecialItemManager = itemsPlugin.getClass().getMethod("getSpecialItemManager");
             var specialItemManager = getSpecialItemManager.invoke(itemsPlugin);
 
-            var getItemMethod = specialItemManager.getClass().getMethod("getItem", String.class, int.class);
-            var optionalItem = getItemMethod.invoke(specialItemManager, itemId, 1);
+            // KORREKTUR: Methode heißt createItem(), nicht getItem()
+            var createItemMethod = specialItemManager.getClass().getMethod("createItem", String.class, int.class);
+            var optionalItem = createItemMethod.invoke(specialItemManager, itemId, 1);
 
             // Optional.isPresent() und Optional.get()
             var isPresentMethod = optionalItem.getClass().getMethod("isPresent");
@@ -206,6 +207,7 @@ public class PriceSetListener implements Listener {
             return null;
         } catch (Exception e) {
             logger.warning("Fehler beim Laden von Coin-Item '" + itemId + "': " + e.getMessage());
+            e.printStackTrace();
             return null;
         }
     }
