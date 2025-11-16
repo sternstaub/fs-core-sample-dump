@@ -62,6 +62,10 @@ public class ItemsModule extends JavaPlugin implements Listener {
         itemProvider = new MMOItemsItemProvider(getLogger());
         getLogger().info("✓ MMOItemsItemProvider initialized");
 
+        // Registriere Provider bei der ProviderRegistry
+        providers.setItemProvider(itemProvider);
+        getLogger().info("✓ MMOItemsItemProvider registered with ProviderRegistry");
+
         // Erstelle SpecialItemManager
         specialItemManager = new SpecialItemManager(itemProvider, getLogger());
         getLogger().info("✓ SpecialItemManager initialized");

@@ -157,4 +157,46 @@ public class ProviderRegistry {
     public ChatProvider getChatProvider() { return chatProvider; }
     public NetworkProvider getNetworkProvider() { return networkProvider; }
     public UIRegistry getUIRegistry() { return uiRegistry; }
+
+    /**
+     * Setter für Provider - erlaubt Modulen, ihre Provider nachträglich zu registrieren.
+     *
+     * Diese Methoden ermöglichen es Modulen, die nach dem Core laden,
+     * ihre konkreten Provider-Implementierungen zu registrieren und
+     * die NoOp-Fallbacks zu ersetzen.
+     */
+    public void setPlotProvider(PlotProvider plotProvider) {
+        this.plotProvider = plotProvider;
+        logger.info("✓ PlotProvider updated: " + plotProvider.getClass().getSimpleName());
+    }
+
+    public void setTownProvider(TownProvider townProvider) {
+        this.townProvider = townProvider;
+        logger.info("✓ TownProvider updated: " + townProvider.getClass().getSimpleName());
+    }
+
+    public void setEconomyProvider(EconomyProvider economyProvider) {
+        this.economyProvider = economyProvider;
+        logger.info("✓ EconomyProvider updated: " + economyProvider.getClass().getSimpleName());
+    }
+
+    public void setNpcProvider(NPCProvider npcProvider) {
+        this.npcProvider = npcProvider;
+        logger.info("✓ NPCProvider updated: " + npcProvider.getClass().getSimpleName());
+    }
+
+    public void setItemProvider(ItemProvider itemProvider) {
+        this.itemProvider = itemProvider;
+        logger.info("✓ ItemProvider updated: " + itemProvider.getClass().getSimpleName());
+    }
+
+    public void setChatProvider(ChatProvider chatProvider) {
+        this.chatProvider = chatProvider;
+        logger.info("✓ ChatProvider updated: " + chatProvider.getClass().getSimpleName());
+    }
+
+    public void setNetworkProvider(NetworkProvider networkProvider) {
+        this.networkProvider = networkProvider;
+        logger.info("✓ NetworkProvider updated: " + networkProvider.getClass().getSimpleName());
+    }
 }
