@@ -19,6 +19,8 @@ import java.util.List;
  * Subcommands:
  * - /fscore admin gui [ui-id] - Öffnet Test-UI
  * - /fscore admin gui list - Zeigt alle registrierten Test-UIs
+ * - /fscore admin items - Item-Modul Testbefehle
+ * - /fscore admin plots - Plot-Modul Testbefehle
  *
  * Erfordert Permission: fallenstar.core.admin
  *
@@ -62,6 +64,8 @@ public class AdminCommand {
 
         switch (subCommand) {
             case "gui" -> handleGuiCommand(sender, Arrays.copyOfRange(args, 1, args.length));
+            case "items" -> handleItemsCommand(sender, Arrays.copyOfRange(args, 1, args.length));
+            case "plots" -> handlePlotsCommand(sender, Arrays.copyOfRange(args, 1, args.length));
             default -> {
                 sender.sendMessage(Component.text("Unbekannter Admin-Befehl: " + subCommand, NamedTextColor.RED));
                 sendAdminHelp(sender);
@@ -166,6 +170,56 @@ public class AdminCommand {
     }
 
     /**
+     * Behandelt /fscore admin items Subcommands.
+     *
+     * @param sender Command-Sender
+     * @param args Argumente (ohne "items")
+     */
+    private void handleItemsCommand(CommandSender sender, String[] args) {
+        sender.sendMessage(Component.text("╔═══════════════════════════════════════╗", NamedTextColor.GOLD));
+        sender.sendMessage(Component.text("║  Item-Modul Testbefehle              ║", NamedTextColor.GOLD));
+        sender.sendMessage(Component.text("╚═══════════════════════════════════════╝", NamedTextColor.GOLD));
+        sender.sendMessage(Component.empty());
+        sender.sendMessage(Component.text("Item-Testbefehle werden vom Items-Modul bereitgestellt.", NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("Stelle sicher, dass FallenStar-Items geladen ist!", NamedTextColor.GRAY));
+        sender.sendMessage(Component.empty());
+        sender.sendMessage(Component.text("Verfügbare Befehle:", NamedTextColor.WHITE));
+        sender.sendMessage(Component.text("  /fscore admin items list [type]", NamedTextColor.GOLD)
+                .append(Component.text(" - Zeigt alle MMOItems", NamedTextColor.GRAY)));
+        sender.sendMessage(Component.text("  /fscore admin items give <type> <id>", NamedTextColor.GOLD)
+                .append(Component.text(" - Gibt ein MMOItem", NamedTextColor.GRAY)));
+        sender.sendMessage(Component.text("  /fscore admin items browse", NamedTextColor.GOLD)
+                .append(Component.text(" - Öffnet Item-Browser", NamedTextColor.GRAY)));
+        sender.sendMessage(Component.text("  /fscore admin items info <type> <id>", NamedTextColor.GOLD)
+                .append(Component.text(" - Zeigt Item-Infos", NamedTextColor.GRAY)));
+        sender.sendMessage(Component.text("  /fscore admin items reload", NamedTextColor.GOLD)
+                .append(Component.text(" - Lädt Cache neu", NamedTextColor.GRAY)));
+    }
+
+    /**
+     * Behandelt /fscore admin plots Subcommands.
+     *
+     * @param sender Command-Sender
+     * @param args Argumente (ohne "plots")
+     */
+    private void handlePlotsCommand(CommandSender sender, String[] args) {
+        sender.sendMessage(Component.text("╔═══════════════════════════════════════╗", NamedTextColor.GOLD));
+        sender.sendMessage(Component.text("║  Plot-Modul Testbefehle              ║", NamedTextColor.GOLD));
+        sender.sendMessage(Component.text("╚═══════════════════════════════════════╝", NamedTextColor.GOLD));
+        sender.sendMessage(Component.empty());
+        sender.sendMessage(Component.text("Plot-Testbefehle werden vom Plots-Modul bereitgestellt.", NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("Stelle sicher, dass FallenStar-Plots geladen ist!", NamedTextColor.GRAY));
+        sender.sendMessage(Component.empty());
+        sender.sendMessage(Component.text("Verfügbare Befehle:", NamedTextColor.WHITE));
+        sender.sendMessage(Component.text("  /fscore admin plots info", NamedTextColor.GOLD)
+                .append(Component.text(" - Zeigt Plot-Info", NamedTextColor.GRAY)));
+        sender.sendMessage(Component.text("  /fscore admin plots storage view", NamedTextColor.GOLD)
+                .append(Component.text(" - Zeigt Storage-Materialien", NamedTextColor.GRAY)));
+        sender.sendMessage(Component.text("  /fscore admin plots storage scan", NamedTextColor.GOLD)
+                .append(Component.text(" - Scannt Storage neu", NamedTextColor.GRAY)));
+    }
+
+    /**
      * Zeigt Admin-Hilfe.
      *
      * @param sender Command-Sender
@@ -176,10 +230,16 @@ public class AdminCommand {
         sender.sendMessage(Component.text("╚═══════════════════════════════════════╝", NamedTextColor.AQUA));
         sender.sendMessage(Component.empty());
 
-        sender.sendMessage(Component.text("  /fscore admin gui list", NamedTextColor.GOLD)
-                .append(Component.text(" - Zeigt alle Test-UIs", NamedTextColor.GRAY)));
-        sender.sendMessage(Component.text("  /fscore admin gui <ui-id>", NamedTextColor.GOLD)
-                .append(Component.text(" - Öffnet ein Test-UI", NamedTextColor.GRAY)));
+        sender.sendMessage(Component.text("  /fscore admin gui", NamedTextColor.GOLD)
+                .append(Component.text(" - UI-Testbefehle", NamedTextColor.GRAY)));
+        sender.sendMessage(Component.text("  /fscore admin items", NamedTextColor.GOLD)
+                .append(Component.text(" - Item-Testbefehle", NamedTextColor.GRAY)));
+        sender.sendMessage(Component.text("  /fscore admin plots", NamedTextColor.GOLD)
+                .append(Component.text(" - Plot-Testbefehle", NamedTextColor.GRAY)));
+        sender.sendMessage(Component.empty());
+        sender.sendMessage(Component.text("Verwende ", NamedTextColor.GRAY)
+                .append(Component.text("/fscore admin <kategorie>", NamedTextColor.YELLOW))
+                .append(Component.text(" für Details.", NamedTextColor.GRAY)));
     }
 
     /**
@@ -193,7 +253,7 @@ public class AdminCommand {
 
         if (args.length == 1) {
             // /fscore admin <?>
-            List<String> subCommands = Arrays.asList("gui");
+            List<String> subCommands = Arrays.asList("gui", "items", "plots");
             for (String sub : subCommands) {
                 if (sub.startsWith(args[0].toLowerCase())) {
                     completions.add(sub);
@@ -206,6 +266,30 @@ public class AdminCommand {
             for (String id : registry.getRegisteredUIIds()) {
                 if (id.startsWith(args[1].toLowerCase())) {
                     completions.add(id);
+                }
+            }
+        } else if (args.length == 2 && "items".equalsIgnoreCase(args[0])) {
+            // /fscore admin items <?>
+            List<String> itemSubs = Arrays.asList("list", "give", "browse", "info", "reload");
+            for (String sub : itemSubs) {
+                if (sub.startsWith(args[1].toLowerCase())) {
+                    completions.add(sub);
+                }
+            }
+        } else if (args.length == 2 && "plots".equalsIgnoreCase(args[0])) {
+            // /fscore admin plots <?>
+            List<String> plotSubs = Arrays.asList("info", "storage");
+            for (String sub : plotSubs) {
+                if (sub.startsWith(args[1].toLowerCase())) {
+                    completions.add(sub);
+                }
+            }
+        } else if (args.length == 3 && "plots".equalsIgnoreCase(args[0]) && "storage".equalsIgnoreCase(args[1])) {
+            // /fscore admin plots storage <?>
+            List<String> storageSubs = Arrays.asList("view", "scan");
+            for (String sub : storageSubs) {
+                if (sub.startsWith(args[2].toLowerCase())) {
+                    completions.add(sub);
                 }
             }
         }

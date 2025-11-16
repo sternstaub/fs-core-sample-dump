@@ -87,15 +87,17 @@ A **modular Minecraft plugin system** for Paper 1.21.1 with provider-based archi
 
 - **Version:** 1.0-SNAPSHOT
 - **Phase:** Aktive Entwicklung
-- **Completion:** ~30% (Core ✅ + Plots ✅ + UI-Framework ✅ + Items ✅)
-- **Aktueller Sprint:** Sprint 5-6 ✅ abgeschlossen (Items-Modul + MMOItems-Integration)
-- **Nächster Sprint:** Sprint 7-8 - UI-Modul (Konkrete UIs: TradeUI, AmbassadorUI, etc.)
+- **Completion:** ~40% (Core ✅ + Plots ✅ + UI-Framework ✅ + Items ✅ + UI-Modul 🔨)
+- **Aktueller Sprint:** Sprint 7-8 🔨 in Arbeit (UI-Modul: ConfirmationUI, SimpleTradeUI)
+- **Nächster Sprint:** Sprint 9-10 - Economy-Modul (Weltwirtschaft, Münzgeld, Preise)
 - **Wichtige Architektur:** Provider-Implementierungen in Modulen, Core nur Interfaces!
 - **Planung:** 20 Sprints (40 Wochen) mit Items, UI, Economy, Chat, Auth, WebHooks
 - **Storage-Modul:** ✅ Entfernt (redundant, in Plots integriert)
 - **UI-Framework:** ✅ Basis-Klassen implementiert (BaseUI, SmallChestUI, etc.)
 - **ItemProvider:** ✅ Interface erweitert, MMOItems 6.10+ Integration abgeschlossen
 - **Items-Modul:** ✅ Vollständig implementiert mit Reflection-basiertem MMOItems-Zugriff
+- **UI-Modul:** 🔨 In Entwicklung (ConfirmationUI, SimpleTradeUI, UIButtonManager)
+- **Testbefehle:** ✅ Neue Struktur unter `/fscore admin [gui/items/plots]`
 
 ---
 
@@ -184,15 +186,28 @@ fs-core-sample-dump/
 │   │   ├── command/                           # Item-Befehle
 │   │   │   └── ItemsCommand.java              # /items browse, info, reload
 │   │   ├── manager/                           # Item-Manager
-│   │   │   └── SpecialItemManager.java        # ✅ Währungs-Items (Münzen), UI-Buttons
+│   │   │   └── SpecialItemManager.java        # ✅ Währungs-Items (Münzen)
 │   │   └── ui/                                # Test-UIs (für UIRegistry)
 │   │       ├── ItemBrowserUI.java             # ✅ Kategorie-basierter Browser
-│   │       └── TestTradeUI.java               # ✅ Vanilla Trading Demo
+│   │       └── TestTradeUI.java               # ✅ MMOItems Trading Demo
 │   └── src/main/resources/
 │       ├── plugin.yml                         # Dependency: FallenStar-Core, MMOItems
 │       └── config.yml
 │
-├── module-economy/                  # FallenStar Economy (Sprint 7-8)
+├── module-ui/                       # FallenStar UI (Sprint 7-8) 🔨
+│   ├── pom.xml                      # Konkrete UIs: ConfirmationUI, SimpleTradeUI
+│   ├── src/main/java/de/fallenstar/ui/
+│   │   ├── UIModule.java                      # Main class (ProvidersReadyEvent)
+│   │   ├── manager/                           # UI-Manager
+│   │   │   └── UIButtonManager.java           # ✅ UI-Button Items (Confirm, Cancel, Close)
+│   │   └── ui/                                # Konkrete UI-Implementierungen
+│   │       ├── ConfirmationUI.java            # ✅ Ja/Nein Dialog
+│   │       └── SimpleTradeUI.java             # ✅ Vanilla Trading Demo
+│   └── src/main/resources/
+│       ├── plugin.yml                         # Dependency: FallenStar-Core
+│       └── config.yml
+│
+├── module-economy/                  # FallenStar Economy (Sprint 9-10)
 │   ├── pom.xml                      # Weltwirtschaft, Münzgeld, Preise
 │   ├── src/main/java/de/fallenstar/economy/
 │   │   ├── EconomyModule.java                 # Main class
@@ -242,7 +257,7 @@ Core (UI-Framework + alle Provider-Interfaces + NoOp-Implementierungen)
  ↑
  ├── Plots            (Plot-System + Storage ✅, Towny → TownyPlotProvider)
  ├── Items            (MMOItems-Wrapper ✅, registriert MMOItemsItemProvider)
- ├── UI               (Konkrete UIs: TradeUI, AmbassadorUI, nutzt ItemProvider)
+ ├── UI               (Konkrete UIs 🔨: ConfirmationUI, SimpleTradeUI, UIButtonManager)
  ├── Economy          (Weltwirtschaft, Vault, nutzt ItemProvider + UI)
  ├── WorldAnchors     (Schnellreisen, POIs, Wegpunkte)
  ├── NPCs             (NPC-System, Denizen-Ersatz, nutzt ItemProvider + PlotProvider + UI)
@@ -258,6 +273,10 @@ Core (UI-Framework + alle Provider-Interfaces + NoOp-Implementierungen)
 - Core enthält NUR Interfaces + NoOp-Implementierungen + NativeTextUIProvider (Fallback)
 - Konkrete Provider-Implementierungen liegen in den Modulen
 - **Storage-Modul** ❌ entfernt, Funktionalität in **Plots-Modul** integriert
+- **Special Items Architektur:** Module registrieren eigene Special Items Kategorien
+  - Items-Modul: Währungs-Items (bronze/silver/gold coins) via SpecialItemManager
+  - UI-Modul: UI-Button Items (Confirm, Cancel, Close, etc.) via UIButtonManager
+  - Economy-Modul: Weitere Währungs-Items (zukünftig)
 
 **Beispiel:** NPCs-Modul nutzt PlotProvider + UIProvider (Core-Interfaces), nicht Towny/Denizen direkt!
 
@@ -480,7 +499,7 @@ Das Projekt folgt einem 20-Sprint-Fahrplan (40 Wochen):
 | **1-2** | **Core + UI Framework** | 2 Wochen | ✅ | Core + UI-Basis-Klassen + Admin-Commands |
 | **3-4** | **Plots (inkl. Storage)** | 2 Wochen | ✅ | Plot-System + Storage-Integration (fertig) |
 | **5-6** | **Items (MMOItems-Wrapper)** | 2 Wochen | ✅ | MMOItems 6.10+ Reflection-Integration + Test-UIs |
-| **7-8** | **UI-Modul** | 2 Wochen | 📋 | Konkrete UIs (TradeUI, AmbassadorUI, etc.) |
+| **7-8** | **UI-Modul** | 2 Wochen | 🔨 | ConfirmationUI ✅, SimpleTradeUI ✅, UIButtonManager ✅ |
 | **9-10** | **Economy** | 2 Wochen | 📋 | Weltwirtschaft mit UI-Integration |
 | **11-12** | **WorldAnchors** | 2 Wochen | 📋 | Schnellreisen, POIs, Wegpunkte |
 | **13-14** | **NPCs** | 2 Wochen | 📋 | NPC-System mit UI, Denizen-Ersatz |
@@ -493,16 +512,79 @@ Das Projekt folgt einem 20-Sprint-Fahrplan (40 Wochen):
 - 🔨 In Arbeit
 - 📋 Geplant
 
+**Sprint 7-8 Fortschritt:**
+- ✅ UIButtonManager (UI-Button Items: Confirm, Cancel, Close, etc.)
+- ✅ ConfirmationUI (Ja/Nein Dialog mit grüner/roter Wolle)
+- ✅ SimpleTradeUI (Vanilla Trading Demo)
+- ✅ Testbefehle: `/fscore admin gui confirm`, `/fscore admin gui trade`
+- 📋 Weitere UIs (AmbassadorUI, DialogUI, etc.) folgen...
+
 **Wichtige Architektur-Änderungen:**
 - **Core** enthält nur Interfaces + NoOp-Implementierungen + UI-Framework-Basis-Klassen
 - **Provider-Implementierungen** liegen in den jeweiligen Modulen
 - **Module** kommunizieren NUR über Core-Interfaces
 - **Storage-Modul** ❌ entfernt (redundant, in Plots integriert)
 - **UI-Framework** ✅ neu (BaseUI, SmallChestUI, LargeChestUI, SignUI, AnvilUI, BookUI)
-- **Admin-Command-System** ✅ neu (/fscore admin gui für UI-Tests)
+- **Admin-Command-System** ✅ neu (/fscore admin [gui/items/plots] für Modul-Tests)
 - **Denizen-Ersatz** 📋 natives NPC-Dialog-System im NPCs-Modul
 - **Sprint-Umplanung:** Items VOR UI-Modul (5-6), UI-Modul nach Items (7-8)
 - **Begründung:** Trading-UIs benötigen Custom-Item-Support (MMOItems)
+
+### Testbefehl-Struktur
+
+**WICHTIG:** Alle Testbefehle sind jetzt unter `/fscore admin <kategorie>` organisiert!
+
+#### `/fscore admin gui` - UI-Testbefehle
+
+```
+/fscore admin gui list              - Zeigt alle registrierten Test-UIs
+/fscore admin gui <ui-id>           - Öffnet ein spezifisches UI
+/fscore admin gui confirm           - Öffnet ConfirmationUI (Ja/Nein Dialog)
+/fscore admin gui trade             - Öffnet SimpleTradeUI (Vanilla Trading Demo)
+```
+
+**UI-Registrierung:**
+- Module registrieren ihre UIs in der UIRegistry (Core)
+- Jedes UI bekommt eine eindeutige ID (z.B. "confirm", "trade", "itembrowser")
+- UIs können via Factory-Methoden oder Konstruktoren erstellt werden
+- Test-UIs sind über `/fscore admin gui <ui-id>` zugänglich
+
+**Beispiel:**
+```java
+// In UIModule.java
+uiRegistry.registerTestUI(
+    "confirm",
+    "Bestätigungs-Dialog (Ja/Nein)",
+    "Generisches Ja/Nein Confirmation UI",
+    () -> ConfirmationUI.createSimple(buttonManager, "Test-Nachricht", onConfirm)
+);
+```
+
+#### `/fscore admin items` - Item-Testbefehle
+
+```
+/fscore admin items list [type]     - Zeigt alle MMOItems (optional nach Type gefiltert)
+/fscore admin items give <type> <id> - Gibt dem Spieler ein MMOItem
+/fscore admin items browse          - Öffnet ItemBrowserUI
+/fscore admin items info <type> <id> - Zeigt detaillierte Item-Infos
+/fscore admin items reload          - Lädt MMOItems-Cache neu
+```
+
+**Hinweis:** Diese Befehle werden vom Items-Modul bereitgestellt (noch nicht implementiert).
+
+#### `/fscore admin plots` - Plot-Testbefehle
+
+```
+/fscore admin plots info            - Zeigt Plot-Info am aktuellen Standort
+/fscore admin plots storage view    - Zeigt Plot-Storage Materialien
+/fscore admin plots storage scan    - Scannt Plot-Storage neu
+```
+
+**Hinweis:** Diese Befehle werden vom Plots-Modul bereitgestellt (noch nicht implementiert).
+
+**Migration:**
+- ❌ `/fscore plotstorage view` → ✅ `/fscore admin plots storage view`
+- Alte Befehle wurden entfernt, neue Struktur ist konsistent
 
 ### Working on a Sprint
 
@@ -1244,10 +1326,76 @@ git log --oneline -10
 
 ---
 
+## Sprint 7-8: UI-Modul - Wichtige Erkenntnisse
+
+### Implementierte Komponenten:
+
+1. **UI-Modul Struktur**
+   - Neues Maven-Modul `module-ui`
+   - Dependency auf Core (UI-Framework)
+   - ProvidersReadyEvent-basierte Initialisierung
+
+2. **UIButtonManager** ✅
+   - Verwaltet UI-Button Items (Confirm, Cancel, Close, Info, Next, Previous, Back)
+   - Button-Cache für Performance
+   - Factory-Methoden für einfache Erstellung
+   - Customizable Namen und Lore
+
+3. **ConfirmationUI** ✅
+   - Generisches Ja/Nein Bestätigungs-Dialog
+   - Layout: 9 Slots (SmallChestUI)
+   - Grüne Wolle (Ja) - Slot 3
+   - Rote Wolle (Nein) - Slot 5
+   - Barriere (Schließen) - Slot 8 (oben rechts)
+   - Factory-Methoden: `createSimple()`, `createWithCallbacks()`
+
+4. **SimpleTradeUI** ✅
+   - Vanilla Trading Demo (ohne MMOItems)
+   - Layout: 54 Slots (LargeChestUI)
+   - 6 Trade-Angebote mit Input1 + Input2 → Output
+   - Demo-Implementierung ohne echte Inventar-Prüfung
+   - Testdaten mit verschiedenen Vanilla-Items
+
+5. **Testbefehl-Struktur** ✅
+   - `/fscore admin gui confirm` - Öffnet ConfirmationUI
+   - `/fscore admin gui trade` - Öffnet SimpleTradeUI
+   - `/fscore admin items` - Placeholder für Item-Befehle
+   - `/fscore admin plots` - Placeholder für Plot-Befehle
+   - Alte `/fscore plotstorage` Befehle entfernt
+
+### Special Items Architektur:
+
+**Konzept:**
+- Module registrieren eigene Special Items Kategorien
+- Jedes Modul verwaltet seine eigenen Special Items
+- Wiederverwendbare Items über Manager-Klassen
+
+**Implementierungen:**
+- **Items-Modul:** `SpecialItemManager` → Währungs-Items (bronze/silver/gold coins)
+- **UI-Modul:** `UIButtonManager` → UI-Button Items (Confirm, Cancel, Close, etc.)
+- **Economy-Modul:** Weitere Währungs-Items (geplant)
+
+### Best Practices etabliert:
+
+1. **UI-Registrierung in UIRegistry** für zentrale Verwaltung
+2. **Factory-Pattern** für UI-Erstellung mit verschiedenen Konfigurationen
+3. **Button-Manager Pattern** für wiederverwendbare UI-Elemente
+4. **Layout-Konzepte** mit festen Slot-Positionen (Consistency)
+
+### Nächste Schritte (Sprint 7-8 Fortsetzung):
+
+- 📋 DialogUI (NPC-Dialoge, Quest-Texte)
+- 📋 AmbassadorUI (Townverwaltung, NPC-Interaktion)
+- 📋 StorageUI (Inventory-Management, Chest-Sorting)
+- 📋 Weitere UI-Button Varianten (Warning, Success, etc.)
+
+---
+
 **Last Updated:** 2025-11-16
 **Repository:** fs-core-sample-dump
-**Branch:** claude/setup-ui-framework-012idY94bWphh2zfeXHvW2gb
+**Branch:** claude/ui-items-implementation-018dv6yDuyau5iAYBKeGSMHg
 **Version:** 1.0-SNAPSHOT
-**Sprint Status:** Sprint 5-6 ✅ abgeschlossen | Nächster: Sprint 7-8 (UI-Modul)
+**Sprint Status:** Sprint 7-8 🔨 in Arbeit (ConfirmationUI ✅, SimpleTradeUI ✅, UIButtonManager ✅)
 **Architektur:** Provider-Implementierungen in Modulen, Core nur Interfaces + NoOp
-**Build Status:** ✅ Alle Module kompilieren erfolgreich (Core, Plots, Items, NPCs, Economy)
+**Build Status:** ✅ Alle Module kompilieren erfolgreich (Core, Plots, Items, UI, NPCs, Economy)
+**Testbefehle:** `/fscore admin [gui/items/plots]` - neue Struktur aktiv

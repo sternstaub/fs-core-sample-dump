@@ -14,21 +14,26 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
- * FallenStar Items Module - MMOItems Integration.
+ * FallenStar Items Module - Vanilla Currency Items + Optional MMOItems Integration.
  *
  * Verantwortlichkeiten:
- * - MMOItemsItemProvider bereitstellen
- * - Spezial-Items verwalten (Münzen, UI-Buttons)
+ * - Vanilla Währungs-Items (Bronze/Silver/Gold Coins) - IMMER verfügbar
+ * - OPTIONAL: MMOItemsItemProvider (nur wenn MMOItems installiert)
  * - Item-Browser und Admin-Commands
  *
+ * Graceful Degradation:
+ * - Modul läuft OHNE MMOItems (nur Vanilla Coins)
+ * - Mit MMOItems: Volle Custom-Item-Unterstützung
+ *
  * @author FallenStar
- * @version 1.0
+ * @version 2.0
  */
 public class ItemsModule extends JavaPlugin implements Listener {
 
     private ProviderRegistry providers;
-    private MMOItemsItemProvider itemProvider;
-    private SpecialItemManager specialItemManager;
+    private MMOItemsItemProvider itemProvider; // OPTIONAL!
+    private SpecialItemManager specialItemManager; // IMMER verfügbar
+    private boolean mmoItemsAvailable = false;
 
     @Override
     public void onEnable() {
@@ -51,24 +56,32 @@ public class ItemsModule extends JavaPlugin implements Listener {
     public void onProvidersReady(ProvidersReadyEvent event) {
         this.providers = event.getRegistry();
 
-        // Prüfe ob MMOItems verfügbar ist
-        if (!checkMMOItemsAvailable()) {
-            getLogger().severe("MMOItems plugin not found! Disabling module...");
-            getServer().getPluginManager().disablePlugin(this);
-            return;
+        // Prüfe ob MMOItems verfügbar ist (OPTIONAL!)
+        mmoItemsAvailable = checkMMOItemsAvailable();
+
+        if (mmoItemsAvailable) {
+            try {
+                // Erstelle MMOItems-Provider
+                itemProvider = new MMOItemsItemProvider(getLogger());
+                getLogger().info("✓ MMOItemsItemProvider initialized");
+
+                // Registriere Provider bei der ProviderRegistry
+                providers.setItemProvider(itemProvider);
+                getLogger().info("✓ MMOItemsItemProvider registered with ProviderRegistry");
+            } catch (Exception e) {
+                getLogger().warning("✗ Failed to initialize MMOItems Provider: " + e.getMessage());
+                getLogger().warning("  Falling back to Vanilla-only mode");
+                mmoItemsAvailable = false;
+            }
+        } else {
+            getLogger().warning("✗ MMOItems not found - running in Vanilla-only mode");
+            getLogger().info("  Currency items (coins) will still work!");
         }
 
-        // Erstelle MMOItems-Provider
-        itemProvider = new MMOItemsItemProvider(getLogger());
-        getLogger().info("✓ MMOItemsItemProvider initialized");
-
-        // Registriere Provider bei der ProviderRegistry
-        providers.setItemProvider(itemProvider);
-        getLogger().info("✓ MMOItemsItemProvider registered with ProviderRegistry");
-
-        // Erstelle SpecialItemManager
-        specialItemManager = new SpecialItemManager(itemProvider, getLogger());
-        getLogger().info("✓ SpecialItemManager initialized");
+        // Erstelle SpecialItemManager (Vanilla Items, KEINE MMOItems-Dependency!)
+        // Läuft IMMER, auch ohne MMOItems
+        specialItemManager = new SpecialItemManager(this, getLogger());
+        getLogger().info("✓ SpecialItemManager initialized (Vanilla Currency Items)");
 
         // Registriere Commands
         registerCommands();
@@ -76,7 +89,13 @@ public class ItemsModule extends JavaPlugin implements Listener {
         // Registriere Test-UIs in UIRegistry
         registerTestUIs();
 
-        getLogger().info("✓ Items Module enabled!");
+        getLogger().info("═══════════════════════════════════════");
+        if (mmoItemsAvailable) {
+            getLogger().info("✓ Items Module enabled (Full Mode - MMOItems + Vanilla)");
+        } else {
+            getLogger().info("✓ Items Module enabled (Vanilla Mode - Coins only)");
+        }
+        getLogger().info("═══════════════════════════════════════");
     }
 
     /**
@@ -103,31 +122,37 @@ public class ItemsModule extends JavaPlugin implements Listener {
     private void registerTestUIs() {
         UIRegistry uiRegistry = providers.getUIRegistry();
 
-        // Erstelle Singleton-Listener-Instanzen für Event-Handling
-        ItemBrowserUI browserListener = new ItemBrowserUI(itemProvider);
-        TestTradeUI tradeListener = new TestTradeUI(itemProvider, specialItemManager);
+        // Nur MMOItems-basierte UIs registrieren wenn MMOItems verfügbar
+        if (mmoItemsAvailable && itemProvider != null) {
+            // Erstelle Singleton-Listener-Instanzen für Event-Handling
+            ItemBrowserUI browserListener = new ItemBrowserUI(itemProvider);
+            TestTradeUI tradeListener = new TestTradeUI(itemProvider, specialItemManager);
 
-        // Registriere als Event-Listener
-        getServer().getPluginManager().registerEvents(browserListener, this);
-        getServer().getPluginManager().registerEvents(tradeListener, this);
+            // Registriere als Event-Listener
+            getServer().getPluginManager().registerEvents(browserListener, this);
+            getServer().getPluginManager().registerEvents(tradeListener, this);
 
-        // ItemBrowserUI registrieren
-        uiRegistry.registerUI(
-                "items-browser",
-                "Item Browser",
-                "Durchstöbere alle Custom-Items nach Kategorien",
-                () -> new ItemBrowserUI(itemProvider)
-        );
+            // ItemBrowserUI registrieren
+            uiRegistry.registerUI(
+                    "items-browser",
+                    "Item Browser",
+                    "Durchstöbere alle Custom-Items nach Kategorien",
+                    () -> new ItemBrowserUI(itemProvider)
+            );
 
-        // TestTradeUI registrieren
-        uiRegistry.registerUI(
-                "items-trade-test",
-                "Trade Test UI",
-                "Demo-Händler mit Custom-Items und Münz-System",
-                () -> new TestTradeUI(itemProvider, specialItemManager)
-        );
+            // TestTradeUI registrieren (mit MMOItems)
+            uiRegistry.registerUI(
+                    "items-trade-test",
+                    "Trade Test UI (MMOItems)",
+                    "Demo-Händler mit Custom-Items und Münz-System",
+                    () -> new TestTradeUI(itemProvider, specialItemManager)
+            );
 
-        getLogger().info("✓ Test-UIs registered (items-browser, items-trade-test)");
+            getLogger().info("✓ Test-UIs registered (items-browser, items-trade-test)");
+        } else {
+            getLogger().info("✗ Test-UIs not registered (MMOItems not available)");
+            getLogger().info("  Vanilla currency items still work in other UIs!");
+        }
     }
 
     @Override

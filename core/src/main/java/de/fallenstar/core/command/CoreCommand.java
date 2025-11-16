@@ -1,18 +1,13 @@
 package de.fallenstar.core.command;
 
 import de.fallenstar.core.FallenStarCore;
-import de.fallenstar.core.provider.Plot;
-import de.fallenstar.core.provider.PlotProvider;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
-import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
-import org.bukkit.entity.Player;
-import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,7 +56,6 @@ public class CoreCommand implements CommandExecutor, TabCompleter {
             case "reload" -> handleReload(sender);
             case "debug" -> handleDebug(sender);
             case "admin" -> adminCommand.handleAdminCommand(sender, Arrays.copyOfRange(args, 1, args.length));
-            case "plotstorage" -> handlePlotStorage(sender, Arrays.copyOfRange(args, 1, args.length));
             case "help" -> sendHelp(sender);
             default -> {
                 sender.sendMessage(Component.text("Unbekannter Befehl: " + subCommand, NamedTextColor.RED));
@@ -161,109 +155,6 @@ public class CoreCommand implements CommandExecutor, TabCompleter {
     }
 
     /**
-     * Handler für /fscore plotstorage Subcommands.
-     */
-    private void handlePlotStorage(CommandSender sender, String[] args) {
-        if (!(sender instanceof Player)) {
-            sender.sendMessage(Component.text("Dieser Befehl kann nur von Spielern verwendet werden.", NamedTextColor.RED));
-            return;
-        }
-
-        if (args.length == 0) {
-            sender.sendMessage(Component.text("Verwendung: /fscore plotstorage view", NamedTextColor.RED));
-            return;
-        }
-
-        Player player = (Player) sender;
-        String subCommand = args[0].toLowerCase();
-
-        if ("view".equals(subCommand)) {
-            handlePlotStorageView(player);
-        } else {
-            sender.sendMessage(Component.text("Unbekannter Subcommand: " + subCommand, NamedTextColor.RED));
-            sender.sendMessage(Component.text("Verwendung: /fscore plotstorage view", NamedTextColor.YELLOW));
-        }
-    }
-
-    /**
-     * Zeigt die registrierten Materialien auf dem aktuellen Grundstück.
-     */
-    private void handlePlotStorageView(Player player) {
-        try {
-            // Hole PlotProvider
-            PlotProvider plotProvider = plugin.getProviderRegistry().getPlotProvider();
-
-            if (!plotProvider.isAvailable()) {
-                player.sendMessage(Component.text("PlotProvider nicht verfügbar!", NamedTextColor.RED));
-                return;
-            }
-
-            // Hole Plot an Spieler-Position
-            Plot plot = plotProvider.getPlot(player.getLocation());
-
-            if (plot == null) {
-                player.sendMessage(Component.text("Du stehst nicht auf einem Grundstück!", NamedTextColor.RED));
-                return;
-            }
-
-            // Prüfe ob Storage-Modul geladen ist
-            Plugin storagePlugin = Bukkit.getPluginManager().getPlugin("FallenStar-Storage");
-
-            if (storagePlugin == null || !storagePlugin.isEnabled()) {
-                player.sendMessage(Component.text("Storage-Modul ist nicht geladen!", NamedTextColor.RED));
-                return;
-            }
-
-            // Greife auf StorageModule zu via Reflection (oder API)
-            try {
-                Object storageModule = storagePlugin;
-                Object storageProvider = storageModule.getClass().getMethod("getStorageProvider").invoke(storageModule);
-                Object plotStorage = storageProvider.getClass().getMethod("getPlotStorage", Plot.class).invoke(storageProvider, plot);
-
-                // Hole alle Materialien
-                @SuppressWarnings("unchecked")
-                java.util.Set<org.bukkit.Material> materials =
-                    (java.util.Set<org.bukkit.Material>) plotStorage.getClass().getMethod("getAllMaterials").invoke(plotStorage);
-
-                // Zeige Header
-                player.sendMessage(Component.text("╔═══════════════════════════════════════╗", NamedTextColor.GOLD));
-                player.sendMessage(Component.text("║  Plot Storage: " + plot.getIdentifier(), NamedTextColor.GOLD));
-                player.sendMessage(Component.text("╚═══════════════════════════════════════╝", NamedTextColor.GOLD));
-                player.sendMessage(Component.empty());
-
-                if (materials.isEmpty()) {
-                    player.sendMessage(Component.text("Keine Materialien gefunden.", NamedTextColor.YELLOW));
-                    return;
-                }
-
-                // Zeige alle Materialien
-                for (org.bukkit.Material material : materials) {
-                    int amount = (int) plotStorage.getClass().getMethod("getTotalAmount", org.bukkit.Material.class)
-                                                  .invoke(plotStorage, material);
-
-                    player.sendMessage(Component.text("  ", NamedTextColor.WHITE)
-                        .append(Component.text(material.name(), NamedTextColor.WHITE))
-                        .append(Component.text(": ", NamedTextColor.GRAY))
-                        .append(Component.text(String.valueOf(amount), NamedTextColor.GREEN)));
-                }
-
-                player.sendMessage(Component.empty());
-                player.sendMessage(Component.text("Gesamt: " + materials.size() + " Material-Typen", NamedTextColor.GRAY));
-
-            } catch (Exception e) {
-                player.sendMessage(Component.text("Fehler beim Zugriff auf Storage: " + e.getMessage(), NamedTextColor.RED));
-                plugin.getLogger().warning("PlotStorage view failed: " + e.getMessage());
-                e.printStackTrace();
-            }
-
-        } catch (Exception e) {
-            player.sendMessage(Component.text("Fehler: " + e.getMessage(), NamedTextColor.RED));
-            plugin.getLogger().warning("PlotStorage command failed: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    /**
      * Zeigt Hilfe-Text.
      */
     private void sendHelp(CommandSender sender) {
@@ -276,7 +167,6 @@ public class CoreCommand implements CommandExecutor, TabCompleter {
         sendCommandHelp(sender, "/fscore reload", "Lädt Config und Provider neu");
         sendCommandHelp(sender, "/fscore debug", "Toggle Debug-Modus");
         sendCommandHelp(sender, "/fscore admin", "Admin-Befehle (erfordert Permission)");
-        sendCommandHelp(sender, "/fscore plotstorage view", "Zeigt Materialien auf dem aktuellen Plot");
         sendCommandHelp(sender, "/fscore help", "Zeigt diese Hilfe");
     }
 
@@ -292,7 +182,7 @@ public class CoreCommand implements CommandExecutor, TabCompleter {
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
                                                   @NotNull String alias, @NotNull String[] args) {
         if (args.length == 1) {
-            List<String> subCommands = Arrays.asList("status", "reload", "debug", "admin", "plotstorage", "help");
+            List<String> subCommands = Arrays.asList("status", "reload", "debug", "admin", "help");
             List<String> completions = new ArrayList<>();
 
             for (String sub : subCommands) {
@@ -307,20 +197,6 @@ public class CoreCommand implements CommandExecutor, TabCompleter {
         // Tab-Completion für admin subcommands
         if (args.length >= 2 && "admin".equalsIgnoreCase(args[0])) {
             return adminCommand.getTabCompletions(Arrays.copyOfRange(args, 1, args.length));
-        }
-
-        // Tab-Completion für plotstorage subcommands
-        if (args.length == 2 && "plotstorage".equalsIgnoreCase(args[0])) {
-            List<String> subCommands = Arrays.asList("view");
-            List<String> completions = new ArrayList<>();
-
-            for (String sub : subCommands) {
-                if (sub.startsWith(args[1].toLowerCase())) {
-                    completions.add(sub);
-                }
-            }
-
-            return completions;
         }
 
         return new ArrayList<>();
