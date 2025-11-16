@@ -60,6 +60,29 @@ public abstract class SmallChestUI extends BaseUI implements Listener {
         player.openInventory(inventory);
     }
 
+    /**
+     * Aktualisiert das Inventory ohne es zu schließen.
+     * Verwendet wenn sich Items ändern aber das UI geöffnet bleiben soll.
+     *
+     * @param player Der Spieler
+     */
+    public void refresh(Player player) {
+        Inventory inventory = player.getOpenInventory().getTopInventory();
+        if (inventory.getSize() != SIZE) {
+            return; // Falsches Inventory
+        }
+
+        // Items aktualisieren
+        for (Map.Entry<Integer, ItemStack> entry : items.entrySet()) {
+            if (entry.getKey() >= 0 && entry.getKey() < SIZE) {
+                inventory.setItem(entry.getKey(), entry.getValue());
+            }
+        }
+
+        // Spieler-Inventory updaten (für visuelle Aktualisierung)
+        player.updateInventory();
+    }
+
     @Override
     public void close(Player player) {
         player.closeInventory();

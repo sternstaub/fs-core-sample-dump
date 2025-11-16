@@ -171,7 +171,7 @@ public class PriceEditorUI extends SmallChestUI {
     private void handleIncrease(Player player, int amount) {
         callback.onIncrease(amount);
         updateItemDisplay();
-        open(player); // UI neu öffnen um Änderungen zu zeigen
+        refresh(player); // UI aktualisieren um Änderungen zu zeigen (ohne zu schließen!)
     }
 
     /**
@@ -183,7 +183,7 @@ public class PriceEditorUI extends SmallChestUI {
     private void handleDecrease(Player player, int amount) {
         callback.onDecrease(amount);
         updateItemDisplay();
-        open(player); // UI neu öffnen um Änderungen zu zeigen
+        refresh(player); // UI aktualisieren um Änderungen zu zeigen (ohne zu schließen!)
     }
 
     /**

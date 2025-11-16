@@ -163,19 +163,19 @@ public class ItemsModule extends JavaPlugin implements Listener {
      * Registriert die Basiswährung "Sterne" (Bronze/Silber/Gold).
      *
      * Diese Methode registriert die drei Tier-Items der Basis-Währung:
-     * - Bronzestern (1er Münze, Wert: 1)
-     * - Silberstern (10er Münze, Wert: 10)
-     * - Goldstern (100er Münze, Wert: 100)
+     * - Bronzestern (1er Münze, Wert: 1) - COPPER (Kupferklumpen)
+     * - Silberstern (10er Münze, Wert: 10) - IRON_NUGGET (Eisenklumpen)
+     * - Goldstern (100er Münze, Wert: 100) - GOLD_NUGGET (Goldklumpen)
      *
      * Diese werden später vom Economy-Modul als CurrencyItemSet verwendet.
      */
     private void registerBaseCurrency() {
         getLogger().info("Registriere Basiswährung 'Sterne'...");
 
-        // Bronzestern (1er Münze)
+        // Bronzestern (1er Münze) - Kupferklumpen
         specialItemManager.registerVanillaItem(
                 "bronze_stern",
-                Material.COPPER_INGOT,
+                Material.COPPER_INGOT,  // Kupferklumpen (da kein COPPER_NUGGET in 1.21)
                 1,  // Custom Model Data
                 net.kyori.adventure.text.Component.text("Bronzestern")
                         .color(net.kyori.adventure.text.format.NamedTextColor.GOLD)
@@ -187,10 +187,10 @@ public class ItemsModule extends JavaPlugin implements Listener {
                 )
         );
 
-        // Silberstern (10er Münze)
+        // Silberstern (10er Münze) - Eisenklumpen
         specialItemManager.registerVanillaItem(
                 "silver_stern",
-                Material.IRON_INGOT,
+                Material.IRON_NUGGET,  // Eisenklumpen
                 2,  // Custom Model Data
                 net.kyori.adventure.text.Component.text("Silberstern")
                         .color(net.kyori.adventure.text.format.NamedTextColor.AQUA)
@@ -202,10 +202,10 @@ public class ItemsModule extends JavaPlugin implements Listener {
                 )
         );
 
-        // Goldstern (100er Münze)
+        // Goldstern (100er Münze) - Goldklumpen
         specialItemManager.registerVanillaItem(
                 "gold_stern",
-                Material.GOLD_INGOT,
+                Material.GOLD_NUGGET,  // Goldklumpen
                 3,  // Custom Model Data
                 net.kyori.adventure.text.Component.text("Goldstern")
                         .color(net.kyori.adventure.text.format.NamedTextColor.YELLOW)

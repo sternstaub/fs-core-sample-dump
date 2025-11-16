@@ -648,6 +648,90 @@ EOF
 
 ## Code Conventions
 
+### ⚠️ Reflection vermeiden!
+
+**WICHTIG:** Reflection sollte **nur als letztes Mittel** verwendet werden. Bevorzuge stattdessen:
+
+#### Warum Reflection problematisch ist:
+- ❌ **Keine Compile-Time-Sicherheit:** Fehler werden erst zur Laufzeit erkannt
+- ❌ **Keine IDE-Unterstützung:** Kein Autocomplete, kein Refactoring
+- ❌ **Performance-Overhead:** Reflection ist langsamer als direkte Aufrufe
+- ❌ **Wartbarkeit:** Schwer zu verstehen und zu debuggen
+- ❌ **Versionsprobleme:** API-Änderungen führen zu Runtime-Errors
+
+#### Bessere Alternativen (in Prioritätsreihenfolge):
+
+1. **Provider-Pattern** (bevorzugt):
+   ```java
+   // ✅ RICHTIG: Provider-Interface im Core
+   public interface ItemProvider {
+       Optional<ItemStack> getSpecialItem(String id, int amount);
+   }
+
+   // Module registrieren Provider in ProviderRegistry
+   ProviderRegistry registry = core.getProviderRegistry();
+   ItemProvider itemProvider = registry.getItemProvider();
+   ItemStack coin = itemProvider.getSpecialItem("bronze_stern", 1);
+   ```
+
+2. **Direct Dependency** (wenn Module-Abhängigkeit akzeptabel):
+   ```java
+   // ✅ RICHTIG: Module als Dependency in pom.xml
+   <dependency>
+       <groupId>de.fallenstar</groupId>
+       <artifactId>module-items</artifactId>
+       <scope>provided</scope>
+   </dependency>
+
+   // Direkter Import und Nutzung
+   import de.fallenstar.items.manager.SpecialItemManager;
+   SpecialItemManager manager = ItemsModule.getSpecialItemManager();
+   ```
+
+3. **Service Registry Pattern**:
+   ```java
+   // ✅ RICHTIG: Zentrale Service-Registry
+   public class ServiceRegistry {
+       private static final Map<Class<?>, Object> services = new HashMap<>();
+
+       public static <T> void register(Class<T> serviceClass, T implementation) {
+           services.put(serviceClass, implementation);
+       }
+
+       public static <T> Optional<T> get(Class<T> serviceClass) {
+           return Optional.ofNullable((T) services.get(serviceClass));
+       }
+   }
+   ```
+
+4. **Reflection** (nur wenn unvermeidbar):
+   ```java
+   // ❌ NUR ALS LETZTES MITTEL!
+   // Beispiel: Zugriff auf Economy-Modul ohne Hard-Dependency
+   try {
+       var plugin = Bukkit.getPluginManager().getPlugin("FallenStar-Economy");
+       var method = plugin.getClass().getMethod("getPriceProvider");
+       var provider = method.invoke(plugin);
+       // ...
+   } catch (Exception e) {
+       // Graceful Degradation
+   }
+   ```
+
+#### Aktuelle Reflection-Nutzung (TODO: Refactoring):
+
+**Plots-Modul:**
+- `PriceSetListener.getCoinItem()` → Via Reflection auf Items-Modul
+  - **TODO:** ItemProvider-Methode `getSpecialItem()` hinzufügen
+- `PlotPriceCommand.loadPriceFromProvider()` → Via Reflection auf Economy-Modul
+  - **TODO:** EconomyProvider-Methode `getItemPrice()` hinzufügen
+- `PlotPriceCommand.savePriceToProvider()` → Via Reflection auf Economy-Modul
+  - **TODO:** EconomyProvider-Methode `setItemPrice()` hinzufügen
+
+**Ziel:** Alle Reflection-Calls durch Provider-Pattern ersetzen.
+
+---
+
 ### Java Style
 
 **Package Structure:**
