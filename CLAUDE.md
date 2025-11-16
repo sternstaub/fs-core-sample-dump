@@ -87,10 +87,13 @@ A **modular Minecraft plugin system** for Paper 1.21.1 with provider-based archi
 
 - **Version:** 1.0-SNAPSHOT
 - **Phase:** Aktive Entwicklung
-- **Completion:** ~40% (Core ✅ + Plots ✅ + NPCs 🔨)
-- **Nächster Sprint:** Sprint 5-6 - FallenStar Items
-- **Aktuell in Arbeit:** Sprint 11-12 - FallenStar NPCs
+- **Completion:** ~15% (Core ✅ + Plots ✅)
+- **Nächster Sprint:** Sprint 1-2 Erweiterung - UI Provider Interface in Core
+- **Dann:** Sprint 5-6 - UI-Modul (natives Rendering)
 - **Wichtige Architektur:** Provider-Implementierungen in Modulen, Core nur Interfaces!
+- **Neue Planung:** 20 Sprints (40 Wochen) mit UI-System, Chat, Auth, WebHooks
+- **Storage-Modul:** ✅ Entfernt (redundant, in Plots integriert)
+- **Denizen-Ersatz:** 📋 Geplant (natives NPC-System mit UI)
 
 ---
 
@@ -114,6 +117,8 @@ fs-core-sample-dump/
 │   │   │   │   ├── NPCProvider.java
 │   │   │   │   ├── ItemProvider.java
 │   │   │   │   ├── ChatProvider.java
+│   │   │   │   ├── UIProvider.java            # 📋 NEU: UI-Provider-Interface
+│   │   │   │   ├── AuthProvider.java          # 📋 NEU: Auth-Provider-Interface
 │   │   │   │   ├── NetworkProvider.java
 │   │   │   │   ├── Plot.java                  # Data model
 │   │   │   │   └── impl/                      # NUR NoOp-Implementierungen!
@@ -121,13 +126,26 @@ fs-core-sample-dump/
 │   │   │   │       ├── NoOpEconomyProvider.java
 │   │   │   │       ├── NoOpNPCProvider.java
 │   │   │   │       ├── NoOpItemProvider.java
-│   │   │   │       └── NoOpChatProvider.java
+│   │   │   │       ├── NoOpChatProvider.java
+│   │   │   │       ├── NoOpUIProvider.java    # 📋 NEU
+│   │   │   │       ├── NoOpAuthProvider.java  # 📋 NEU
+│   │   │   │       └── NativeTextUIProvider.java  # 📋 NEU: Native Fallback
 │   │   │   ├── registry/
 │   │   │   │   └── ProviderRegistry.java      # Auto-detects providers
 │   │   │   ├── exception/
 │   │   │   │   └── ProviderFunctionalityNotFoundException.java
 │   │   │   ├── event/
 │   │   │   │   └── ProvidersReadyEvent.java
+│   │   │   ├── ui/                            # 📋 NEU: UI-Kontext-Klassen
+│   │   │   │   ├── context/
+│   │   │   │   │   ├── TradeContext.java
+│   │   │   │   │   ├── DialogContext.java
+│   │   │   │   │   ├── StorageContext.java
+│   │   │   │   │   └── TownContext.java
+│   │   │   │   └── components/
+│   │   │   │       ├── Menu.java
+│   │   │   │       ├── Dialog.java
+│   │   │   │       └── Form.java
 │   │   │   └── database/
 │   │   │       ├── DataStore.java             # Interface
 │   │   │       └── impl/                      # (missing implementations)
@@ -135,7 +153,7 @@ fs-core-sample-dump/
 │   │       ├── plugin.yml
 │   │       └── config.yml
 │
-├── module-plots/                    # FallenStar Plots (Sprint 3-4)
+├── module-plots/                    # FallenStar Plots (Sprint 3-4) ✅
 │   ├── pom.xml                      # Plot-System + Storage-Integration
 │   ├── src/main/java/de/fallenstar/plots/
 │   │   ├── PlotsModule.java                   # Main class
@@ -144,7 +162,13 @@ fs-core-sample-dump/
 │   │   ├── command/                           # Plot-Befehle
 │   │   ├── manager/                           # Plot- und Storage-Manager
 │   │   ├── model/                             # Plot-Datenmodelle
-│   │   └── listener/                          # Event-Handler
+│   │   ├── listener/                          # Event-Handler
+│   │   └── storage/                           # ✅ Storage-System (ex-module-storage)
+│   │       ├── command/                       # Storage-Befehle
+│   │       ├── manager/                       # Storage-Manager
+│   │       ├── model/                         # Storage-Datenmodelle
+│   │       ├── provider/                      # PlotStorageProvider
+│   │       └── listener/                      # Storage-Events
 │   └── src/main/resources/
 │       ├── plugin.yml
 │       └── config.yml
