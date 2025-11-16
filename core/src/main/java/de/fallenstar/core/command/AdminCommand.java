@@ -160,6 +160,12 @@ public class AdminCommand {
         }
 
         try {
+            // UI als Event-Listener registrieren (wichtig für Click-Handler!)
+            if (ui instanceof org.bukkit.event.Listener) {
+                plugin.getServer().getPluginManager().registerEvents((org.bukkit.event.Listener) ui, plugin);
+                plugin.getLogger().fine("UI '" + uiId + "' als Event-Listener registriert");
+            }
+
             ui.open(player);
             player.sendMessage(Component.text("✓ Test-UI geöffnet: " + uiId, NamedTextColor.GREEN));
         } catch (Exception e) {
@@ -203,12 +209,147 @@ public class AdminCommand {
      * @param args Argumente (ohne "plots")
      */
     private void handlePlotsCommand(CommandSender sender, String[] args) {
+        // Prüfe ob Plot-Modul geladen ist
+        org.bukkit.plugin.Plugin plotModule = plugin.getServer().getPluginManager().getPlugin("FallenStar-Plots");
+
+        if (plotModule == null || !plotModule.isEnabled()) {
+            sender.sendMessage(Component.text("✗ FallenStar-Plots Modul nicht geladen!", NamedTextColor.RED));
+            sender.sendMessage(Component.text("  Bitte stelle sicher, dass FallenStar-Plots installiert ist.", NamedTextColor.GRAY));
+            return;
+        }
+
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("Dieser Befehl kann nur von Spielern verwendet werden.", NamedTextColor.RED));
+            return;
+        }
+
+        if (args.length == 0) {
+            sendPlotsHelp(sender);
+            return;
+        }
+
+        String subCommand = args[0].toLowerCase();
+
+        switch (subCommand) {
+            case "info" -> handlePlotInfo(player);
+            case "storage" -> handlePlotStorage(player, Arrays.copyOfRange(args, 1, args.length));
+            default -> {
+                sender.sendMessage(Component.text("Unbekannter Plot-Befehl: " + subCommand, NamedTextColor.RED));
+                sendPlotsHelp(sender);
+            }
+        }
+    }
+
+    /**
+     * Zeigt Plot-Info am aktuellen Standort.
+     *
+     * @param player Spieler
+     */
+    private void handlePlotInfo(Player player) {
+        try {
+            de.fallenstar.core.provider.PlotProvider plotProvider = plugin.getProviderRegistry().getPlotProvider();
+
+            if (!plotProvider.isAvailable()) {
+                player.sendMessage(Component.text("✗ Plot-System nicht verfügbar!", NamedTextColor.RED));
+                return;
+            }
+
+            de.fallenstar.core.provider.Plot plot = plotProvider.getPlot(player.getLocation());
+
+            if (plot == null) {
+                player.sendMessage(Component.text("✗ Kein Plot an dieser Position!", NamedTextColor.RED));
+                return;
+            }
+
+            // Plot-Informationen anzeigen
+            player.sendMessage(Component.text("╔═══════════════════════════════════════╗", NamedTextColor.AQUA));
+            player.sendMessage(Component.text("║  Plot-Informationen                   ║", NamedTextColor.AQUA));
+            player.sendMessage(Component.text("╚═══════════════════════════════════════╝", NamedTextColor.AQUA));
+            player.sendMessage(Component.empty());
+            player.sendMessage(Component.text("  Typ: ", NamedTextColor.GRAY)
+                    .append(Component.text(plot.type(), NamedTextColor.WHITE)));
+            player.sendMessage(Component.text("  Besitzer: ", NamedTextColor.GRAY)
+                    .append(Component.text(plot.owner() != null ? plot.owner() : "Keiner", NamedTextColor.WHITE)));
+            player.sendMessage(Component.text("  Town: ", NamedTextColor.GRAY)
+                    .append(Component.text(plot.townName() != null ? plot.townName() : "Keine", NamedTextColor.WHITE)));
+            player.sendMessage(Component.text("  Koordinaten: ", NamedTextColor.GRAY)
+                    .append(Component.text(plot.x() + ", " + plot.z(), NamedTextColor.WHITE)));
+
+        } catch (Exception e) {
+            player.sendMessage(Component.text("✗ Fehler beim Abrufen der Plot-Info: " + e.getMessage(), NamedTextColor.RED));
+            plugin.getLogger().warning("Error in /fscore admin plots info: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Behandelt /fscore admin plots storage Subcommands.
+     *
+     * @param player Spieler
+     * @param args Argumente (ohne "storage")
+     */
+    private void handlePlotStorage(Player player, String[] args) {
+        if (args.length == 0) {
+            player.sendMessage(Component.text("Verwendung:", NamedTextColor.YELLOW));
+            player.sendMessage(Component.text("  /fscore admin plots storage view", NamedTextColor.GOLD)
+                    .append(Component.text(" - Zeigt Storage-Materialien", NamedTextColor.GRAY)));
+            player.sendMessage(Component.text("  /fscore admin plots storage scan", NamedTextColor.GOLD)
+                    .append(Component.text(" - Scannt Storage neu", NamedTextColor.GRAY)));
+            return;
+        }
+
+        String storageCommand = args[0].toLowerCase();
+
+        switch (storageCommand) {
+            case "view" -> handleStorageView(player);
+            case "scan" -> handleStorageScan(player);
+            default -> {
+                player.sendMessage(Component.text("Unbekannter Storage-Befehl: " + storageCommand, NamedTextColor.RED));
+                player.sendMessage(Component.text("Verwendung: /fscore admin plots storage <view|scan>", NamedTextColor.GRAY));
+            }
+        }
+    }
+
+    /**
+     * Zeigt Storage-Materialien am aktuellen Plot.
+     *
+     * @param player Spieler
+     */
+    private void handleStorageView(Player player) {
+        player.sendMessage(Component.text("╔═══════════════════════════════════════╗", NamedTextColor.GOLD));
+        player.sendMessage(Component.text("║  Plot-Storage Materialien            ║", NamedTextColor.GOLD));
+        player.sendMessage(Component.text("╚═══════════════════════════════════════╝", NamedTextColor.GOLD));
+        player.sendMessage(Component.empty());
+        player.sendMessage(Component.text("Diese Funktion wird vom Plot-Modul bereitgestellt.", NamedTextColor.YELLOW));
+        player.sendMessage(Component.text("Verwende: ", NamedTextColor.GRAY)
+                .append(Component.text("/plot storage", NamedTextColor.GOLD))
+                .append(Component.text(" für vollständige Storage-Funktionalität", NamedTextColor.GRAY)));
+    }
+
+    /**
+     * Scannt Storage am aktuellen Plot neu.
+     *
+     * @param player Spieler
+     */
+    private void handleStorageScan(Player player) {
+        player.sendMessage(Component.text("╔═══════════════════════════════════════╗", NamedTextColor.GOLD));
+        player.sendMessage(Component.text("║  Plot-Storage Scan                    ║", NamedTextColor.GOLD));
+        player.sendMessage(Component.text("╚═══════════════════════════════════════╝", NamedTextColor.GOLD));
+        player.sendMessage(Component.empty());
+        player.sendMessage(Component.text("Diese Funktion wird vom Plot-Modul bereitgestellt.", NamedTextColor.YELLOW));
+        player.sendMessage(Component.text("Verwende: ", NamedTextColor.GRAY)
+                .append(Component.text("/plot storage", NamedTextColor.GOLD))
+                .append(Component.text(" für vollständige Storage-Funktionalität", NamedTextColor.GRAY)));
+    }
+
+    /**
+     * Zeigt Plot-Hilfe.
+     *
+     * @param sender Command-Sender
+     */
+    private void sendPlotsHelp(CommandSender sender) {
         sender.sendMessage(Component.text("╔═══════════════════════════════════════╗", NamedTextColor.GOLD));
         sender.sendMessage(Component.text("║  Plot-Modul Testbefehle              ║", NamedTextColor.GOLD));
         sender.sendMessage(Component.text("╚═══════════════════════════════════════╝", NamedTextColor.GOLD));
-        sender.sendMessage(Component.empty());
-        sender.sendMessage(Component.text("Plot-Testbefehle werden vom Plots-Modul bereitgestellt.", NamedTextColor.YELLOW));
-        sender.sendMessage(Component.text("Stelle sicher, dass FallenStar-Plots geladen ist!", NamedTextColor.GRAY));
         sender.sendMessage(Component.empty());
         sender.sendMessage(Component.text("Verfügbare Befehle:", NamedTextColor.WHITE));
         sender.sendMessage(Component.text("  /fscore admin plots info", NamedTextColor.GOLD)
@@ -217,6 +358,10 @@ public class AdminCommand {
                 .append(Component.text(" - Zeigt Storage-Materialien", NamedTextColor.GRAY)));
         sender.sendMessage(Component.text("  /fscore admin plots storage scan", NamedTextColor.GOLD)
                 .append(Component.text(" - Scannt Storage neu", NamedTextColor.GRAY)));
+        sender.sendMessage(Component.empty());
+        sender.sendMessage(Component.text("Hinweis:", NamedTextColor.YELLOW)
+                .append(Component.text(" Vollständige Plot-Funktionalität via ", NamedTextColor.GRAY))
+                .append(Component.text("/plot", NamedTextColor.GOLD)));
     }
 
     /**
