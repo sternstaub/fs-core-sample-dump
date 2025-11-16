@@ -108,7 +108,11 @@ public class PriceSetListener implements Listener {
         player.sendMessage("§7Item: §e" + getItemDisplayName(item));
         player.sendMessage("§7Aktueller Preis: §e" + initialPrice + " Sterne");
 
-        uiProvider.showMenu(player, menu);
+        try {
+            uiProvider.showMenu(player, menu);
+        } catch (Exception e) {
+            player.sendMessage("§cFehler beim Öffnen der UI: " + e.getMessage());
+        }
     }
 
     /**
