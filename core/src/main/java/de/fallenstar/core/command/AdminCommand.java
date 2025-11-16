@@ -21,6 +21,7 @@ import java.util.List;
  * - /fscore admin gui list - Zeigt alle registrierten Test-UIs
  * - /fscore admin items - Item-Modul Testbefehle
  * - /fscore admin plots - Plot-Modul Testbefehle
+ * - /fscore admin economy - Economy-Modul Testbefehle
  *
  * Erfordert Permission: fallenstar.core.admin
  *
@@ -66,6 +67,7 @@ public class AdminCommand {
             case "gui" -> handleGuiCommand(sender, Arrays.copyOfRange(args, 1, args.length));
             case "items" -> handleItemsCommand(sender, Arrays.copyOfRange(args, 1, args.length));
             case "plots" -> handlePlotsCommand(sender, Arrays.copyOfRange(args, 1, args.length));
+            case "economy" -> handleEconomyCommand(sender, Arrays.copyOfRange(args, 1, args.length));
             default -> {
                 sender.sendMessage(Component.text("Unbekannter Admin-Befehl: " + subCommand, NamedTextColor.RED));
                 sendAdminHelp(sender);
@@ -370,6 +372,156 @@ public class AdminCommand {
     }
 
     /**
+     * Behandelt /fscore admin economy Subcommands.
+     *
+     * @param sender Command-Sender
+     * @param args Argumente (ohne "economy")
+     */
+    private void handleEconomyCommand(CommandSender sender, String[] args) {
+        // Prüfe ob Economy-Modul geladen ist
+        org.bukkit.plugin.Plugin economyModule = plugin.getServer().getPluginManager().getPlugin("FallenStar-Economy");
+
+        if (economyModule == null || !economyModule.isEnabled()) {
+            sender.sendMessage(Component.text("✗ FallenStar-Economy Modul nicht geladen!", NamedTextColor.RED));
+            sender.sendMessage(Component.text("  Bitte stelle sicher, dass FallenStar-Economy installiert ist.", NamedTextColor.GRAY));
+            return;
+        }
+
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("Dieser Befehl kann nur von Spielern verwendet werden.", NamedTextColor.RED));
+            return;
+        }
+
+        if (args.length == 0) {
+            sendEconomyHelp(sender);
+            return;
+        }
+
+        String subCommand = args[0].toLowerCase();
+
+        switch (subCommand) {
+            case "getcoin" -> handleGetCoin(player, Arrays.copyOfRange(args, 1, args.length));
+            default -> {
+                sender.sendMessage(Component.text("Unbekannter Economy-Befehl: " + subCommand, NamedTextColor.RED));
+                sendEconomyHelp(sender);
+            }
+        }
+    }
+
+    /**
+     * Behandelt /fscore admin economy getcoin.
+     *
+     * @param player Spieler
+     * @param args Argumente: <währungsname> [bronze/silver/gold] [anzahl]
+     */
+    private void handleGetCoin(Player player, String[] args) {
+        if (args.length < 1) {
+            player.sendMessage(Component.text("Verwendung: /fscore admin economy getcoin <währungsname> [bronze/silver/gold] [anzahl]", NamedTextColor.RED));
+            player.sendMessage(Component.text("Beispiel: /fscore admin economy getcoin sterne gold 10", NamedTextColor.GRAY));
+            return;
+        }
+
+        String currencyName = args[0].toLowerCase();
+        String tierName = args.length > 1 ? args[1].toLowerCase() : "bronze";
+        int amount = 1;
+
+        if (args.length > 2) {
+            try {
+                amount = Integer.parseInt(args[2]);
+                if (amount <= 0 || amount > 64) {
+                    player.sendMessage(Component.text("Menge muss zwischen 1 und 64 liegen!", NamedTextColor.RED));
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                player.sendMessage(Component.text("Ungültige Anzahl: " + args[2], NamedTextColor.RED));
+                return;
+            }
+        }
+
+        // Hole Economy-Modul
+        org.bukkit.plugin.Plugin economyPlugin = plugin.getServer().getPluginManager().getPlugin("FallenStar-Economy");
+        if (economyPlugin == null) {
+            player.sendMessage(Component.text("✗ Economy-Modul nicht verfügbar!", NamedTextColor.RED));
+            return;
+        }
+
+        try {
+            // Reflection: CurrencyManager holen
+            java.lang.reflect.Method getCurrencyManager = economyPlugin.getClass().getMethod("getCurrencyManager");
+            Object currencyManager = getCurrencyManager.invoke(economyPlugin);
+
+            // Reflection: CurrencyTier enum holen
+            Class<?> currencyItemSetClass = Class.forName("de.fallenstar.economy.model.CurrencyItemSet");
+            Class<?> currencyTierEnum = Class.forName("de.fallenstar.economy.model.CurrencyItemSet$CurrencyTier");
+
+            Object tier;
+            try {
+                java.lang.reflect.Method fromString = currencyTierEnum.getMethod("fromString", String.class);
+                tier = fromString.invoke(null, tierName);
+
+                if (tier == null) {
+                    player.sendMessage(Component.text("Ungültiger Tier: " + tierName, NamedTextColor.RED));
+                    player.sendMessage(Component.text("Verfügbar: bronze, silver, gold", NamedTextColor.GRAY));
+                    return;
+                }
+            } catch (Exception e) {
+                player.sendMessage(Component.text("✗ Fehler beim Parsen des Tiers!", NamedTextColor.RED));
+                plugin.getLogger().warning("Error parsing currency tier: " + e.getMessage());
+                return;
+            }
+
+            // Reflection: payoutCoins() aufrufen
+            java.lang.reflect.Method payoutCoins = currencyManager.getClass().getMethod(
+                    "payoutCoins",
+                    org.bukkit.entity.Player.class,
+                    String.class,
+                    currencyTierEnum,
+                    int.class
+            );
+
+            Boolean success = (Boolean) payoutCoins.invoke(currencyManager, player, currencyName, tier, amount);
+
+            if (success) {
+                player.sendMessage(Component.text("✓ ", NamedTextColor.GREEN)
+                        .append(Component.text(amount + "x ", NamedTextColor.WHITE))
+                        .append(Component.text(tierName.toUpperCase(), NamedTextColor.GOLD))
+                        .append(Component.text(" " + currencyName.toUpperCase() + " ausgezahlt!", NamedTextColor.WHITE)));
+            } else {
+                player.sendMessage(Component.text("✗ Währung nicht gefunden: " + currencyName, NamedTextColor.RED));
+                player.sendMessage(Component.text("Tipp: Verwende 'sterne' für die Basiswährung", NamedTextColor.GRAY));
+            }
+
+        } catch (Exception e) {
+            player.sendMessage(Component.text("✗ Fehler beim Auszahlen: " + e.getMessage(), NamedTextColor.RED));
+            plugin.getLogger().warning("Error in /fscore admin economy getcoin: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Zeigt Economy-Hilfe.
+     *
+     * @param sender Command-Sender
+     */
+    private void sendEconomyHelp(CommandSender sender) {
+        sender.sendMessage(Component.text("╔═══════════════════════════════════════╗", NamedTextColor.GOLD));
+        sender.sendMessage(Component.text("║  Economy-Modul Testbefehle           ║", NamedTextColor.GOLD));
+        sender.sendMessage(Component.text("╚═══════════════════════════════════════╝", NamedTextColor.GOLD));
+        sender.sendMessage(Component.empty());
+        sender.sendMessage(Component.text("Verfügbare Befehle:", NamedTextColor.WHITE));
+        sender.sendMessage(Component.text("  /fscore admin economy getcoin <währung> [tier] [anzahl]", NamedTextColor.GOLD));
+        sender.sendMessage(Component.text("    Gibt Münzen an den Spieler", NamedTextColor.GRAY));
+        sender.sendMessage(Component.empty());
+        sender.sendMessage(Component.text("Beispiele:", NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("  /fscore admin economy getcoin sterne bronze 10", NamedTextColor.GOLD));
+        sender.sendMessage(Component.text("  /fscore admin economy getcoin sterne silver 5", NamedTextColor.GOLD));
+        sender.sendMessage(Component.text("  /fscore admin economy getcoin sterne gold", NamedTextColor.GOLD));
+        sender.sendMessage(Component.empty());
+        sender.sendMessage(Component.text("Tiers:", NamedTextColor.YELLOW)
+                .append(Component.text(" bronze (1er), silver (10er), gold (100er)", NamedTextColor.GRAY)));
+    }
+
+    /**
      * Zeigt Admin-Hilfe.
      *
      * @param sender Command-Sender
@@ -386,6 +538,8 @@ public class AdminCommand {
                 .append(Component.text(" - Item-Testbefehle", NamedTextColor.GRAY)));
         sender.sendMessage(Component.text("  /fscore admin plots", NamedTextColor.GOLD)
                 .append(Component.text(" - Plot-Testbefehle", NamedTextColor.GRAY)));
+        sender.sendMessage(Component.text("  /fscore admin economy", NamedTextColor.GOLD)
+                .append(Component.text(" - Economy-Testbefehle", NamedTextColor.GRAY)));
         sender.sendMessage(Component.empty());
         sender.sendMessage(Component.text("Verwende ", NamedTextColor.GRAY)
                 .append(Component.text("/fscore admin <kategorie>", NamedTextColor.YELLOW))
@@ -403,7 +557,7 @@ public class AdminCommand {
 
         if (args.length == 1) {
             // /fscore admin <?>
-            List<String> subCommands = Arrays.asList("gui", "items", "plots");
+            List<String> subCommands = Arrays.asList("gui", "items", "plots", "economy");
             for (String sub : subCommands) {
                 if (sub.startsWith(args[0].toLowerCase())) {
                     completions.add(sub);
@@ -442,6 +596,30 @@ public class AdminCommand {
                     completions.add(sub);
                 }
             }
+        } else if (args.length == 2 && "economy".equalsIgnoreCase(args[0])) {
+            // /fscore admin economy <?>
+            List<String> economySubs = Arrays.asList("getcoin");
+            for (String sub : economySubs) {
+                if (sub.startsWith(args[1].toLowerCase())) {
+                    completions.add(sub);
+                }
+            }
+        } else if (args.length == 3 && "economy".equalsIgnoreCase(args[0]) && "getcoin".equalsIgnoreCase(args[1])) {
+            // /fscore admin economy getcoin <?>
+            completions.add("sterne");
+        } else if (args.length == 4 && "economy".equalsIgnoreCase(args[0]) && "getcoin".equalsIgnoreCase(args[1])) {
+            // /fscore admin economy getcoin <währung> <?>
+            List<String> tiers = Arrays.asList("bronze", "silver", "gold");
+            for (String tier : tiers) {
+                if (tier.startsWith(args[3].toLowerCase())) {
+                    completions.add(tier);
+                }
+            }
+        } else if (args.length == 5 && "economy".equalsIgnoreCase(args[0]) && "getcoin".equalsIgnoreCase(args[1])) {
+            // /fscore admin economy getcoin <währung> <tier> <?>
+            completions.add("1");
+            completions.add("10");
+            completions.add("64");
         }
 
         return completions;
