@@ -9,6 +9,7 @@ import de.fallenstar.core.provider.NPCProvider;
 import de.fallenstar.core.registry.PlotTypeRegistry;
 import de.fallenstar.core.registry.ProviderRegistry;
 import de.fallenstar.plot.command.PlotCommand;
+import de.fallenstar.plot.integration.TownyIntegration;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -186,32 +187,27 @@ public class PlotModule extends JavaPlugin implements Listener {
     }
 
     /**
-     * Registriert die Towny-Integration wenn Towny verfügbar ist.
-     * Verwendet Reflection um ClassNotFoundException zu vermeiden.
+     * Registriert die Towny-Integration.
+     * Registriert Custom-Plot-Typen in Towny.
      */
     private void registerTownyIntegration() {
         // Prüfe ob Towny verfügbar ist
         org.bukkit.plugin.Plugin towny = getServer().getPluginManager().getPlugin("Towny");
         if (towny == null || !towny.isEnabled()) {
-            getLogger().info("○ Towny nicht verfügbar - Custom-Plot-Typen deaktiviert");
+            getLogger().warning("✗ Towny nicht verfügbar - Plot-Modul benötigt Towny!");
+            getLogger().warning("  Custom-Plot-Typen können nicht registriert werden");
             return;
         }
 
         try {
-            // Lade TownyIntegration-Klasse via Reflection
-            Class<?> integrationClass = Class.forName("de.fallenstar.plot.integration.TownyIntegration");
-            Object integration = integrationClass
-                .getConstructor(JavaPlugin.class)
-                .newInstance(this);
-
-            // Registriere als Event-Listener
-            getServer().getPluginManager().registerEvents((Listener) integration, this);
+            // Registriere Towny-Integration
+            TownyIntegration integration = new TownyIntegration(this);
+            getServer().getPluginManager().registerEvents(integration, this);
             getLogger().info("✓ Towny-Integration aktiviert (Custom-Plot-Typen verfügbar)");
 
-        } catch (ClassNotFoundException e) {
-            getLogger().warning("✗ TownyIntegration-Klasse nicht gefunden");
         } catch (Exception e) {
             getLogger().warning("✗ Fehler beim Laden der Towny-Integration: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 

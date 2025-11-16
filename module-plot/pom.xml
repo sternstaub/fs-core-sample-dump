@@ -31,6 +31,13 @@
             <groupId>io.papermc.paper</groupId>
             <artifactId>paper-api</artifactId>
         </dependency>
+
+        <!-- Towny (REQUIRED für Plot-System) -->
+        <dependency>
+            <groupId>com.palmergames.bukkit.towny</groupId>
+            <artifactId>towny</artifactId>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
     <build>

@@ -10,7 +10,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 /**
  * Towny-Integration für das Plot-Modul.
  *
- * Diese Klasse wird nur registriert, wenn Towny verfügbar ist.
  * Registriert Custom-Plot-Typen in Towny.
  *
  * @author FallenStar
