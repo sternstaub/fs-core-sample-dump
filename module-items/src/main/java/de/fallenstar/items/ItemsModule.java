@@ -163,7 +163,7 @@ public class ItemsModule extends JavaPlugin implements Listener {
      * Registriert die Basiswährung "Sterne" (Bronze/Silber/Gold).
      *
      * Diese Methode registriert die drei Tier-Items der Basis-Währung:
-     * - Bronzestern (1er Münze, Wert: 1) - COPPER (Kupferklumpen)
+     * - Bronzestern (1er Münze, Wert: 1) - COPPER_NUGGET (Kupferklumpen)
      * - Silberstern (10er Münze, Wert: 10) - IRON_NUGGET (Eisenklumpen)
      * - Goldstern (100er Münze, Wert: 100) - GOLD_NUGGET (Goldklumpen)
      *
@@ -175,7 +175,7 @@ public class ItemsModule extends JavaPlugin implements Listener {
         // Bronzestern (1er Münze) - Kupferklumpen
         specialItemManager.registerVanillaItem(
                 "bronze_stern",
-                Material.COPPER_INGOT,  // Kupferklumpen (da kein COPPER_NUGGET in 1.21)
+                Material.COPPER_NUGGET,  // Kupferklumpen
                 1,  // Custom Model Data
                 net.kyori.adventure.text.Component.text("Bronzestern")
                         .color(net.kyori.adventure.text.format.NamedTextColor.GOLD)
