@@ -15,12 +15,13 @@ Das Items-Modul stellt ein **Vanilla-First** Währungssystem bereit und integrie
 ## ✅ Features
 
 ### Vanilla Currency System "Sterne" (IMMER verfügbar)
-- **Bronzestern** (COPPER_NUGGET, CMD: 1, Wert: 1)
-- **Silberstern** (IRON_NUGGET, CMD: 2, Wert: 10)
-- **Goldstern** (GOLD_NUGGET, CMD: 3, Wert: 100)
+- **Bronzestern** (COPPER_INGOT, CMD: 1, Wert: 1)
+- **Silberstern** (IRON_INGOT, CMD: 2, Wert: 10)
+- **Goldstern** (GOLD_INGOT, CMD: 3, Wert: 100)
 - PDC-basierte Item-Identifikation (`fallenstar:item_id`)
 - Custom Model Data für Resource Pack Support
 - Währungswert-Berechnung (1:10:100 Ratio)
+- **Konfigurierbare Materialien** (config.yml)
 
 ### Optional: MMOItems Integration
 - MMOItemsItemProvider (nur wenn MMOItems installiert)
@@ -170,6 +171,57 @@ if (itemsModule.getItemProvider() != null) {
 
 ---
 
+## ⚙️ Konfiguration
+
+### Währungs-Materialien anpassen
+
+Die Materialien für die Währungs-Tiers können in der `config.yml` angepasst werden:
+
+```yaml
+# config.yml
+currency:
+  # Material-Typen für Währungs-Tiers
+  # WICHTIG: Materialien müssen in Minecraft 1.21.1 verfügbar sein!
+  bronze-tier-material: COPPER_INGOT
+  silver-tier-material: IRON_INGOT
+  gold-tier-material: GOLD_INGOT
+```
+
+**Wichtige Hinweise:**
+- ✅ Materialien müssen in Minecraft 1.21.1 existieren
+- ✅ Material-Namen müssen UPPERCASE sein (z.B. `COPPER_INGOT`, nicht `copper_ingot`)
+- ❌ `COPPER_NUGGET` gibt es erst ab Minecraft 1.21.9!
+- ⚠️ Bei ungültigem Material wird automatisch der Default verwendet
+
+**Beispiel-Konfigurationen:**
+
+```yaml
+# Nuggets (nur ab MC 1.21.9!)
+currency:
+  bronze-tier-material: COPPER_NUGGET
+  silver-tier-material: IRON_NUGGET
+  gold-tier-material: GOLD_NUGGET
+
+# Alternative Items (z.B. Edelsteine)
+currency:
+  bronze-tier-material: EMERALD
+  silver-tier-material: DIAMOND
+  gold-tier-material: NETHER_STAR
+
+# Kreative Varianten
+currency:
+  bronze-tier-material: BRICK
+  silver-tier-material: QUARTZ
+  gold-tier-material: AMETHYST_SHARD
+```
+
+**Achtung:**
+- Nach Änderung der Materialien muss der Server neu gestartet werden
+- Bestehende Währungs-Items behalten ihr altes Material
+- Custom Model Data bleibt erhalten (1 = Bronze, 2 = Silber, 3 = Gold)
+
+---
+
 ## 🎮 Testbefehle
 
 ```bash
@@ -186,11 +238,13 @@ if (itemsModule.getItemProvider() != null) {
 
 ## 📊 Basiswährung "Sterne" - Definitionen
 
-| Name | Item-ID | Material | Custom Model Data | Wert | Beschreibung |
+| Name | Item-ID | Material (Default) | Custom Model Data | Wert | Beschreibung |
 |------|---------|----------|-------------------|------|--------------|
-| **Bronzestern** | `bronze_stern` | `COPPER_NUGGET` | `1` | 1 | Basiswährung (1er Münze) |
-| **Silberstern** | `silver_stern` | `IRON_NUGGET` | `2` | 10 | Handelswährung (10er Münze) |
-| **Goldstern** | `gold_stern` | `GOLD_NUGGET` | `3` | 100 | Edelwährung (100er Münze) |
+| **Bronzestern** | `bronze_stern` | `COPPER_INGOT` | `1` | 1 | Basiswährung (1er Münze) |
+| **Silberstern** | `silver_stern` | `IRON_INGOT` | `2` | 10 | Handelswährung (10er Münze) |
+| **Goldstern** | `gold_stern` | `GOLD_INGOT` | `3` | 100 | Edelwährung (100er Münze) |
+
+**Hinweis:** Materialien können in der `config.yml` geändert werden (siehe Konfiguration unten).
 
 ### Custom Model Data für Resource Packs
 
@@ -200,12 +254,12 @@ if (itemsModule.getItemProvider() != null) {
 
 Erstelle einen Resource Pack mit folgenden Override-Einträgen:
 
-**`assets/minecraft/models/item/copper_nugget.json`:**
+**`assets/minecraft/models/item/copper_ingot.json`:**
 ```json
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "minecraft:item/copper_nugget"
+    "layer0": "minecraft:item/copper_ingot"
   },
   "overrides": [
     {
@@ -216,12 +270,12 @@ Erstelle einen Resource Pack mit folgenden Override-Einträgen:
 }
 ```
 
-**`assets/minecraft/models/item/iron_nugget.json`:**
+**`assets/minecraft/models/item/iron_ingot.json`:**
 ```json
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "minecraft:item/iron_nugget"
+    "layer0": "minecraft:item/iron_ingot"
   },
   "overrides": [
     {
@@ -232,12 +286,12 @@ Erstelle einen Resource Pack mit folgenden Override-Einträgen:
 }
 ```
 
-**`assets/minecraft/models/item/gold_nugget.json`:**
+**`assets/minecraft/models/item/gold_ingot.json`:**
 ```json
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "minecraft:item/gold_nugget"
+    "layer0": "minecraft:item/gold_ingot"
   },
   "overrides": [
     {
