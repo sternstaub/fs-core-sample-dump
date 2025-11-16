@@ -5,6 +5,7 @@ import de.fallenstar.core.provider.PlotProvider;
 import de.fallenstar.core.registry.ProviderRegistry;
 import de.fallenstar.plot.gui.PriceEditorContext;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -74,9 +75,18 @@ public class PlotPriceCommand {
             return true;
         }
 
-        if (!plot.getType().equalsIgnoreCase("handelsgilde")) {
+        PlotProvider plotProvider = providers.getPlotProvider();
+        String plotType;
+        try {
+            plotType = plotProvider.getPlotType(plot);
+        } catch (Exception e) {
+            player.sendMessage("§cFehler beim Abrufen des Plot-Typs!");
+            return true;
+        }
+
+        if (plotType == null || !plotType.equalsIgnoreCase("handelsgilde")) {
             player.sendMessage("§cDieser Befehl funktioniert nur auf Handelsgilde-Grundstücken!");
-            player.sendMessage("§7Aktueller Plot-Typ: §e" + plot.getType());
+            player.sendMessage("§7Aktueller Plot-Typ: §e" + (plotType != null ? plotType : "unbekannt"));
             return true;
         }
 
@@ -146,9 +156,22 @@ public class PlotPriceCommand {
      * @param plot Der Plot
      */
     private void handleListPrices(Player player, Plot plot) {
+        PlotProvider plotProvider = providers.getPlotProvider();
+
+        String owner = "unbekannt";
+        try {
+            owner = plotProvider.getOwnerName(plot);
+        } catch (Exception e) {
+            // Fehler beim Abrufen des Besitzers
+        }
+
+        Location loc = plot.getLocation();
+        int x = loc.getBlockX();
+        int z = loc.getBlockZ();
+
         player.sendMessage("§6§m----------§r §e§lHandelsgilde Preisliste §6§m----------");
-        player.sendMessage("§7Grundstück: §e" + plot.getX() + "," + plot.getZ());
-        player.sendMessage("§7Besitzer: §e" + plot.getOwner());
+        player.sendMessage("§7Grundstück: §e" + x + "," + z);
+        player.sendMessage("§7Besitzer: §e" + owner);
         player.sendMessage("");
         player.sendMessage("§7[Roadmap] Preisliste wird hier angezeigt");
         player.sendMessage("§7Integration mit ItemBasePriceProvider folgt...");

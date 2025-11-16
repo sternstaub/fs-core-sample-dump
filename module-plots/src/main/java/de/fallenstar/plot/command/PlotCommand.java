@@ -261,11 +261,15 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
             }
 
             // Öffne grundstückstyp-spezifische UI
-            String plotType = plot.getType();
+            String plotType = plotProvider.getPlotType(plot);
+            if (plotType == null) {
+                plotType = "default";
+            }
+
             switch (plotType.toLowerCase()) {
                 case "handelsgilde" -> openHandelsgildeUI(player, uiProvider);
                 case "botschaft" -> openBotschaftUI(player, uiProvider);
-                default -> openDefaultPlotUI(player, uiProvider, plot);
+                default -> openDefaultPlotUI(player, uiProvider, plot, plotType);
             }
 
             return true;
@@ -340,12 +344,13 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
      * @param player Der Spieler
      * @param uiProvider UIProvider-Instanz
      * @param plot Der Plot
+     * @param plotType Der Plot-Typ
      */
     private void openDefaultPlotUI(Player player, de.fallenstar.core.provider.UIProvider uiProvider,
-                                     de.fallenstar.core.provider.Plot plot) {
+                                     de.fallenstar.core.provider.Plot plot, String plotType) {
         var menu = new de.fallenstar.core.ui.UIMenu(
             "Plot-Verwaltung",
-            "Grundstück: " + plot.getType()
+            "Grundstück: " + plotType
         );
 
         menu.addButton(de.fallenstar.core.ui.UIButton.of(
