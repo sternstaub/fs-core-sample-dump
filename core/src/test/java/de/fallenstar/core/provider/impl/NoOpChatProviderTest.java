@@ -32,7 +32,7 @@ class NoOpChatProviderTest {
     void setUp() {
         provider = new NoOpChatProvider();
         mockUuid = UUID.randomUUID();
-        mockHandler = args -> {}; // Einfacher Lambda-Handler
+        mockHandler = (userId, args) -> {}; // Einfacher Lambda-Handler mit userId und args
     }
 
     @Test

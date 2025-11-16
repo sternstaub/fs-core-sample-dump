@@ -1,0 +1,10 @@
+name: FallenStar-Economy
+version: ${project.version}
+main: de.fallenstar.coin.CoinModule
+api-version: 1.21
+authors: [FallenStar]
+description: Economy management system with currency and pricing
+
+# Abhängigkeiten
+depend: [FallenStar-Core]
+softdepend: [Vault]
