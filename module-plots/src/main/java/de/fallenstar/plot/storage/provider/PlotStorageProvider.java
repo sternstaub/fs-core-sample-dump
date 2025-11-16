@@ -3,6 +3,7 @@ package de.fallenstar.plot.storage.provider;
 import de.fallenstar.core.provider.Plot;
 import de.fallenstar.plot.storage.model.ChestData;
 import de.fallenstar.plot.storage.model.PlotStorage;
+import de.fallenstar.plot.storage.model.StoredMaterial;
 import org.bukkit.Location;
 import org.bukkit.Material;
 
@@ -78,10 +79,9 @@ public class PlotStorageProvider {
 
         // Entferne Material aus Truhen
         int remaining = amount;
-        List<de.fallenstar.storage.model.StoredMaterial> materialLocations =
-            storage.getMaterialLocations(material);
+        List<StoredMaterial> materialLocations = storage.getMaterialLocations(material);
 
-        for (de.fallenstar.storage.model.StoredMaterial stored : materialLocations) {
+        for (StoredMaterial stored : materialLocations) {
             if (remaining <= 0) break;
 
             int toRemove = Math.min(remaining, stored.getAmount());
