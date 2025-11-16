@@ -1,0 +1,33 @@
+# FallenStar NPC Module Configuration
+
+# Botschafter-NPC Einstellungen
+npc:
+  ambassador:
+    # Anzeigename des NPCs
+    name: "§6§lBotschafter"
+
+    # Skin des NPCs (Spielername oder Textur)
+    skin: "Steve"
+
+    # Kosten für Teleport
+    teleport-cost: 100.0
+
+    # Ob Teleport Geld kostet
+    requires-payment: true
+
+  # Banker-NPC Einstellungen (TODO)
+  banker:
+    # Anzeigename des NPCs
+    name: "§e§lBankier"
+
+    # Skin des NPCs
+    skin: "Alex"
+
+    # Münzen-Auszahlung aktiviert
+    enabled: false
+
+# Nachrichten
+messages:
+  npc-not-available: "§cDieser NPC ist momentan nicht verfügbar!"
+  teleport-success: "§aDu wurdest erfolgreich teleportiert!"
+  insufficient-funds: "§cDu hast nicht genug Geld!"
