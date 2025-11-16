@@ -401,6 +401,7 @@ public class AdminCommand {
 
         switch (subCommand) {
             case "getcoin" -> handleGetCoin(player, Arrays.copyOfRange(args, 1, args.length));
+            case "withdraw" -> handleWithdraw(player, Arrays.copyOfRange(args, 1, args.length));
             default -> {
                 sender.sendMessage(Component.text("Unbekannter Economy-Befehl: " + subCommand, NamedTextColor.RED));
                 sendEconomyHelp(sender);
@@ -499,6 +500,135 @@ public class AdminCommand {
     }
 
     /**
+     * Behandelt /fscore admin economy withdraw.
+     *
+     * @param player Spieler
+     * @param args Argumente: <währungsname> [bronze/silver/gold] [anzahl]
+     */
+    private void handleWithdraw(Player player, String[] args) {
+        if (args.length < 1) {
+            player.sendMessage(Component.text("Verwendung: /fscore admin economy withdraw <währungsname> [bronze/silver/gold] [anzahl]", NamedTextColor.RED));
+            player.sendMessage(Component.text("Beispiel: /fscore admin economy withdraw sterne gold 10", NamedTextColor.GRAY));
+            player.sendMessage(Component.text("Hinweis: Zieht Geld von deinem Vault-Konto ab!", NamedTextColor.YELLOW));
+            return;
+        }
+
+        String currencyName = args[0].toLowerCase();
+        String tierName = args.length > 1 ? args[1].toLowerCase() : "bronze";
+        int amount = 1;
+
+        if (args.length > 2) {
+            try {
+                amount = Integer.parseInt(args[2]);
+                if (amount <= 0 || amount > 64) {
+                    player.sendMessage(Component.text("Menge muss zwischen 1 und 64 liegen!", NamedTextColor.RED));
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                player.sendMessage(Component.text("Ungültige Anzahl: " + args[2], NamedTextColor.RED));
+                return;
+            }
+        }
+
+        // Hole Economy-Modul
+        org.bukkit.plugin.Plugin economyPlugin = plugin.getServer().getPluginManager().getPlugin("FallenStar-Economy");
+        if (economyPlugin == null) {
+            player.sendMessage(Component.text("✗ Economy-Modul nicht verfügbar!", NamedTextColor.RED));
+            return;
+        }
+
+        try {
+            // Reflection: CurrencyManager holen
+            java.lang.reflect.Method getCurrencyManager = economyPlugin.getClass().getMethod("getCurrencyManager");
+            Object currencyManager = getCurrencyManager.invoke(economyPlugin);
+
+            // Reflection: CurrencyTier enum holen
+            Class<?> currencyTierEnum = Class.forName("de.fallenstar.economy.model.CurrencyItemSet$CurrencyTier");
+
+            Object tier;
+            try {
+                java.lang.reflect.Method fromString = currencyTierEnum.getMethod("fromString", String.class);
+                tier = fromString.invoke(null, tierName);
+
+                if (tier == null) {
+                    player.sendMessage(Component.text("Ungültiger Tier: " + tierName, NamedTextColor.RED));
+                    player.sendMessage(Component.text("Verfügbar: bronze, silver, gold", NamedTextColor.GRAY));
+                    return;
+                }
+            } catch (Exception e) {
+                player.sendMessage(Component.text("✗ Fehler beim Parsen des Tiers!", NamedTextColor.RED));
+                plugin.getLogger().warning("Error parsing currency tier: " + e.getMessage());
+                return;
+            }
+
+            // Zeige Balance vor Auszahlung
+            try {
+                org.bukkit.plugin.Plugin vaultPlugin = plugin.getServer().getPluginManager().getPlugin("Vault");
+                if (vaultPlugin != null) {
+                    de.fallenstar.core.provider.EconomyProvider economyProvider = plugin.getProviderRegistry().getEconomyProvider();
+                    if (economyProvider.isAvailable()) {
+                        double balance = economyProvider.getBalance(player);
+                        player.sendMessage(Component.text("Aktuelles Guthaben: ", NamedTextColor.GRAY)
+                                .append(Component.text(String.format("%.2f", balance), NamedTextColor.GOLD)));
+                    }
+                }
+            } catch (Exception ignored) {
+                // Balance-Anzeige ist optional
+            }
+
+            // Reflection: withdrawCoins() aufrufen
+            java.lang.reflect.Method withdrawCoins = currencyManager.getClass().getMethod(
+                    "withdrawCoins",
+                    org.bukkit.entity.Player.class,
+                    String.class,
+                    currencyTierEnum,
+                    int.class
+            );
+
+            Integer actualAmount = (Integer) withdrawCoins.invoke(currencyManager, player, currencyName, tier, amount);
+
+            if (actualAmount > 0) {
+                if (actualAmount < amount) {
+                    player.sendMessage(Component.text("⚠ ", NamedTextColor.YELLOW)
+                            .append(Component.text("Nicht genug Guthaben für " + amount + " Münzen!", NamedTextColor.WHITE)));
+                    player.sendMessage(Component.text("✓ ", NamedTextColor.GREEN)
+                            .append(Component.text(actualAmount + "x ", NamedTextColor.WHITE))
+                            .append(Component.text(tierName.toUpperCase(), NamedTextColor.GOLD))
+                            .append(Component.text(" " + currencyName.toUpperCase() + " ausgezahlt!", NamedTextColor.WHITE)));
+                } else {
+                    player.sendMessage(Component.text("✓ ", NamedTextColor.GREEN)
+                            .append(Component.text(actualAmount + "x ", NamedTextColor.WHITE))
+                            .append(Component.text(tierName.toUpperCase(), NamedTextColor.GOLD))
+                            .append(Component.text(" " + currencyName.toUpperCase() + " ausgezahlt!", NamedTextColor.WHITE)));
+                }
+
+                // Zeige neue Balance
+                try {
+                    de.fallenstar.core.provider.EconomyProvider economyProvider = plugin.getProviderRegistry().getEconomyProvider();
+                    if (economyProvider.isAvailable()) {
+                        double newBalance = economyProvider.getBalance(player);
+                        player.sendMessage(Component.text("Neues Guthaben: ", NamedTextColor.GRAY)
+                                .append(Component.text(String.format("%.2f", newBalance), NamedTextColor.GOLD)));
+                    }
+                } catch (Exception ignored) {
+                    // Balance-Anzeige ist optional
+                }
+            } else {
+                player.sendMessage(Component.text("✗ Auszahlung fehlgeschlagen!", NamedTextColor.RED));
+                player.sendMessage(Component.text("Mögliche Gründe:", NamedTextColor.GRAY));
+                player.sendMessage(Component.text("  - Nicht genug Guthaben", NamedTextColor.GRAY));
+                player.sendMessage(Component.text("  - Währung nicht gefunden: " + currencyName, NamedTextColor.GRAY));
+                player.sendMessage(Component.text("  - Economy-System nicht verfügbar", NamedTextColor.GRAY));
+            }
+
+        } catch (Exception e) {
+            player.sendMessage(Component.text("✗ Fehler bei der Auszahlung: " + e.getMessage(), NamedTextColor.RED));
+            plugin.getLogger().warning("Error in /fscore admin economy withdraw: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
      * Zeigt Economy-Hilfe.
      *
      * @param sender Command-Sender
@@ -510,12 +640,17 @@ public class AdminCommand {
         sender.sendMessage(Component.empty());
         sender.sendMessage(Component.text("Verfügbare Befehle:", NamedTextColor.WHITE));
         sender.sendMessage(Component.text("  /fscore admin economy getcoin <währung> [tier] [anzahl]", NamedTextColor.GOLD));
-        sender.sendMessage(Component.text("    Gibt Münzen an den Spieler", NamedTextColor.GRAY));
+        sender.sendMessage(Component.text("    Gibt Münzen an den Spieler (kostenlos)", NamedTextColor.GRAY));
+        sender.sendMessage(Component.text("  /fscore admin economy withdraw <währung> [tier] [anzahl]", NamedTextColor.GOLD));
+        sender.sendMessage(Component.text("    Zahlt Münzen aus (zieht von Vault-Konto ab)", NamedTextColor.GRAY));
         sender.sendMessage(Component.empty());
         sender.sendMessage(Component.text("Beispiele:", NamedTextColor.YELLOW));
-        sender.sendMessage(Component.text("  /fscore admin economy getcoin sterne bronze 10", NamedTextColor.GOLD));
-        sender.sendMessage(Component.text("  /fscore admin economy getcoin sterne silver 5", NamedTextColor.GOLD));
-        sender.sendMessage(Component.text("  /fscore admin economy getcoin sterne gold", NamedTextColor.GOLD));
+        sender.sendMessage(Component.text("  /fscore admin economy getcoin sterne bronze 10", NamedTextColor.GOLD)
+                .append(Component.text(" (kostenlos)", NamedTextColor.GRAY)));
+        sender.sendMessage(Component.text("  /fscore admin economy withdraw sterne silver 5", NamedTextColor.GOLD)
+                .append(Component.text(" (zahlt 50 aus Vault)", NamedTextColor.GRAY)));
+        sender.sendMessage(Component.text("  /fscore admin economy withdraw sterne gold", NamedTextColor.GOLD)
+                .append(Component.text(" (zahlt 100 aus Vault)", NamedTextColor.GRAY)));
         sender.sendMessage(Component.empty());
         sender.sendMessage(Component.text("Tiers:", NamedTextColor.YELLOW)
                 .append(Component.text(" bronze (1er), silver (10er), gold (100er)", NamedTextColor.GRAY)));
@@ -598,25 +733,28 @@ public class AdminCommand {
             }
         } else if (args.length == 2 && "economy".equalsIgnoreCase(args[0])) {
             // /fscore admin economy <?>
-            List<String> economySubs = Arrays.asList("getcoin");
+            List<String> economySubs = Arrays.asList("getcoin", "withdraw");
             for (String sub : economySubs) {
                 if (sub.startsWith(args[1].toLowerCase())) {
                     completions.add(sub);
                 }
             }
-        } else if (args.length == 3 && "economy".equalsIgnoreCase(args[0]) && "getcoin".equalsIgnoreCase(args[1])) {
-            // /fscore admin economy getcoin <?>
+        } else if (args.length == 3 && "economy".equalsIgnoreCase(args[0]) &&
+                   ("getcoin".equalsIgnoreCase(args[1]) || "withdraw".equalsIgnoreCase(args[1]))) {
+            // /fscore admin economy [getcoin|withdraw] <?>
             completions.add("sterne");
-        } else if (args.length == 4 && "economy".equalsIgnoreCase(args[0]) && "getcoin".equalsIgnoreCase(args[1])) {
-            // /fscore admin economy getcoin <währung> <?>
+        } else if (args.length == 4 && "economy".equalsIgnoreCase(args[0]) &&
+                   ("getcoin".equalsIgnoreCase(args[1]) || "withdraw".equalsIgnoreCase(args[1]))) {
+            // /fscore admin economy [getcoin|withdraw] <währung> <?>
             List<String> tiers = Arrays.asList("bronze", "silver", "gold");
             for (String tier : tiers) {
                 if (tier.startsWith(args[3].toLowerCase())) {
                     completions.add(tier);
                 }
             }
-        } else if (args.length == 5 && "economy".equalsIgnoreCase(args[0]) && "getcoin".equalsIgnoreCase(args[1])) {
-            // /fscore admin economy getcoin <währung> <tier> <?>
+        } else if (args.length == 5 && "economy".equalsIgnoreCase(args[0]) &&
+                   ("getcoin".equalsIgnoreCase(args[1]) || "withdraw".equalsIgnoreCase(args[1]))) {
+            // /fscore admin economy [getcoin|withdraw] <währung> <tier> <?>
             completions.add("1");
             completions.add("10");
             completions.add("64");

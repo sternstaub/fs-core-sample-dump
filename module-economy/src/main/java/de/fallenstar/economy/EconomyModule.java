@@ -70,6 +70,10 @@ public class EconomyModule extends JavaPlugin implements Listener {
         // Initialisiere Module
         initializeManagers();
         registerEconomyProvider();
+
+        // Setze EconomyProvider im CurrencyManager (für withdrawCoins)
+        currencyManager.setEconomyProvider(economyProvider);
+
         registerBaseCurrency();
 
         getLogger().info("✓ Economy-Modul erfolgreich initialisiert!");
