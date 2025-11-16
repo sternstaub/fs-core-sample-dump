@@ -11,10 +11,13 @@ import de.fallenstar.core.exception.ProviderFunctionalityNotFoundException;
 import de.fallenstar.core.provider.PlotProvider;
 import de.fallenstar.core.provider.TownProvider;
 import de.fallenstar.core.provider.NPCProvider;
+import de.fallenstar.core.registry.AdminCommandRegistry;
 import de.fallenstar.core.registry.PlotTypeRegistry;
 import de.fallenstar.core.registry.ProviderRegistry;
 import de.fallenstar.plot.command.PlotCommand;
+import de.fallenstar.plot.command.PlotsAdminHandler;
 import de.fallenstar.plot.storage.listener.ChestInteractListener;
+import de.fallenstar.plot.storage.manager.ChestScanService;
 import de.fallenstar.plot.storage.manager.StorageManager;
 import de.fallenstar.plot.storage.provider.PlotStorageProvider;
 import org.bukkit.event.EventHandler;
@@ -212,6 +215,7 @@ public class PlotModule extends JavaPlugin implements Listener {
 
         // Registriere Commands
         registerCommands();
+        registerAdminCommands();
 
         // Initialer Status-Log
         getLogger().info("=== Plot Module Initialized ===");
@@ -284,6 +288,36 @@ public class PlotModule extends JavaPlugin implements Listener {
         getCommand("plot").setTabCompleter(plotCommand);
 
         getLogger().info("✓ Commands registriert");
+    }
+
+    /**
+     * Registriert Admin-Command-Handler in der Core AdminCommandRegistry.
+     */
+    private void registerAdminCommands() {
+        // Hole Core Plugin
+        if (corePlugin == null) {
+            getLogger().warning("✗ Core nicht verfügbar - Admin-Commands können nicht registriert werden");
+            return;
+        }
+
+        // Hole AdminCommandRegistry
+        AdminCommandRegistry registry = corePlugin.getAdminCommandRegistry();
+        if (registry == null) {
+            getLogger().warning("✗ AdminCommandRegistry nicht verfügbar");
+            return;
+        }
+
+        // Hole ChestScanService
+        ChestScanService scanService = getScanService();
+        if (scanService == null && storageSystemEnabled) {
+            getLogger().warning("⚠ ChestScanService nicht verfügbar - Storage-Befehle möglicherweise eingeschränkt");
+        }
+
+        // Erstelle und registriere PlotsAdminHandler
+        PlotsAdminHandler handler = new PlotsAdminHandler(providers, storageProvider, scanService);
+        registry.registerHandler("plots", handler);
+
+        getLogger().info("✓ Admin-Commands registriert");
     }
 
     /**

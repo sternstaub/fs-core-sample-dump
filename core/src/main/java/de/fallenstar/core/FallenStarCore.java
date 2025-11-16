@@ -6,6 +6,7 @@ import de.fallenstar.core.database.impl.MySQLDataStore;
 import de.fallenstar.core.database.impl.PostgreSQLDataStore;
 import de.fallenstar.core.database.impl.SQLiteDataStore;
 import de.fallenstar.core.event.ProvidersReadyEvent;
+import de.fallenstar.core.registry.AdminCommandRegistry;
 import de.fallenstar.core.registry.PlotTypeRegistry;
 import de.fallenstar.core.registry.ProviderRegistry;
 import de.fallenstar.core.registry.UIRegistry;
@@ -34,6 +35,7 @@ public class FallenStarCore extends JavaPlugin {
     private ProviderRegistry providerRegistry;
     private PlotTypeRegistry plotTypeRegistry;
     private UIRegistry uiRegistry;
+    private AdminCommandRegistry adminCommandRegistry;
     private DataStore dataStore;
     
     @Override
@@ -130,6 +132,10 @@ public class FallenStarCore extends JavaPlugin {
         // UIRegistry initialisieren
         uiRegistry = new UIRegistry(getLogger());
         getLogger().info("✓ UIRegistry initialized");
+
+        // AdminCommandRegistry initialisieren
+        adminCommandRegistry = new AdminCommandRegistry(getLogger());
+        getLogger().info("✓ AdminCommandRegistry initialized");
     }
     
     /**
@@ -198,5 +204,16 @@ public class FallenStarCore extends JavaPlugin {
      */
     public DataStore getDataStore() {
         return dataStore;
+    }
+
+    /**
+     * API-Methode: Gibt die AdminCommandRegistry zurück.
+     *
+     * Wird von Modulen genutzt um Admin-Subcommand-Handler zu registrieren.
+     *
+     * @return AdminCommandRegistry
+     */
+    public AdminCommandRegistry getAdminCommandRegistry() {
+        return adminCommandRegistry;
     }
 }

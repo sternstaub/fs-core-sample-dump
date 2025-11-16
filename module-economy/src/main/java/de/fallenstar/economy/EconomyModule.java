@@ -1,7 +1,10 @@
 package de.fallenstar.economy;
 
+import de.fallenstar.core.FallenStarCore;
 import de.fallenstar.core.event.ProvidersReadyEvent;
+import de.fallenstar.core.registry.AdminCommandRegistry;
 import de.fallenstar.core.registry.ProviderRegistry;
+import de.fallenstar.economy.command.EconomyAdminHandler;
 import de.fallenstar.economy.manager.CurrencyManager;
 import de.fallenstar.economy.model.CurrencyItemSet;
 import de.fallenstar.economy.provider.VaultEconomyProvider;
@@ -75,6 +78,7 @@ public class EconomyModule extends JavaPlugin implements Listener {
         currencyManager.setEconomyProvider(economyProvider);
 
         registerBaseCurrency();
+        registerAdminCommands();
 
         getLogger().info("✓ Economy-Modul erfolgreich initialisiert!");
         getLogger().info("  - Registrierte Währungen: " + currencyManager.getCurrencyCount());
@@ -151,6 +155,31 @@ public class EconomyModule extends JavaPlugin implements Listener {
 
         getLogger().info("✓ Basiswährung registriert: " + sterne.displayName() +
                 " (Wechselkurs: " + sterne.exchangeRate() + ")");
+    }
+
+    /**
+     * Registriert Admin-Command-Handler in der Core AdminCommandRegistry.
+     */
+    private void registerAdminCommands() {
+        // Hole Core Plugin
+        FallenStarCore core = (FallenStarCore) getServer().getPluginManager().getPlugin("FallenStar-Core");
+        if (core == null) {
+            getLogger().warning("✗ Core nicht verfügbar - Admin-Commands können nicht registriert werden");
+            return;
+        }
+
+        // Hole AdminCommandRegistry
+        AdminCommandRegistry registry = core.getAdminCommandRegistry();
+        if (registry == null) {
+            getLogger().warning("✗ AdminCommandRegistry nicht verfügbar");
+            return;
+        }
+
+        // Erstelle und registriere EconomyAdminHandler
+        EconomyAdminHandler handler = new EconomyAdminHandler(currencyManager, providers);
+        registry.registerHandler("economy", handler);
+
+        getLogger().info("✓ Admin-Commands registriert");
     }
 
     // ==================== Getter ====================
