@@ -38,6 +38,14 @@
             <version>6.10.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
+
+        <!-- MythicLib (MMOLib) - Required by MMOItems -->
+        <dependency>
+            <groupId>io.lumine</groupId>
+            <artifactId>MythicLib-dist</artifactId>
+            <version>1.6.2-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
     <repositories>
