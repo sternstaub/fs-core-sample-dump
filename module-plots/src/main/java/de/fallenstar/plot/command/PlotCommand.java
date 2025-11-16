@@ -313,7 +313,11 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
             "/plot info"
         ));
 
-        uiProvider.showMenu(player, menu);
+        try {
+            uiProvider.showMenu(player, menu);
+        } catch (Exception e) {
+            player.sendMessage("§cFehler beim Öffnen der UI: " + e.getMessage());
+        }
     }
 
     /**
@@ -335,7 +339,11 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
         ));
 
         player.sendMessage("§7[Roadmap] Botschaft-UI noch nicht vollständig implementiert");
-        uiProvider.showMenu(player, menu);
+        try {
+            uiProvider.showMenu(player, menu);
+        } catch (Exception e) {
+            player.sendMessage("§cFehler beim Öffnen der UI: " + e.getMessage());
+        }
     }
 
     /**
@@ -375,7 +383,11 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
             ));
         }
 
-        uiProvider.showMenu(player, menu);
+        try {
+            uiProvider.showMenu(player, menu);
+        } catch (Exception e) {
+            player.sendMessage("§cFehler beim Öffnen der UI: " + e.getMessage());
+        }
     }
 
     /**
