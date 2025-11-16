@@ -8,6 +8,7 @@ import de.fallenstar.core.database.impl.SQLiteDataStore;
 import de.fallenstar.core.event.ProvidersReadyEvent;
 import de.fallenstar.core.registry.PlotTypeRegistry;
 import de.fallenstar.core.registry.ProviderRegistry;
+import de.fallenstar.core.registry.UIRegistry;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -32,6 +33,7 @@ public class FallenStarCore extends JavaPlugin {
 
     private ProviderRegistry providerRegistry;
     private PlotTypeRegistry plotTypeRegistry;
+    private UIRegistry uiRegistry;
     private DataStore dataStore;
     
     @Override
@@ -124,6 +126,10 @@ public class FallenStarCore extends JavaPlugin {
         // PlotTypeRegistry initialisieren
         plotTypeRegistry = new PlotTypeRegistry(getLogger());
         getLogger().info("✓ PlotTypeRegistry initialized");
+
+        // UIRegistry initialisieren
+        uiRegistry = new UIRegistry(getLogger());
+        getLogger().info("✓ UIRegistry initialized");
     }
     
     /**
@@ -170,6 +176,17 @@ public class FallenStarCore extends JavaPlugin {
      */
     public PlotTypeRegistry getPlotTypeRegistry() {
         return plotTypeRegistry;
+    }
+
+    /**
+     * API-Methode: Gibt die UIRegistry zurück.
+     *
+     * Wird von Modulen genutzt um Test-UIs zu registrieren.
+     *
+     * @return UIRegistry
+     */
+    public UIRegistry getUIRegistry() {
+        return uiRegistry;
     }
 
     /**

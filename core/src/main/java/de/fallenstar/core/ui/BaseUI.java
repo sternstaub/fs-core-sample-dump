@@ -1,0 +1,121 @@
+package de.fallenstar.core.ui;
+
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Consumer;
+
+/**
+ * Abstrakte Basis-Klasse für alle UI-Typen.
+ *
+ * Bietet grundlegende Funktionalität für:
+ * - Click-Handler mit ProviderFunction-Integration
+ * - Item-Button-Verwaltung
+ * - Spieler-spezifische UI-Instanzen
+ *
+ * Implementierungen:
+ * - SmallChestUI (27 Slots, 3 Zeilen)
+ * - LargeChestUI (54 Slots, 6 Zeilen)
+ * - SignUI (4 Zeilen Text-Input)
+ * - AnvilUI (Text-Input mit Rename)
+ * - BookUI (Multi-Page Output)
+ *
+ * @author FallenStar
+ * @version 1.0
+ */
+public abstract class BaseUI {
+
+    protected final String title;
+    protected final Map<Integer, ItemStack> items;
+    protected final Map<Integer, Consumer<Player>> clickHandlers;
+
+    /**
+     * Konstruktor für BaseUI.
+     *
+     * @param title Titel des UI
+     */
+    protected BaseUI(String title) {
+        this.title = title;
+        this.items = new HashMap<>();
+        this.clickHandlers = new HashMap<>();
+    }
+
+    /**
+     * Setzt ein Item an einer bestimmten Slot-Position.
+     *
+     * @param slot Slot-Position (0-basiert)
+     * @param item ItemStack für den Button
+     */
+    public void setItem(int slot, ItemStack item) {
+        items.put(slot, item);
+    }
+
+    /**
+     * Setzt ein Item mit Click-Handler an einer Slot-Position.
+     *
+     * @param slot Slot-Position (0-basiert)
+     * @param item ItemStack für den Button
+     * @param clickHandler Handler-Funktion die beim Click ausgeführt wird
+     */
+    public void setItem(int slot, ItemStack item, Consumer<Player> clickHandler) {
+        items.put(slot, item);
+        clickHandlers.put(slot, clickHandler);
+    }
+
+    /**
+     * Entfernt ein Item von einer Slot-Position.
+     *
+     * @param slot Slot-Position (0-basiert)
+     */
+    public void removeItem(int slot) {
+        items.remove(slot);
+        clickHandlers.remove(slot);
+    }
+
+    /**
+     * Öffnet das UI für einen Spieler.
+     *
+     * @param player Spieler für den das UI geöffnet wird
+     */
+    public abstract void open(Player player);
+
+    /**
+     * Schließt das UI für einen Spieler.
+     *
+     * @param player Spieler für den das UI geschlossen wird
+     */
+    public abstract void close(Player player);
+
+    /**
+     * Behandelt einen Click auf einen Slot.
+     *
+     * @param player Spieler der geclickt hat
+     * @param slot Geclickter Slot
+     */
+    protected void handleClick(Player player, int slot) {
+        Consumer<Player> handler = clickHandlers.get(slot);
+        if (handler != null) {
+            handler.accept(player);
+        }
+    }
+
+    /**
+     * Gibt den Titel des UI zurück.
+     *
+     * @return UI-Titel
+     */
+    public String getTitle() {
+        return title;
+    }
+
+    /**
+     * Gibt alle Items zurück.
+     *
+     * @return Map von Slot zu ItemStack
+     */
+    public Map<Integer, ItemStack> getItems() {
+        return new HashMap<>(items);
+    }
+}
