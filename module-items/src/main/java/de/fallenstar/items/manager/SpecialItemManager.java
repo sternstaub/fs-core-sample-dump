@@ -50,7 +50,12 @@ public class SpecialItemManager {
         if (itemId == null) {
             return Optional.empty();
         }
-        return itemProvider.createItem("MATERIAL", itemId, amount);
+        try {
+            return itemProvider.createItem("MATERIAL", itemId, amount);
+        } catch (Exception e) {
+            logger.warning("Failed to create currency item '" + currencyType + "': " + e.getMessage());
+            return Optional.empty();
+        }
     }
 
     public Optional<ItemStack> createUIButton(String buttonType) {
@@ -58,15 +63,24 @@ public class SpecialItemManager {
         if (itemId == null) {
             return Optional.empty();
         }
-        return itemProvider.createItem("MISC", itemId, 1);
+        try {
+            return itemProvider.createItem("MISC", itemId, 1);
+        } catch (Exception e) {
+            logger.warning("Failed to create UI button '" + buttonType + "': " + e.getMessage());
+            return Optional.empty();
+        }
     }
 
     public boolean isCurrencyItem(ItemStack itemStack) {
-        if (!itemProvider.isCustomItem(itemStack)) {
+        try {
+            if (!itemProvider.isCustomItem(itemStack)) {
+                return false;
+            }
+            Optional<String> itemId = itemProvider.getItemId(itemStack);
+            return itemId.isPresent() && currencyItemIds.containsValue(itemId.get());
+        } catch (Exception e) {
             return false;
         }
-        Optional<String> itemId = itemProvider.getItemId(itemStack);
-        return itemId.isPresent() && currencyItemIds.containsValue(itemId.get());
     }
 
     public Set<String> getCurrencyTypes() {
