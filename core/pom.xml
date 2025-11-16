@@ -42,21 +42,12 @@
         </dependency>
         -->
 
-        <!-- Citizens (optional, provided by server)
-             Commented out due to potential repository issues
-             The code will compile without it and use runtime reflection
+        <!-- Citizens (optional, provided by server) -->
         <dependency>
             <groupId>net.citizensnpcs</groupId>
             <artifactId>citizens-main</artifactId>
-            <optional>true</optional>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
+            <scope>provided</scope>
         </dependency>
-        -->
 
         <!-- Gson for JSON serialization -->
         <dependency>

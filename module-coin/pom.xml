@@ -13,10 +13,10 @@
     </parent>
 
     <!-- Module Identity -->
-    <artifactId>module-storage</artifactId>
+    <artifactId>module-coin</artifactId>
     <packaging>jar</packaging>
-    <name>FallenStar Storage Module</name>
-    <description>Plot-based chest storage system</description>
+    <name>FallenStar Coin Module</name>
+    <description>Coin management system (placeholder for banker NPC)</description>
 
     <dependencies>
         <!-- Core Plugin (REQUIRED) -->
@@ -34,7 +34,7 @@
     </dependencies>
 
     <build>
-        <finalName>FallenStar-Storage-${project.version}</finalName>
+        <finalName>FallenStar-Coin-${project.version}</finalName>
         <defaultGoal>clean package</defaultGoal>
         <resources>
             <resource>

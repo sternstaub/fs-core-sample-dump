@@ -13,10 +13,10 @@
     </parent>
 
     <!-- Module Identity -->
-    <artifactId>module-storage</artifactId>
+    <artifactId>module-plot</artifactId>
     <packaging>jar</packaging>
-    <name>FallenStar Storage Module</name>
-    <description>Plot-based chest storage system</description>
+    <name>FallenStar Plot Module</name>
+    <description>Plot management and NPC spawning system</description>
 
     <dependencies>
         <!-- Core Plugin (REQUIRED) -->
@@ -34,7 +34,7 @@
     </dependencies>
 
     <build>
-        <finalName>FallenStar-Storage-${project.version}</finalName>
+        <finalName>FallenStar-Plot-${project.version}</finalName>
         <defaultGoal>clean package</defaultGoal>
         <resources>
             <resource>

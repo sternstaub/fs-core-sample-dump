@@ -25,6 +25,7 @@ public class ProviderRegistry {
     private final Plugin plugin;
 
     private PlotProvider plotProvider;
+    private TownProvider townProvider;
     private EconomyProvider economyProvider;
     private NPCProvider npcProvider;
     private ItemProvider itemProvider;
@@ -66,6 +67,15 @@ public class ProviderRegistry {
             logger.info("○ No plot plugin found - plot features disabled");
         }
 
+        // Town Provider - Towny support
+        if (isPluginEnabled("Towny") || isPluginEnabled("TownyAdvanced")) {
+            townProvider = new TownyTownProvider();
+            logger.info("✓ Towny detected - TownyTownProvider registered");
+        } else {
+            townProvider = new NoOpTownProvider();
+            logger.info("○ No town plugin found - town features disabled");
+        }
+
         // Economy Provider - NoOp (Vault support can be added later)
         economyProvider = new NoOpEconomyProvider();
         if (isPluginEnabled("Vault")) {
@@ -74,14 +84,26 @@ public class ProviderRegistry {
             logger.info("○ No economy plugin found - economy features disabled");
         }
 
-        // NPC Provider - NoOp (Citizens support can be added later)
-        npcProvider = new NoOpNPCProvider();
+        // NPC Provider - Citizens oder NoOp
         if (isPluginEnabled("Citizens")) {
-            logger.info("○ Citizens detected - using NoOp provider (add CitizensNPCProvider implementation)");
+            try {
+                CitizensNPCProvider citizensProvider = new CitizensNPCProvider();
+                npcProvider = citizensProvider;
+
+                // Registriere als Event-Listener für Click-Events
+                Bukkit.getPluginManager().registerEvents(citizensProvider, plugin);
+
+                logger.info("✓ Citizens detected - CitizensNPCProvider registered");
+            } catch (Exception e) {
+                logger.warning("✗ Citizens found but failed to initialize: " + e.getMessage());
+                npcProvider = new NoOpNPCProvider();
+            }
         } else if (isPluginEnabled("ZNPCsPlus")) {
             logger.info("○ ZNPCsPlus detected - using NoOp provider (add ZNPCProvider implementation)");
+            npcProvider = new NoOpNPCProvider();
         } else {
             logger.info("○ No NPC plugin found - NPC features disabled");
+            npcProvider = new NoOpNPCProvider();
         }
 
         // Item Provider - NoOp
@@ -113,6 +135,7 @@ public class ProviderRegistry {
     
     // Getter für Provider
     public PlotProvider getPlotProvider() { return plotProvider; }
+    public TownProvider getTownProvider() { return townProvider; }
     public EconomyProvider getEconomyProvider() { return economyProvider; }
     public NPCProvider getNpcProvider() { return npcProvider; }
     public ItemProvider getItemProvider() { return itemProvider; }

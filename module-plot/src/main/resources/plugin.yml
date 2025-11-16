@@ -1,0 +1,17 @@
+name: FallenStar-Plot
+version: ${project.version}
+main: de.fallenstar.plot.PlotModule
+api-version: 1.21
+authors: [FallenStar]
+description: Plot management and NPC spawning system
+
+# Abhängigkeiten
+depend: [FallenStar-Core]
+softdepend: [Towny, Citizens, FallenStar-Storage]
+
+# Commands
+commands:
+  plot:
+    description: Plot-Verwaltung
+    usage: /plot <info|storage|npc> [args]
+    aliases: [p]
