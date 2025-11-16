@@ -32,7 +32,6 @@ import java.util.Set;
 public class AdminCommand {
 
     private final FallenStarCore plugin;
-    private final de.fallenstar.core.registry.AdminCommandRegistry adminRegistry;
     private static final String PERMISSION = "fallenstar.core.admin";
 
     /**
@@ -42,7 +41,15 @@ public class AdminCommand {
      */
     public AdminCommand(FallenStarCore plugin) {
         this.plugin = plugin;
-        this.adminRegistry = plugin.getAdminCommandRegistry();
+    }
+
+    /**
+     * Holt die AdminCommandRegistry (lazy-loading).
+     *
+     * @return AdminCommandRegistry oder null
+     */
+    private de.fallenstar.core.registry.AdminCommandRegistry getAdminRegistry() {
+        return plugin.getAdminCommandRegistry();
     }
 
     /**
@@ -217,7 +224,13 @@ public class AdminCommand {
      */
     private void handlePlotsCommand(CommandSender sender, String[] args) {
         // Delegiere an registrierten Handler
-        adminRegistry.getHandler("plots").ifPresentOrElse(
+        de.fallenstar.core.registry.AdminCommandRegistry registry = getAdminRegistry();
+        if (registry == null) {
+            sender.sendMessage(Component.text("✗ Admin-Command-System noch nicht bereit!", NamedTextColor.RED));
+            return;
+        }
+
+        registry.getHandler("plots").ifPresentOrElse(
             handler -> handler.handle(sender, args),
             () -> {
                 sender.sendMessage(Component.text("✗ FallenStar-Plots Modul nicht geladen!", NamedTextColor.RED));
@@ -236,7 +249,13 @@ public class AdminCommand {
      */
     private void handleEconomyCommand(CommandSender sender, String[] args) {
         // Delegiere an registrierten Handler
-        adminRegistry.getHandler("economy").ifPresentOrElse(
+        de.fallenstar.core.registry.AdminCommandRegistry registry = getAdminRegistry();
+        if (registry == null) {
+            sender.sendMessage(Component.text("✗ Admin-Command-System noch nicht bereit!", NamedTextColor.RED));
+            return;
+        }
+
+        registry.getHandler("economy").ifPresentOrElse(
             handler -> handler.handle(sender, args),
             () -> {
                 sender.sendMessage(Component.text("✗ FallenStar-Economy Modul nicht geladen!", NamedTextColor.RED));
