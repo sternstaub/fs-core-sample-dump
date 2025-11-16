@@ -214,7 +214,7 @@ public class PlotsAdminHandler implements AdminSubcommandHandler {
             // Hole PlotStorage - KEINE REFLECTION MEHR!
             PlotStorage plotStorage = storageProvider.getPlotStorage(plot);
             Set<Material> materials = plotStorage.getAllMaterials();
-            Set<?> chests = plotStorage.getAllChests();
+            java.util.Collection<?> chests = plotStorage.getAllChests();
 
             if (materials.isEmpty()) {
                 player.sendMessage(Component.text("✗ Keine Materialien auf diesem Grundstück gefunden!", NamedTextColor.YELLOW));
