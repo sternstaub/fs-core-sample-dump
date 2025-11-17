@@ -8,6 +8,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.Plugin;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -33,17 +34,24 @@ public abstract class SmallChestUI extends BaseUI implements Listener {
     public static final int SIZE = 27; // 3 Zeilen
     protected static final Map<UUID, SmallChestUI> activeUIs = new HashMap<>();
 
+    protected final Plugin plugin;
+
     /**
      * Konstruktor für SmallChestUI.
      *
+     * @param plugin Plugin-Instanz (für Event-Registrierung)
      * @param title Titel des Chest-UI
      */
-    public SmallChestUI(String title) {
+    public SmallChestUI(Plugin plugin, String title) {
         super(title);
+        this.plugin = plugin;
     }
 
     @Override
     public void open(Player player) {
+        // Event-Listener registrieren
+        Bukkit.getPluginManager().registerEvents(this, plugin);
+
         Inventory inventory = Bukkit.createInventory(null, SIZE, title);
 
         // Items in Inventory laden

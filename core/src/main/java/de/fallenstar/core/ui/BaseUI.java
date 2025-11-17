@@ -1,5 +1,6 @@
 package de.fallenstar.core.ui;
 
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
@@ -108,13 +109,21 @@ public abstract class BaseUI {
     /**
      * Behandelt einen Click auf einen Slot.
      *
+     * Wenn ein Click-Handler für den Slot existiert, wird dieser ausgeführt.
+     * Wenn kein Handler existiert, aber ein Item vorhanden ist,
+     * wird ein "Funktion nicht verfügbar" Sound gespielt.
+     *
      * @param player Spieler der geclickt hat
      * @param slot Geclickter Slot
      */
     protected void handleClick(Player player, int slot) {
         Consumer<Player> handler = clickHandlers.get(slot);
         if (handler != null) {
+            // Handler vorhanden - ausführen
             handler.accept(player);
+        } else if (items.containsKey(slot)) {
+            // Item vorhanden, aber kein Handler - Sound abspielen
+            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
         }
     }
 

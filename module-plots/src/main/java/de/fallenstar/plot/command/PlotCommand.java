@@ -301,6 +301,7 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
 
             // Öffne HandelsgildeUI (mit Guest/Owner View)
             de.fallenstar.plot.ui.HandelsgildeUI ui = new de.fallenstar.plot.ui.HandelsgildeUI(
+                    plugin,
                     providers,
                     priceCommand,
                     plot,

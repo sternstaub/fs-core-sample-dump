@@ -13,6 +13,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.plugin.Plugin;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -52,18 +53,20 @@ public class HandelsgildeUI extends SmallChestUI {
     /**
      * Erstellt eine neue HandelsgildeUI.
      *
+     * @param plugin Plugin-Instanz (für Event-Registrierung)
      * @param providers ProviderRegistry
      * @param priceCommand PlotPriceCommand (für Preis-Zugriff)
      * @param plot Der Plot
      * @param isOwner Ob der öffnende Spieler der Besitzer ist
      */
     public HandelsgildeUI(
+            Plugin plugin,
             ProviderRegistry providers,
             PlotPriceCommand priceCommand,
             Plot plot,
             boolean isOwner
     ) {
-        super(isOwner ? "§6§lHandelsgilde - Verwaltung" : "§e§lHandelsgilde - Shop");
+        super(plugin, isOwner ? "§6§lHandelsgilde - Verwaltung" : "§e§lHandelsgilde - Shop");
         this.providers = providers;
         this.priceCommand = priceCommand;
         this.plot = plot;
