@@ -3,6 +3,7 @@ package de.fallenstar.plot.ui;
 import de.fallenstar.core.provider.Plot;
 import de.fallenstar.core.registry.ProviderRegistry;
 import de.fallenstar.core.ui.SmallChestUI;
+import de.fallenstar.plot.PlotModule;
 import de.fallenstar.plot.slot.MarketPlot;
 import de.fallenstar.plot.slot.PlotSlotManager;
 import net.kyori.adventure.text.Component;
@@ -239,8 +240,7 @@ public class MarketPlotUI extends SmallChestUI {
                 )
         );
         setItem(16, storageButton, player -> {
-            player.closeInventory();
-            player.performCommand("plot storage list");
+            openPlotStorageUI(player);
         });
 
         // Zeile 2: Weitere Optionen
@@ -366,5 +366,38 @@ public class MarketPlotUI extends SmallChestUI {
 
         item.setItemMeta(meta);
         return item;
+    }
+
+    /**
+     * Öffnet die PlotStorageUI für den Spieler.
+     *
+     * @param player Der Spieler
+     */
+    private void openPlotStorageUI(Player player) {
+        // Cast Plugin zu PlotModule
+        PlotModule plotModule = (PlotModule) plugin;
+
+        // Hole Storage-Provider und Manager
+        de.fallenstar.plot.storage.provider.PlotStorageProvider storageProvider = plotModule.getStorageProvider();
+        de.fallenstar.plot.storage.manager.StorageManager storageManager = plotModule.getStorageManager();
+
+        if (storageProvider == null || storageManager == null) {
+            player.sendMessage("§cStorage-System nicht verfügbar!");
+            return;
+        }
+
+        // Hole PlotStorage für aktuellen Plot
+        de.fallenstar.plot.storage.model.PlotStorage plotStorage = storageProvider.getPlotStorage(plot);
+
+        // Öffne PlotStorageUI
+        PlotStorageUI storageUI = new PlotStorageUI(
+                plugin,
+                plot,
+                plotStorage,
+                storageProvider,
+                storageManager,
+                isOwner
+        );
+        storageUI.open(player);
     }
 }
