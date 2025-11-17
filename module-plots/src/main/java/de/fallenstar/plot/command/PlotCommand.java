@@ -383,7 +383,7 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
     }
 
     /**
-     * Öffnet die Default-Plot-UI (Text-basiert, da kein GUI vorhanden).
+     * Öffnet die Default-Plot-UI (PlotInfoUI).
      *
      * @param player Der Spieler
      * @param plot Der Plot
@@ -392,24 +392,37 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
      */
     private void openDefaultPlotUI(Player player, de.fallenstar.core.provider.Plot plot,
                                      String plotType, boolean isOwner) {
-        player.sendMessage("§e§m-----§r §6Plot-Verwaltung §e§m-----");
-        player.sendMessage("§7Grundstück-Typ: §e" + plotType);
-        player.sendMessage("");
-        player.sendMessage("§7Verfügbare Commands:");
-        player.sendMessage("§e/plot info §7- Grundstücks-Informationen");
+        try {
+            // Öffne PlotInfoUI für Standard-Plots
+            de.fallenstar.plot.ui.PlotInfoUI ui = new de.fallenstar.plot.ui.PlotInfoUI(
+                    plot,
+                    providers.getPlotProvider(),
+                    player
+            );
 
-        if (storageSystemEnabled) {
-            player.sendMessage("§e/plot storage list §7- Storage-Verwaltung");
+            ui.open(player);
+
+        } catch (Exception e) {
+            // Fallback: Text-basierte Hilfe
+            player.sendMessage("§cFehler beim Öffnen der Plot-UI: " + e.getMessage());
+            player.sendMessage("");
+            player.sendMessage("§e§m-----§r §6Plot-Verwaltung §e§m-----");
+            player.sendMessage("§7Grundstück-Typ: §e" + plotType);
+            player.sendMessage("");
+            player.sendMessage("§7Verfügbare Commands:");
+            player.sendMessage("§e/plot info §7- Grundstücks-Informationen");
+
+            if (storageSystemEnabled) {
+                player.sendMessage("§e/plot storage list §7- Storage-Verwaltung");
+            }
+
+            if (npcSystemEnabled) {
+                player.sendMessage("§e/plot npc list §7- NPC-Verwaltung");
+            }
+
+            player.sendMessage("§e§m-------------------------");
+            e.printStackTrace();
         }
-
-        if (npcSystemEnabled) {
-            player.sendMessage("§e/plot npc list §7- NPC-Verwaltung");
-        }
-
-        player.sendMessage("§e§m-------------------------");
-        player.sendMessage("");
-        player.sendMessage("§7[Info] Für diesen Plot-Typ gibt es noch kein GUI.");
-        player.sendMessage("§7Nutze die Commands oben für die Verwaltung.");
     }
 
     /**

@@ -222,12 +222,11 @@ public class MarketPlotUI extends SmallChestUI {
                         "§7Verwalte Händler-NPCs",
                         "§7auf diesem Marktplatz",
                         "§7",
-                        "§c§lNoch nicht implementiert"
+                        "§a§lKlicke zum Öffnen"
                 )
         );
         setItem(14, npcButton, player -> {
-            player.sendMessage("§c§lNPC-Verwaltung noch nicht implementiert!");
-            player.sendMessage("§7Wird in Sprint 13-14 verfügbar sein");
+            openSlotManagementUI(player);
         });
 
         // Slot 16: Storage verwalten
@@ -400,5 +399,34 @@ public class MarketPlotUI extends SmallChestUI {
                 isOwner
         );
         storageUI.open(player);
+    }
+
+    /**
+     * Öffnet die SlotManagementUI für den Spieler.
+     *
+     * @param player Der Spieler
+     */
+    private void openSlotManagementUI(Player player) {
+        // Cast Plugin zu PlotModule
+        PlotModule plotModule = (PlotModule) plugin;
+
+        // Hole PlotRegistry
+        de.fallenstar.plot.registry.PlotRegistry plotRegistry = plotModule.getPlotRegistry();
+
+        if (plotRegistry == null) {
+            player.sendMessage("§cPlotRegistry nicht verfügbar!");
+            return;
+        }
+
+        // MarketPlot ist SlottedPlot, daher direkt nutzen
+        de.fallenstar.plot.slot.SlottedPlot slottedPlot = marketPlot;
+
+        // Öffne SlotManagementUI
+        SlotManagementUI slotUI = new SlotManagementUI(
+                plugin,
+                slottedPlot,
+                plotRegistry
+        );
+        slotUI.open(player);
     }
 }
