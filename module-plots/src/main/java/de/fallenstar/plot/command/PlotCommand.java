@@ -51,6 +51,7 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
     private final PlotNpcCommand npcCommand;
     private final PlotPriceCommand priceCommand;
     private final PlotSlotCommand slotCommand;
+    private final PlotNameCommand nameCommand;
     private final StorageListCommand storageListCommand;
     private final StorageInfoCommand storageInfoCommand;
     private final StorageSetReceiverCommand storageSetReceiverCommand;
@@ -92,6 +93,7 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
         this.infoCommand = new PlotInfoCommand(providers, plotTypeRegistry);
         this.npcCommand = new PlotNpcCommand(plugin, providers, plotTypeRegistry);
         this.priceCommand = new PlotPriceCommand(providers);
+        this.nameCommand = new PlotNameCommand(plugin.getLogger(), plugin, providers, plugin.getPlotNameManager());
 
         // Slot-Command initialisieren (wenn Slot-System aktiviert)
         if (slotSystemEnabled && plugin.getPlotSlotManager() != null) {
@@ -176,6 +178,10 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
                     return true;
                 }
                 return slotCommand.execute(player, subArgs);
+            }
+
+            case "name" -> {
+                return nameCommand.execute(player, subArgs);
             }
 
             case "help" -> {
@@ -434,6 +440,11 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
         // GUI-Command
         player.sendMessage("§e/plot gui §7- Öffnet grundstückstypabhängige GUI");
 
+        // Name-Command
+        player.sendMessage("§e/plot name §7- Plot-Namen verwalten");
+        player.sendMessage("§e/plot name <name> §7- Plot-Namen setzen");
+        player.sendMessage("§e/plot name clear §7- Plot-Namen löschen");
+
         // Price-Command (nur auf Handelsgilde)
         player.sendMessage("§e/plot price set §7- Handelspreis festlegen §8[Handelsgilde]");
         player.sendMessage("§e/plot price list §7- Preisliste anzeigen §8[Handelsgilde]");
@@ -466,6 +477,7 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
                 completions.add("npc");
             }
             completions.add("gui");
+            completions.add("name");  // Plot-Namen-Verwaltung
             completions.add("price");  // Handelsgilde-Preisverwaltung
             if (slotSystemEnabled) {
                 completions.add("slots");  // Market-Slot-Verwaltung
@@ -490,6 +502,9 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
                         completions.add("remove");
                         completions.add("list");
                     }
+                }
+                case "name" -> {
+                    completions.add("clear");
                 }
                 case "price" -> {
                     completions.add("set");

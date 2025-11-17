@@ -56,6 +56,7 @@ public class PlotModule extends JavaPlugin implements Listener {
     private StorageManager storageManager;
     private PlotSlotManager plotSlotManager;
     private NPCManager npcManager;
+    private de.fallenstar.plot.manager.PlotNameManager plotNameManager;
     private de.fallenstar.plot.command.PlotCommand plotCommand;
 
     private boolean plotSystemEnabled = false;
@@ -85,6 +86,10 @@ public class PlotModule extends JavaPlugin implements Listener {
             return;
         }
 
+        // PlotNameManager initialisieren
+        this.plotNameManager = new de.fallenstar.plot.manager.PlotNameManager(getLogger());
+        this.plotNameManager.loadFromConfig(getConfig());
+
         // Warte auf ProvidersReadyEvent
         getServer().getPluginManager().registerEvents(this, this);
     }
@@ -111,6 +116,9 @@ public class PlotModule extends JavaPlugin implements Listener {
         if (npcManager != null) {
             npcManager.saveToConfig(getConfig());
         }
+        if (plotNameManager != null) {
+            plotNameManager.saveToConfig(getConfig());
+        }
         saveConfig();
         getLogger().fine("Config gespeichert");
     }
@@ -124,6 +132,9 @@ public class PlotModule extends JavaPlugin implements Listener {
         this.plotTypeRegistry = corePlugin.getPlotTypeRegistry();
 
         getLogger().info("Providers ready - initializing Plot Module...");
+
+        // Registriere TownyPlotProvider (Modul-eigene Implementierung)
+        registerTownyPlotProvider();
 
         // KRITISCHE Features prüfen (required)
         if (!checkRequiredFeatures()) {
@@ -146,6 +157,36 @@ public class PlotModule extends JavaPlugin implements Listener {
 
         // Module vollständig initialisieren
         initializeModule();
+    }
+
+    /**
+     * Registriert TownyPlotProvider in der ProviderRegistry.
+     *
+     * Diese Methode ersetzt die Core-eigene Towny-Integration.
+     * Das Plots-Modul stellt nun seine eigene TownyPlotProvider-Implementierung bereit.
+     */
+    private void registerTownyPlotProvider() {
+        // Prüfe ob Towny verfügbar ist
+        if (getServer().getPluginManager().getPlugin("Towny") == null &&
+            getServer().getPluginManager().getPlugin("TownyAdvanced") == null) {
+            getLogger().info("○ Towny nicht gefunden - verwende NoOp PlotProvider");
+            return;
+        }
+
+        try {
+            // Erstelle TownyPlotProvider (Modul-eigene Implementierung)
+            de.fallenstar.plot.provider.TownyPlotProvider townyProvider =
+                new de.fallenstar.plot.provider.TownyPlotProvider();
+
+            // Registriere in ProviderRegistry
+            providers.setPlotProvider(townyProvider);
+
+            getLogger().info("✓ TownyPlotProvider (Plots-Modul) registriert");
+
+        } catch (Exception e) {
+            getLogger().warning("✗ Fehler beim Registrieren von TownyPlotProvider: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -476,8 +517,16 @@ public class PlotModule extends JavaPlugin implements Listener {
                 });
             }
 
+            // /plot name (Plot-Namen-Verwaltung)
+            TownyCommandAddonAPI.addSubCommand(CommandType.PLOT, "name", (sender, cmd, label, args) -> {
+                String[] newArgs = new String[args.length + 1];
+                newArgs[0] = "name";
+                System.arraycopy(args, 0, newArgs, 1, args.length);
+                return plotCommand.onCommand(sender, cmd, "plot", newArgs);
+            });
+
             getLogger().info("✓ Commands über Towny API registriert");
-            getLogger().info("  Verfügbar: /plot info, /plot gui, /plot price" +
+            getLogger().info("  Verfügbar: /plot info, /plot gui, /plot name, /plot price" +
                 (storageSystemEnabled ? ", /plot storage" : "") +
                 (npcSystemEnabled ? ", /plot npc" : "") +
                 (slotSystemEnabled ? ", /plot slots" : ""));
@@ -616,5 +665,14 @@ public class PlotModule extends JavaPlugin implements Listener {
      */
     public boolean isSlotSystemEnabled() {
         return slotSystemEnabled;
+    }
+
+    /**
+     * Gibt den PlotNameManager zurück.
+     *
+     * @return PlotNameManager oder null
+     */
+    public de.fallenstar.plot.manager.PlotNameManager getPlotNameManager() {
+        return plotNameManager;
     }
 }

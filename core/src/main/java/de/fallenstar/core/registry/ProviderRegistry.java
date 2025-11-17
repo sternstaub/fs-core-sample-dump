@@ -57,20 +57,13 @@ public class ProviderRegistry {
     public void detectAndRegister() {
         logger.info("Detecting available providers...");
 
-        // Plot Provider - Towny/Factions support
+        // Plot Provider - Default NoOp (Module registrieren ihre eigenen Provider)
+        plotProvider = new NoOpPlotProvider();
         if (isPluginEnabled("Towny") || isPluginEnabled("TownyAdvanced")) {
-            try {
-                plotProvider = new TownyPlotProvider();
-                logger.info("✓ Towny detected - TownyPlotProvider registered");
-            } catch (Exception e) {
-                logger.warning("✗ Towny found but failed to initialize PlotProvider: " + e.getMessage());
-                plotProvider = new NoOpPlotProvider();
-            }
+            logger.info("○ Towny detected - Plot-Modul wird TownyPlotProvider registrieren");
         } else if (isPluginEnabled("Factions")) {
-            plotProvider = new NoOpPlotProvider();
-            logger.info("○ Factions detected - using NoOp provider (add FactionsPlotProvider implementation)");
+            logger.info("○ Factions detected - using NoOp provider (add FactionsPlotProvider in Module)");
         } else {
-            plotProvider = new NoOpPlotProvider();
             logger.info("○ No plot plugin found - plot features disabled");
         }
 

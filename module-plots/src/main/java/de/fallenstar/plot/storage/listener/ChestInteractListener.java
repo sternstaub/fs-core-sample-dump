@@ -134,7 +134,7 @@ public class ChestInteractListener implements Listener {
 
     /**
      * Wird gefeuert wenn eine Truhe zerstört wird.
-     * Scannt das Plot neu um die Truhe zu entfernen.
+     * Unregistriert die Truhe aus dem PlotStorage.
      */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onChestBreak(BlockBreakEvent event) {
@@ -156,10 +156,25 @@ public class ChestInteractListener implements Listener {
                 return;
             }
 
-            // Rescanne Plot
-            storageManager.rescanPlot(plot);
+            // Hole PlotStorage
+            PlotStorage storage = storageProvider.getPlotStorage(plot);
 
-            logger.info("Truhe auf Plot " + plot.getIdentifier() + " entfernt");
+            // Finde und unregistriere die Truhe
+            boolean unregistered = false;
+            for (de.fallenstar.plot.storage.model.ChestData chestData : storage.getAllChests()) {
+                if (chestData.getLocation().equals(chestLocation)) {
+                    storage.unregisterChest(chestData.getChestId());
+                    unregistered = true;
+                    logger.info("Truhe auf Plot " + plot.getIdentifier() + " unregistriert (Type: " +
+                               chestData.getChestType().getDisplayName() + ")");
+                    break;
+                }
+            }
+
+            // Falls Truhe nicht registriert war, ist das kein Fehler (kann normale Truhe sein)
+            if (!unregistered) {
+                logger.fine("Nicht-registrierte Truhe auf Plot " + plot.getIdentifier() + " zerstört");
+            }
 
         } catch (ProviderFunctionalityNotFoundException e) {
             // PlotProvider nicht verfügbar - ignorieren
