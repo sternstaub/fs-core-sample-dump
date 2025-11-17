@@ -516,8 +516,9 @@ public class GuildTraderNPC implements NPCType, TradingEntity {
 
         @Override
         public Optional<Inventory> getTradeInventory() {
-            // Delegiere an GuildTraderNPC
-            return GuildTraderNPC.this.getPlotStorageInventory(npcId);
+            // Gildenhändler nutzen Plot-Storage (List<ItemStack>), nicht Bukkit Inventory
+            // Daher geben wir Empty zurück (wie im TradingEntity-Interface dokumentiert)
+            return Optional.empty();
         }
 
         @Override
