@@ -84,4 +84,24 @@ public class NoOpPlotProvider implements PlotProvider {
             REASON
         );
     }
+
+    @Override
+    public java.util.List<java.util.UUID> getAssociates(Plot plot)
+            throws ProviderFunctionalityNotFoundException {
+        throw new ProviderFunctionalityNotFoundException(
+            PROVIDER_NAME,
+            "getAssociates",
+            REASON
+        );
+    }
+
+    @Override
+    public java.util.List<Plot> getPlayerPlots(java.util.UUID playerUUID)
+            throws ProviderFunctionalityNotFoundException {
+        throw new ProviderFunctionalityNotFoundException(
+            PROVIDER_NAME,
+            "getPlayerPlots",
+            REASON
+        );
+    }
 }

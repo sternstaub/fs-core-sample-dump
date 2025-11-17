@@ -12,6 +12,8 @@ import de.fallenstar.core.provider.PlotProvider;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -298,5 +300,96 @@ public class TownyPlotProvider implements PlotProvider {
         String townName = (town != null) ? town.getName() : "Unknown";
 
         return townName + " (" + townBlock.getX() + "," + townBlock.getZ() + ")";
+    }
+
+    @Override
+    public List<UUID> getAssociates(Plot plot)
+            throws ProviderFunctionalityNotFoundException {
+        if (!isAvailable()) {
+            throw new ProviderFunctionalityNotFoundException(
+                "PlotProvider", "getAssociates", "Towny API not available"
+            );
+        }
+
+        List<UUID> associates = new ArrayList<>();
+
+        try {
+            TownBlock townBlock = plot.getNativePlot();
+
+            if (townBlock == null) {
+                return associates; // Leere Liste
+            }
+
+            // Hole die Town des Plots
+            Town town = townBlock.getTownOrNull();
+            if (town == null) {
+                return associates; // Keine Stadt = keine Bewohner
+            }
+
+            // Hole alle Residents der Town
+            for (Resident resident : town.getResidents()) {
+                UUID playerUUID = resident.getUUID();
+                if (playerUUID != null) {
+                    associates.add(playerUUID);
+                }
+            }
+
+            return associates;
+
+        } catch (Exception e) {
+            throw new ProviderFunctionalityNotFoundException(
+                "PlotProvider", "getAssociates",
+                "Error getting town residents: " + e.getMessage()
+            );
+        }
+    }
+
+    @Override
+    public List<Plot> getPlayerPlots(UUID playerUUID)
+            throws ProviderFunctionalityNotFoundException {
+        if (!isAvailable()) {
+            throw new ProviderFunctionalityNotFoundException(
+                "PlotProvider", "getPlayerPlots", "Towny API not available"
+            );
+        }
+
+        List<Plot> playerPlots = new ArrayList<>();
+
+        try {
+            // Hole Resident des Spielers
+            Resident resident = townyAPI.getResident(playerUUID);
+            if (resident == null) {
+                return playerPlots; // Spieler hat keine Grundstücke
+            }
+
+            // Hole alle TownBlocks des Residents
+            for (TownBlock townBlock : resident.getTownBlocks()) {
+                // Generiere UUID und Identifier
+                UUID plotId = generatePlotUUID(townBlock);
+                String identifier = generatePlotIdentifier(townBlock);
+
+                // Erstelle Plot-Objekt
+                Plot plot = new Plot(
+                    plotId,
+                    identifier,
+                    townBlock.getWorldCoord().getCoord().getBukkitWorld().getBlockAt(
+                        townBlock.getX() * 16,
+                        64,
+                        townBlock.getZ() * 16
+                    ).getLocation(),
+                    townBlock
+                );
+
+                playerPlots.add(plot);
+            }
+
+            return playerPlots;
+
+        } catch (Exception e) {
+            throw new ProviderFunctionalityNotFoundException(
+                "PlotProvider", "getPlayerPlots",
+                "Error getting player plots: " + e.getMessage()
+            );
+        }
     }
 }

@@ -32,6 +32,49 @@ storage:
   # Plot-basiertes Storage aktivieren
   enabled: true
 
+# Rabatt-System für Stadtbewohner
+discount:
+  # Aktiviert Rabatt-System für Stadtbewohner/Gilden-Mitglieder
+  enabled: true
+  # Rabatt in Prozent für assoziierte Spieler (Stadtbewohner)
+  # 0.5 = 50% Rabatt, 0.25 = 25% Rabatt, 0.0 = kein Rabatt
+  associate-discount: 0.5
+  # Nachricht bei Rabatt-Anwendung
+  discount-message: "§7Du erhältst §e{0}% Rabatt§7 als Stadtbewohner!"
+
+# NPC-System
+npc:
+  # Aktiviert NPC-System
+  enabled: true
+  # Gildenhändler-Einstellungen
+  guild-trader:
+    # Source-Plot ist immer der Host-Plot
+    auto-source: true
+  # Spielerhändler-Einstellungen
+  player-trader:
+    # Preis für Spielerhändler-Kauf
+    purchase-price: 500.0
+    # Währung für Händler-Kauf
+    currency: "sterne"
+    # Tier der Währung
+    currency-tier: "gold"
+    # Erlaubt Spielern, Source-Plot zu wählen
+    allow-source-selection: true
+  # Bankier-Einstellungen
+  banker:
+    # Lokaler Bankier: Initialer Münzbestand
+    local-initial-balance: 10000
+    # Weltbankier: Keine Limits
+    world-unlimited: true
+  # Botschafter-Einstellungen
+  ambassador:
+    # Standard-Teleport-Kosten
+    default-teleport-cost: 100.0
+    # Währung für Teleportation
+    currency: "sterne"
+    # Tier der Währung
+    currency-tier: "silver"
+
 # Nachrichten
 messages:
   no-plot: "§cDu stehst auf keinem Plot!"
