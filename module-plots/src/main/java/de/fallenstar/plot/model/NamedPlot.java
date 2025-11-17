@@ -50,7 +50,8 @@ public class NamedPlot extends Plot {
      * @return Optional mit Custom-Namen, oder empty wenn nicht gesetzt
      */
     public Optional<String> getCustomName() {
-        return nameManager.getCustomName(getIdentifier());
+        String name = nameManager.getPlotName(this);
+        return Optional.ofNullable(name);
     }
 
     /**
@@ -63,7 +64,7 @@ public class NamedPlot extends Plot {
         if (!isValidName(name)) {
             throw new IllegalArgumentException("Ungültiger Plot-Name: " + name);
         }
-        nameManager.setCustomName(getIdentifier(), name);
+        nameManager.setPlotName(this, name);
     }
 
     /**
@@ -72,7 +73,7 @@ public class NamedPlot extends Plot {
      * Danach wird wieder der Default-Name verwendet.
      */
     public void clearCustomName() {
-        nameManager.clearCustomName(getIdentifier());
+        nameManager.setPlotName(this, null);
     }
 
     /**
