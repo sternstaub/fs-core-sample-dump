@@ -185,4 +185,84 @@ public class PlotStorageProvider {
     public int getPlotCount() {
         return plotStorageMap.size();
     }
+
+    /**
+     * Sammelt alle Items aus allen Output-Chests eines Plots.
+     *
+     * Output-Chests enthalten Items, die zum Verkauf angeboten werden.
+     *
+     * @param plot Das Plot-Objekt
+     * @return Liste aller ItemStacks aus allen Output-Chests
+     */
+    public List<org.bukkit.inventory.ItemStack> getOutputChestContents(Plot plot) {
+        PlotStorage storage = plotStorageMap.get(plot.getUuid());
+        if (storage == null) {
+            return Collections.emptyList();
+        }
+
+        List<org.bukkit.inventory.ItemStack> allItems = new ArrayList<>();
+
+        // Hole alle Output-Chests
+        List<ChestData> outputChests = storage.getOutputChests();
+
+        for (ChestData chestData : outputChests) {
+            Location chestLocation = chestData.getLocation();
+
+            // Prüfe ob Truhe noch vorhanden ist
+            if (chestLocation.getBlock().getState() instanceof org.bukkit.block.Chest) {
+                org.bukkit.block.Chest chest = (org.bukkit.block.Chest) chestLocation.getBlock().getState();
+                org.bukkit.inventory.Inventory inv = chest.getInventory();
+
+                // Sammle alle Items aus der Truhe
+                for (org.bukkit.inventory.ItemStack item : inv.getContents()) {
+                    if (item != null && item.getType() != Material.AIR) {
+                        allItems.add(item.clone()); // Clone um Referenz-Probleme zu vermeiden
+                    }
+                }
+            }
+        }
+
+        return allItems;
+    }
+
+    /**
+     * Fügt ein ItemStack zur Input-Chest (Empfangskiste) eines Plots hinzu.
+     *
+     * Input-Chests empfangen gekaufte Items.
+     *
+     * @param plot Das Plot-Objekt
+     * @param stack Der ItemStack zum Hinzufügen
+     * @return true wenn erfolgreich hinzugefügt, false wenn keine Input-Chest vorhanden
+     */
+    public boolean addToInputChests(Plot plot, org.bukkit.inventory.ItemStack stack) {
+        PlotStorage storage = plotStorageMap.get(plot.getUuid());
+        if (storage == null) {
+            return false;
+        }
+
+        // Hole Input-Chest
+        ChestData inputChest = storage.getInputChest();
+        if (inputChest == null) {
+            return false; // Keine Input-Chest gesetzt
+        }
+
+        Location chestLocation = inputChest.getLocation();
+
+        // Prüfe ob Truhe noch vorhanden ist
+        if (!(chestLocation.getBlock().getState() instanceof org.bukkit.block.Chest)) {
+            return false; // Truhe wurde entfernt
+        }
+
+        org.bukkit.block.Chest chest = (org.bukkit.block.Chest) chestLocation.getBlock().getState();
+        org.bukkit.inventory.Inventory inv = chest.getInventory();
+
+        // Versuche Item hinzuzufügen
+        HashMap<Integer, org.bukkit.inventory.ItemStack> remainingItems = inv.addItem(stack);
+
+        // Aktualisiere Zugriffs-Zeitstempel
+        inputChest.updateAccessTime();
+
+        // Rückgabe: true wenn vollständig hinzugefügt, false wenn Teile übrig blieben
+        return remainingItems.isEmpty();
+    }
 }

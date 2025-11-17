@@ -1,4 +1,4 @@
-package de.fallenstar.core.provider.impl;
+package de.fallenstar.plot.provider;
 
 import com.palmergames.bukkit.towny.TownyAPI;
 import com.palmergames.bukkit.towny.object.Town;
