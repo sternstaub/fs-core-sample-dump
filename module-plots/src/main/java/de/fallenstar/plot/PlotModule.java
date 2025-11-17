@@ -310,14 +310,13 @@ public class PlotModule extends JavaPlugin implements Listener {
             this.plotRegistry.loadFromConfig(getConfig());
 
             getLogger().info("✓ PlotRegistry initialisiert");
-            getLogger().info("  Registrierte Handelsgilden: " + plotRegistry.getPlotsByType(de.fallenstar.plot.registry.PlotRegistry.PlotType.MERCHANT_GUILD).size());
+            getLogger().info("  Registrierte Handelsgilden: " + plotRegistry.getPlotIdsByType(de.fallenstar.plot.registry.PlotRegistry.PlotType.MERCHANT_GUILD).size());
 
             // Registriere PlotRegistryListener für Auto-Updates
             de.fallenstar.plot.registry.PlotRegistryListener registryListener =
                 new de.fallenstar.plot.registry.PlotRegistryListener(
-                    plotRegistry,
-                    providers.getPlotProvider(),
-                    getLogger()
+                    this,
+                    plotRegistry
                 );
             getServer().getPluginManager().registerEvents(registryListener, this);
             getLogger().info("✓ PlotRegistryListener registriert");
