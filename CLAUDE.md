@@ -89,7 +89,7 @@ A **modular Minecraft plugin system** for Paper 1.21.1 with provider-based archi
 - **Phase:** Aktive Entwicklung
 - **Completion:** ~50% (Core ✅ + Plots ✅ + UI-Framework ✅ + Items ✅ + UI-Modul ✅ + Economy ✅)
 - **Aktueller Sprint:** Sprint 9-10 ✅ ABGESCHLOSSEN (Economy-Modul: Währungen, Münzsystem, Vault, Withdraw)
-- **Nächster Sprint:** Sprint 11-12 - WorldAnchors (Schnellreisen, POIs, Wegpunkte)
+- **Nächster Sprint:** Sprint 11-12 - Plot-Slots & Botschafter-System (NPC-Slots auf Grundstücken)
 - **Wichtige Architektur:** Provider-Implementierungen in Modulen, Core nur Interfaces!
 - **Planung:** 20 Sprints (40 Wochen) mit Items, UI, Economy, Chat, Auth, WebHooks
 - **Storage-Modul:** ✅ Entfernt (redundant, in Plots integriert)
@@ -223,19 +223,7 @@ fs-core-sample-dump/
 │       ├── plugin.yml
 │       └── config.yml
 │
-├── module-worldanchors/             # FallenStar WorldAnchors (Sprint 9-10)
-│   ├── pom.xml                      # Schnellreisen, POIs, Wegpunkte
-│   ├── src/main/java/de/fallenstar/worldanchors/
-│   │   ├── WorldAnchorsModule.java            # Main class
-│   │   ├── command/                           # Reise-Befehle
-│   │   ├── manager/                           # Reise-Manager
-│   │   ├── model/                             # POI-Modelle
-│   │   └── task/                              # Reise-Tasks
-│   └── src/main/resources/
-│       ├── plugin.yml
-│       └── config.yml
-│
-├── module-npcs/                     # FallenStar NPCs (Sprint 11-12)
+├── module-npcs/                     # FallenStar NPCs (Sprint 13-14)
 │   ├── pom.xml                      # NPC-System (Citizens-Integration)
 │   ├── src/main/java/de/fallenstar/npcs/
 │   │   ├── NPCsModule.java                    # Main class
@@ -257,12 +245,11 @@ fs-core-sample-dump/
 ```
 Core (UI-Framework + alle Provider-Interfaces + NoOp-Implementierungen)
  ↑
- ├── Plots            (Plot-System + Storage ✅, Towny → TownyPlotProvider)
+ ├── Plots            (Plot-System + Storage ✅, Slot-System ✅, Towny → TownyPlotProvider)
  ├── Items            (MMOItems-Wrapper ✅, registriert MMOItemsItemProvider)
- ├── UI               (Konkrete UIs 🔨: ConfirmationUI, SimpleTradeUI, UIButtonManager)
- ├── Economy          (Weltwirtschaft, Vault, nutzt ItemProvider + UI)
- ├── WorldAnchors     (Schnellreisen, POIs, Wegpunkte)
- ├── NPCs             (NPC-System, Denizen-Ersatz, nutzt ItemProvider + PlotProvider + UI)
+ ├── UI               (Konkrete UIs ✅: ConfirmationUI, SimpleTradeUI, UIButtonManager)
+ ├── Economy          (Weltwirtschaft ✅, Vault ✅, nutzt ItemProvider + UI)
+ ├── NPCs             (NPC-System, Botschafter-NPCs, Denizen-Ersatz, nutzt ItemProvider + PlotProvider + UI)
  ├── Chat             (Matrix-Bridge → MatrixChatProvider)
  ├── Auth             (Keycloak → KeycloakAuthProvider)
  └── WebHooks         (Wiki/Forum-Integration)
@@ -488,6 +475,195 @@ public class ProviderRegistry {
 }
 ```
 
+### 6. Data Persistence Pattern (WICHTIG!)
+
+**Regel:** Alle Module müssen ihre Daten persistent speichern!
+
+**Problem:** In-Memory-Datenstrukturen gehen bei Server-Neustarts verloren.
+
+**Lösung:** Bidirektionale Config-Integration mit `loadFromConfig()` und `saveToConfig()`.
+
+#### Standard-Pattern für Persistierung:
+
+```java
+public class DataManager {
+    private final Logger logger;
+    private final Map<String, SomeData> dataMap;  // In-Memory Cache
+
+    /**
+     * Lädt Daten aus der Config.
+     *
+     * Wird beim Modul-Start aufgerufen (onEnable oder onProvidersReady).
+     */
+    public void loadFromConfig(FileConfiguration config) {
+        ConfigurationSection section = config.getConfigurationSection("data-section");
+        if (section == null) {
+            logger.warning("Keine Daten in config.yml gefunden");
+            initializeDefaults();
+            return;
+        }
+
+        // Parse Config und fülle dataMap
+        for (String key : section.getKeys(false)) {
+            SomeData data = parseData(section, key);
+            dataMap.put(key, data);
+        }
+
+        logger.info("Daten geladen: " + dataMap.size() + " Einträge");
+    }
+
+    /**
+     * Speichert Daten zurück in die Config.
+     *
+     * WICHTIG: Muss nach JEDER Daten-Änderung aufgerufen werden!
+     */
+    public void saveToConfig(FileConfiguration config) {
+        // Lösche alte Daten
+        config.set("data-section", null);
+
+        // Schreibe alle Daten
+        for (Map.Entry<String, SomeData> entry : dataMap.entrySet()) {
+            String key = entry.getKey();
+            SomeData data = entry.getValue();
+
+            config.set("data-section." + key + ".field1", data.getField1());
+            config.set("data-section." + key + ".field2", data.getField2());
+        }
+
+        logger.info("Daten gespeichert: " + dataMap.size() + " Einträge");
+    }
+}
+```
+
+#### Modul-Integration:
+
+```java
+public class MyModule extends JavaPlugin {
+    private DataManager dataManager;
+
+    @Override
+    public void onEnable() {
+        saveDefaultConfig();  // Erstelle config.yml falls nicht vorhanden
+
+        dataManager = new DataManager(getLogger());
+        dataManager.loadFromConfig(getConfig());  // Lade Daten
+    }
+
+    /**
+     * Speichert die Config auf Festplatte.
+     *
+     * MUSS nach JEDER Daten-Änderung aufgerufen werden!
+     */
+    public void saveConfiguration() {
+        dataManager.saveToConfig(getConfig());  // In-Memory → Config
+        saveConfig();  // Config → Festplatte (Bukkit API)
+        getLogger().fine("Config gespeichert");
+    }
+
+    // Getter für andere Module (via Reflection)
+    public DataManager getDataManager() {
+        return dataManager;
+    }
+}
+```
+
+#### Usage in Commands/Listeners:
+
+```java
+public class SomeCommand {
+    private final MyModule plugin;
+    private final DataManager dataManager;
+
+    public void execute(Player player, String[] args) {
+        // Ändere Daten
+        dataManager.setSomeData("key", newData);
+
+        // WICHTIG: Sofort speichern!
+        plugin.saveConfiguration();
+
+        player.sendMessage("§aDaten gespeichert!");
+    }
+}
+```
+
+#### Best Practices:
+
+1. ✅ **Immer bidirektional:** `loadFromConfig()` UND `saveToConfig()`
+2. ✅ **Sofort speichern:** Nach JEDER Daten-Änderung `saveConfiguration()` aufrufen
+3. ✅ **Defaults definieren:** `initializeDefaults()` wenn Config leer
+4. ✅ **Fehlerbehandlung:** Try-catch bei Config-Parsing
+5. ✅ **Logging:** Info bei Load/Save, Warning bei Fehlern
+6. ✅ **Validierung:** Prüfe Daten-Integrität beim Laden
+
+#### Häufige Fehler:
+
+❌ **Nur laden, nicht speichern:**
+```java
+// FALSCH: Daten gehen bei Neustart verloren!
+public void setData(String key, Data data) {
+    dataMap.put(key, data);  // Nur In-Memory
+    // Fehlt: saveConfiguration()
+}
+```
+
+❌ **Speichern ohne saveConfig():**
+```java
+// FALSCH: Config bleibt nur im RAM!
+public void saveConfiguration() {
+    dataManager.saveToConfig(getConfig());
+    // Fehlt: saveConfig() für Festplatte!
+}
+```
+
+❌ **Speichern nur bei onDisable():**
+```java
+// FALSCH: Bei Server-Crash gehen Daten verloren!
+@Override
+public void onDisable() {
+    saveConfiguration();  // Zu spät!
+}
+```
+
+✅ **Richtig:**
+```java
+// Speichere SOFORT nach jeder Änderung
+public void setData(String key, Data data) {
+    dataMap.put(key, data);
+    plugin.saveConfiguration();  // Sofort auf Festplatte!
+}
+```
+
+#### Beispiel-Implementierungen im Projekt:
+
+- **ItemBasePriceProvider** (Economy-Modul):
+  - `loadFromConfig()` - Zeile 82-129
+  - `saveToConfig()` - Zeile 347-372
+  - `EconomyModule.saveConfiguration()` - Zeile 243-251
+
+- **PlotStorageData** (Plots-Modul):
+  - Speichert Plot-Storage-Materialien persistent
+  - Integration mit Towny Plot-Data
+
+#### Config-Struktur-Empfehlung:
+
+```yaml
+# config.yml - Strukturiertes Format
+data-manager:
+  defaults:
+    some-value: 1.0
+
+  entries:
+    entry-1:
+      field1: "value1"
+      field2: 100
+      field3: true
+
+    entry-2:
+      field1: "value2"
+      field2: 200
+      field3: false
+```
+
 ---
 
 ## Development Workflow
@@ -503,7 +679,7 @@ Das Projekt folgt einem 20-Sprint-Fahrplan (40 Wochen):
 | **5-6** | **Items (MMOItems-Wrapper)** | 2 Wochen | ✅ | MMOItems 6.10+ Reflection-Integration + Test-UIs |
 | **7-8** | **UI-Modul** | 2 Wochen | ✅ | ConfirmationUI ✅, SimpleTradeUI ✅, UIButtonManager ✅ |
 | **9-10** | **Economy** | 2 Wochen | ✅ | CurrencyManager ✅, Basiswährung "Sterne" ✅, Vault-Integration ✅, Withdraw-Funktionalität ✅ |
-| **11-12** | **WorldAnchors** | 2 Wochen | 📋 | Schnellreisen, POIs, Wegpunkte |
+| **11-12** | **Plot-Slots & Botschafter** | 2 Wochen | 📋 | NPC-Slots auf Grundstücken, Botschafter-NPCs |
 | **13-14** | **NPCs** | 2 Wochen | 📋 | NPC-System mit UI, Denizen-Ersatz |
 | **15-16** | **Chat** | 2 Wochen | 📋 | Matrix-Bridge, globaler Chat |
 | **17-18** | **Auth** | 2 Wochen | 📋 | Keycloak-Integration, SSO |
@@ -647,6 +823,90 @@ EOF
 ---
 
 ## Code Conventions
+
+### ⚠️ Reflection vermeiden!
+
+**WICHTIG:** Reflection sollte **nur als letztes Mittel** verwendet werden. Bevorzuge stattdessen:
+
+#### Warum Reflection problematisch ist:
+- ❌ **Keine Compile-Time-Sicherheit:** Fehler werden erst zur Laufzeit erkannt
+- ❌ **Keine IDE-Unterstützung:** Kein Autocomplete, kein Refactoring
+- ❌ **Performance-Overhead:** Reflection ist langsamer als direkte Aufrufe
+- ❌ **Wartbarkeit:** Schwer zu verstehen und zu debuggen
+- ❌ **Versionsprobleme:** API-Änderungen führen zu Runtime-Errors
+
+#### Bessere Alternativen (in Prioritätsreihenfolge):
+
+1. **Provider-Pattern** (bevorzugt):
+   ```java
+   // ✅ RICHTIG: Provider-Interface im Core
+   public interface ItemProvider {
+       Optional<ItemStack> getSpecialItem(String id, int amount);
+   }
+
+   // Module registrieren Provider in ProviderRegistry
+   ProviderRegistry registry = core.getProviderRegistry();
+   ItemProvider itemProvider = registry.getItemProvider();
+   ItemStack coin = itemProvider.getSpecialItem("bronze_stern", 1);
+   ```
+
+2. **Direct Dependency** (wenn Module-Abhängigkeit akzeptabel):
+   ```java
+   // ✅ RICHTIG: Module als Dependency in pom.xml
+   <dependency>
+       <groupId>de.fallenstar</groupId>
+       <artifactId>module-items</artifactId>
+       <scope>provided</scope>
+   </dependency>
+
+   // Direkter Import und Nutzung
+   import de.fallenstar.items.manager.SpecialItemManager;
+   SpecialItemManager manager = ItemsModule.getSpecialItemManager();
+   ```
+
+3. **Service Registry Pattern**:
+   ```java
+   // ✅ RICHTIG: Zentrale Service-Registry
+   public class ServiceRegistry {
+       private static final Map<Class<?>, Object> services = new HashMap<>();
+
+       public static <T> void register(Class<T> serviceClass, T implementation) {
+           services.put(serviceClass, implementation);
+       }
+
+       public static <T> Optional<T> get(Class<T> serviceClass) {
+           return Optional.ofNullable((T) services.get(serviceClass));
+       }
+   }
+   ```
+
+4. **Reflection** (nur wenn unvermeidbar):
+   ```java
+   // ❌ NUR ALS LETZTES MITTEL!
+   // Beispiel: Zugriff auf Economy-Modul ohne Hard-Dependency
+   try {
+       var plugin = Bukkit.getPluginManager().getPlugin("FallenStar-Economy");
+       var method = plugin.getClass().getMethod("getPriceProvider");
+       var provider = method.invoke(plugin);
+       // ...
+   } catch (Exception e) {
+       // Graceful Degradation
+   }
+   ```
+
+#### Aktuelle Reflection-Nutzung (TODO: Refactoring):
+
+**Plots-Modul:**
+- `PriceSetListener.getCoinItem()` → Via Reflection auf Items-Modul
+  - **TODO:** ItemProvider-Methode `getSpecialItem()` hinzufügen
+- `PlotPriceCommand.loadPriceFromProvider()` → Via Reflection auf Economy-Modul
+  - **TODO:** EconomyProvider-Methode `getItemPrice()` hinzufügen
+- `PlotPriceCommand.savePriceToProvider()` → Via Reflection auf Economy-Modul
+  - **TODO:** EconomyProvider-Methode `setItemPrice()` hinzufügen
+
+**Ziel:** Alle Reflection-Calls durch Provider-Pattern ersetzen.
+
+---
 
 ### Java Style
 
@@ -972,8 +1232,8 @@ mvn clean package
 - `core/target/FallenStar-Core-1.0.jar`
 - `module-plots/target/FallenStar-Plots-1.0.jar`
 - `module-items/target/FallenStar-Items-1.0.jar`
+- `module-ui/target/FallenStar-UI-1.0.jar`
 - `module-economy/target/FallenStar-Economy-1.0.jar`
-- `module-worldanchors/target/FallenStar-WorldAnchors-1.0.jar`
 - `module-npcs/target/FallenStar-NPCs-1.0.jar`
 
 ### Implementing Missing Classes
@@ -1599,11 +1859,505 @@ registry.registerHandler("economy", new EconomyAdminHandler(currencyManager, pro
 
 ---
 
-**Last Updated:** 2025-11-16
+## Plot-System: Owner-Berechtigungen
+
+**Regel:** Grundstücks-Befehle erfordern Owner-Rechte!
+
+### Owner-Check Pattern
+
+Alle Plot-Verwaltungsbefehle müssen prüfen, ob der Spieler der Besitzer des Grundstücks ist:
+
+```java
+/**
+ * Prüft ob ein Spieler der Besitzer eines Plots ist.
+ *
+ * @param player Der Spieler
+ * @param plot Der Plot
+ * @return true wenn Besitzer
+ */
+private boolean isPlotOwner(Player player, Plot plot) {
+    PlotProvider plotProvider = providers.getPlotProvider();
+    try {
+        return plotProvider.isOwner(plot, player);
+    } catch (Exception e) {
+        // Bei Fehler: kein Zugriff
+        return false;
+    }
+}
+```
+
+### Berechtigungsmatrix
+
+#### Public Commands (ALLE Spieler):
+- `/plot info` - Plot-Informationen anzeigen
+- `/plot price list` - Preisliste anzeigen
+
+#### Owner-Only Commands (NUR Besitzer):
+- `/plot price set` - Preise festlegen
+- `/plot storage setreceiver` - Empfangskiste setzen
+- `/plot npc spawn` - NPCs spawnen
+- `/plot gui` - Verwaltungs-GUI öffnen (Owner-Ansicht)
+
+### Implementierungsbeispiel
+
+```java
+public boolean execute(Player player, String[] args) {
+    Plot plot = getCurrentPlot(player);
+
+    // Public Commands
+    if (subCommand.equals("list")) {
+        handleListPrices(player, plot);
+        return true;
+    }
+
+    // Owner-Check für alle anderen Befehle
+    if (!isPlotOwner(player, plot)) {
+        player.sendMessage("§cDu musst der Besitzer dieses Grundstücks sein!");
+        try {
+            String owner = plotProvider.getOwnerName(plot);
+            player.sendMessage("§7Besitzer: §e" + owner);
+        } catch (Exception e) {
+            // Ignoriere Fehler
+        }
+        return true;
+    }
+
+    // Owner-exklusive Befehle
+    switch (subCommand) {
+        case "set" -> handleSetPrice(player, plot);
+        // ...
+    }
+}
+```
+
+---
+
+## NPC-Modul: Geplante Features (Sprint 13-14)
+
+### NPC-Typen
+
+#### 1. Weltbankier NPC
+**Funktion:** Globale Bank ohne Limits
+- Sterne einzahlen → Vault-Guthaben
+- Sterne auszahlen ← Vault-Guthaben
+- **Kein Limit** für Transaktionen
+- Verfügbar auf speziellen Admin-Plots
+
+**Verwendung:**
+```
+/npc create weltbankier
+Rechtsklick auf NPC → Banking-UI öffnet sich
+```
+
+#### 2. Lokaler Bankier NPC
+**Funktion:** Bank mit eigenem Münzbestand
+- Gehört zu einer spezifischen Bank (Plot-gebunden)
+- Kann Sterne UND eigene Währung handeln
+- **Eigener Münzbestand** (kann zur Neige gehen!)
+- Verwendet Plot-Storage für Münzreserven
+
+**Features:**
+- Währungsumtausch (Sterne ↔ Lokale Währung)
+- Münzbestand einsehbar (Owner)
+- Automatische Nachfüllung via Plot-Storage
+
+**Verwendung:**
+```
+/plot npc spawn bankier
+/plot npc config bankier currency <währung>
+Rechtsklick → Banking-UI (zeigt Münzbestand)
+```
+
+#### 3. Botschafter NPC
+**Funktion:** Schnellreise-System
+- Teleportiert Spieler zu anderen Botschaftern
+- **Entgelt konfigurierbar** (Default: 100 Sterne)
+- Preis wird vom Plot-Besitzer festgelegt
+- Falls kein Plot → Standard-Config-Wert
+
+**Features:**
+- Liste aller verbundenen Botschafter
+- Teleportations-Kosten variabel
+- Integration mit Plot-Slots System (AMBASSADOR-Slots)
+
+**Verwendung:**
+```
+/plot npc spawn botschafter
+/plot npc price botschafter <preis>  # Default: 100 Sterne
+Rechtsklick → Botschafter-Liste UI
+```
+
+#### 4. Gildenhändler NPC
+**Funktion:** Automatischer Handelsgilde-Händler
+- Wird über Handelsgilde-Plot erstellt
+- Verkauft/Kauft zu Gilden-Preisen
+- **Nutzt Plot-Storage** des Handelsgilde-Grundstücks
+- Items aus Storage = verkaufbar
+
+**Features:**
+- Preise via `/plot price set` definiert
+- Automatisches Inventar (Plot-Storage)
+- Einnahmen → Plot-Storage
+- Ausgaben ← Plot-Storage
+
+**Verwendung:**
+```
+/plot npc spawn gildenhändler  # Nur auf Handelsgilde-Plots
+Rechtsklick → Handelsgilde-Shop UI (Preisliste)
+```
+
+#### 5. Spielerhändler NPC
+**Funktion:** Persönlicher Händler für Spieler
+- Spieler kauft Händler-Slot auf Grundstück
+- Spieler konfiguriert eigenen Shop
+- Nutzt eigenes Inventar (nicht Plot-Storage)
+
+**Features:**
+- Kauf via `/plot gui` → "Händler kaufen"
+- Slotten via `/plot slots` auf Grundstück
+- Eigene Preise festlegbar
+- Eigenes Inventar verwalten
+
+**Verwendung:**
+```
+/plot gui  # Auf Gilde-Grundstück
+→ "Händler kaufen" Button (kostet Sterne)
+/plot slots  # Zeigt freie Händler-Slots
+→ Händler auf Slot platzieren
+/npc config myhändler inventory  # Inventar verwalten
+```
+
+---
+
+## Plot-Slots System (Sprint 11-12)
+
+### Konzept
+
+**Slots sind Positionen auf Grundstücken, an denen NPCs platziert werden können.**
+
+Dies ermöglicht:
+- Feste NPC-Platzierung durch Grundstücksbesitzer
+- Dynamische NPC-Platzierung (fahrende Händler, Handwerker)
+- Slot-Verwaltung über UI
+- Verschiedene Slot-Typen für verschiedene NPC-Arten
+
+### Architektur
+
+#### PlotSlot-Klasse
+
+```java
+package de.fallenstar.plot.slot;
+
+public class PlotSlot {
+    private final UUID slotId;           // Eindeutige Slot-ID
+    private final Location location;     // Position des Slots
+    private final SlotType slotType;     // Typ des Slots
+    private UUID assignedNPC;            // Zugewiesener NPC (optional)
+    private boolean active;              // Aktiv-Status
+
+    public enum SlotType {
+        TRADER("Händler"),
+        BANKER("Bankier"),
+        AMBASSADOR("Botschafter"),
+        CRAFTSMAN("Handwerker"),
+        TRAVELING_MERCHANT("Fahrender Händler")
+    }
+
+    // Methoden: assignNPC(), removeNPC(), isOccupied()
+}
+```
+
+#### SlottedPlot-Interface
+
+```java
+package de.fallenstar.plot.slot;
+
+public interface SlottedPlot extends Plot {
+    // Slot-Verwaltung
+    List<PlotSlot> getActiveSlots();
+    List<PlotSlot> getAllSlots();
+    Optional<PlotSlot> getSlot(UUID slotId);
+    List<PlotSlot> getSlotsByType(PlotSlot.SlotType slotType);
+
+    // Slot-Operationen
+    boolean addSlot(PlotSlot slot);
+    boolean removeSlot(UUID slotId);
+
+    // Slot-Limits
+    int getMaxSlots();
+    int getUsedSlots();
+    int getFreeSlots();
+    boolean hasFreeSlots();
+}
+```
+
+#### SlottedPlotForMerchants-Interface
+
+```java
+package de.fallenstar.plot.slot;
+
+public interface SlottedPlotForMerchants extends SlottedPlot {
+    // Händler-Slots
+    int getTraderSlotAmount();
+    List<PlotSlot> getTraderSlots();
+    int getMaxTraderSlots();  // Default: 5
+
+    // Bankier-Slots
+    int getBankerSlotAmount();
+    List<PlotSlot> getBankerSlots();
+    int getMaxBankerSlots();  // Default: 2
+
+    // Handwerker-Slots
+    int getCraftsmanSlotAmount();
+    List<PlotSlot> getCraftsmanSlots();
+    int getMaxCraftsmanSlots();  // Default: 3
+}
+```
+
+### Slot-Typen
+
+| Slot-Typ | Verwendung | Max. Anzahl (Handelsgilde) |
+|----------|------------|----------------------------|
+| **TRADER** | Gildenhändler, Spielerhändler | 5 |
+| **BANKER** | Lokale Bankiers (eigene Münzbestände) | 2 |
+| **AMBASSADOR** | Botschafter-NPCs (Schnellreisen) | - |
+| **CRAFTSMAN** | Handwerks-NPCs (Rüstungsschmied, etc.) | 3 |
+| **TRAVELING_MERCHANT** | Fahrende Händler (selbstplatzierend) | - |
+
+### Commands (geplant)
+
+```bash
+# Slot erstellen (Owner)
+/plot slots create <typ>          # Erstellt Slot an aktueller Position
+
+# Slots anzeigen
+/plot slots list                  # Zeigt alle Slots + Status
+
+# NPC slotten
+/plot slots assign <slot-id> <npc-id>  # Weist NPC einem Slot zu
+
+# Slot entfernen
+/plot slots remove <slot-id>      # Entfernt Slot (nur wenn leer)
+
+# Slot aktivieren/deaktivieren
+/plot slots toggle <slot-id>      # Aktiviert/Deaktiviert Slot
+```
+
+### Use Cases
+
+#### 1. Feste NPC-Platzierung (Owner)
+```java
+// Besitzer erstellt Händler-Slot an Position
+PlotSlot slot = new PlotSlot(location, PlotSlot.SlotType.TRADER);
+merchantPlot.addSlot(slot);
+
+// Besitzer platziert NPC auf Slot
+slot.assignNPC(npcUuid);
+```
+
+#### 2. Dynamische NPC-Platzierung (Traveling Merchants)
+```java
+// Fahrender Händler sucht freien Slot
+SlottedPlotForMerchants plot = ...;
+List<PlotSlot> freeSlots = plot.getTraderSlots().stream()
+    .filter(slot -> !slot.isOccupied())
+    .toList();
+
+if (!freeSlots.isEmpty()) {
+    PlotSlot slot = freeSlots.get(0);
+    slot.assignNPC(travelingMerchantUuid);
+    // NPC teleportiert sich auf Slot-Position
+}
+```
+
+#### 3. Slot-Limits prüfen
+```java
+// Prüfe ob noch Händler-Slots verfügbar
+if (plot.getTraderSlotAmount() < plot.getMaxTraderSlots()) {
+    // Neuer Slot kann erstellt werden
+}
+```
+
+### Integration mit HandelsgildeUI
+
+```java
+// HandelsgildeUI zeigt Slots im Owner-View
+private void buildOwnerOptions() {
+    // Slot 20: Händler-Slots verwalten
+    ItemStack slotsButton = createButton(
+        Material.ARMOR_STAND,
+        "§6Händler-Slots",
+        "§7Slots: " + plot.getUsedSlots() + "/" + plot.getMaxSlots()
+    );
+
+    setItem(20, slotsButton, player -> {
+        // Öffne Slot-Management-UI
+        openSlotManagementUI(player, plot);
+    });
+}
+```
+
+### Persistierung
+
+Slots werden in der Plot-Config persistent gespeichert:
+
+```yaml
+# Plot-Config (Towny MetaData oder eigene Config)
+slots:
+  slot-1:
+    uuid: "abc-123-def-456"
+    type: TRADER
+    location:
+      world: "world"
+      x: 100.5
+      y: 64.0
+      z: 200.5
+      yaw: 0.0
+      pitch: 0.0
+    assigned-npc: "npc-uuid-789"
+    active: true
+
+  slot-2:
+    uuid: "xyz-789-uvw-012"
+    type: BANKER
+    location: ...
+    assigned-npc: null
+    active: true
+```
+
+---
+
+## UI-System: Guest vs. Owner Pattern
+
+**Regel:** Jedes UI hat zwei Ansichten - für Besucher und für Besitzer.
+
+### UI-Ansichten-Pattern
+
+```java
+public interface PlotUI {
+    /**
+     * Öffnet die Guest-Ansicht (read-only).
+     *
+     * @param player Der Spieler (Besucher)
+     * @param plot Der Plot
+     */
+    void openGuestView(Player player, Plot plot);
+
+    /**
+     * Öffnet die Owner-Ansicht (read-write).
+     *
+     * @param player Der Spieler (Besitzer)
+     * @param plot Der Plot
+     */
+    void openOwnerView(Player player, Plot plot);
+}
+```
+
+### Automatische Ansichtswahl
+
+```java
+public void openPlotUI(Player player, Plot plot) {
+    PlotProvider plotProvider = providers.getPlotProvider();
+
+    try {
+        if (plotProvider.isOwner(plot, player)) {
+            // Besitzer → Owner-Ansicht (Verwaltung)
+            ui.openOwnerView(player, plot);
+        } else {
+            // Gast → Guest-Ansicht (Nutzung)
+            ui.openGuestView(player, plot);
+        }
+    } catch (Exception e) {
+        // Fehler → Guest-Ansicht
+        ui.openGuestView(player, plot);
+    }
+}
+```
+
+### Beispiel: Handelsgilde-UI
+
+#### Guest-Ansicht (Besucher)
+```
+┌─────────────────────────────────┐
+│    Handelsgilde - Shop          │
+├─────────────────────────────────┤
+│ [Item 1] - 10 Sterne   [Kaufen] │
+│ [Item 2] - 25 Sterne   [Kaufen] │
+│ [Item 3] - 50 Sterne   [Kaufen] │
+│                                  │
+│ [Schließen]                      │
+└─────────────────────────────────┘
+```
+- **Read-Only:** Nur Preise sichtbar
+- **Aktion:** Kaufen (falls Guthaben vorhanden)
+
+#### Owner-Ansicht (Besitzer)
+```
+┌─────────────────────────────────┐
+│  Handelsgilde - Verwaltung      │
+├─────────────────────────────────┤
+│ [Item 1] - 10 ⭐ [Preis ändern]  │
+│ [Item 2] - 25 ⭐ [Preis ändern]  │
+│ [Item 3] - 50 ⭐ [Preis ändern]  │
+│                                  │
+│ [Händler verwalten]              │
+│ [Storage anzeigen]               │
+│ [Schließen]                      │
+└─────────────────────────────────┘
+```
+- **Read-Write:** Preise änderbar
+- **Extra-Features:** Händler-Verwaltung, Storage-Zugriff
+
+### UI-Implementierung
+
+```java
+public class HandelsgildeUI extends LargeChestUI {
+
+    public void openGuestView(Player player, Plot plot) {
+        setTitle("Handelsgilde - Shop");
+
+        // Zeige nur Verkaufs-Items
+        loadShopItems(plot);
+
+        // Kaufen-Buttons
+        addBuyButtons();
+
+        // Keine Verwaltungs-Optionen
+        open(player);
+    }
+
+    public void openOwnerView(Player player, Plot plot) {
+        setTitle("Handelsgilde - Verwaltung");
+
+        // Zeige Items + Preise
+        loadShopItems(plot);
+
+        // Preis-Ändern-Buttons
+        addPriceEditButtons();
+
+        // Verwaltungs-Optionen
+        addManagementButtons();
+
+        open(player);
+    }
+}
+```
+
+### Best Practices
+
+1. ✅ **Immer Owner-Check:** Vor `openOwnerView()` prüfen
+2. ✅ **Fallback zu Guest:** Bei Fehler → Guest-Ansicht
+3. ✅ **Unterschiedliche Items:** Owner sieht mehr Optionen
+4. ✅ **UI-Titel unterscheiden:** "Shop" vs. "Verwaltung"
+5. ✅ **Permissions:** Owner-Buttons nur für Besitzer anzeigen
+
+---
+
+**Last Updated:** 2025-11-17
 **Repository:** fs-core-sample-dump
-**Branch:** claude/ui-items-implementation-018dv6yDuyau5iAYBKeGSMHg
+**Branch:** claude/integrate-vault-economy-01BK4oPAgZ6Eutu9QZsJTv2h
 **Version:** 1.0-SNAPSHOT
-**Sprint Status:** Sprint 9-10 ✅ **ABGESCHLOSSEN** (Economy: CurrencyManager ✅, VaultEconomyProvider ✅, Withdraw ✅, Reflection eliminiert ✅, Plot Storage Integration ✅)
+**Sprint Status:** Sprint 9-10 ✅ **ABGESCHLOSSEN** (Economy: CurrencyManager ✅, VaultEconomyProvider ✅, Withdraw ✅, Reflection eliminiert ✅, Plot Storage Integration ✅, Owner-Checks ✅)
 **Architektur:** Command-Handler-Registry-Pattern (kein Reflection mehr!)
 **Build Status:** ✅ Alle Module kompilieren erfolgreich (Core, Plots, Items, UI, Economy)
 **Testbefehle:** `/fscore admin [gui/items/plots/economy]` - Handler-basierte Struktur aktiv

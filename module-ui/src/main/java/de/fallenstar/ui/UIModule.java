@@ -123,6 +123,7 @@ public class UIModule extends JavaPlugin implements Listener {
                 "Bestätigungs-Dialog (Ja/Nein)",
                 "Generisches Ja/Nein Confirmation UI mit UI-Buttons",
                 () -> ConfirmationUI.createSimple(
+                        this,
                         buttonManager,
                         "Möchtest du diese Aktion ausführen?",
                         player -> player.sendMessage(Component.text("✓ Bestätigt!", NamedTextColor.GREEN))

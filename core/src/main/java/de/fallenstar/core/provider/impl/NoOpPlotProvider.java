@@ -66,11 +66,21 @@ public class NoOpPlotProvider implements PlotProvider {
     }
     
     @Override
-    public boolean hasAdminRights(Player player, Plot plot) 
+    public boolean hasAdminRights(Player player, Plot plot)
             throws ProviderFunctionalityNotFoundException {
         throw new ProviderFunctionalityNotFoundException(
             PROVIDER_NAME,
             "hasAdminRights",
+            REASON
+        );
+    }
+
+    @Override
+    public boolean isOwner(Plot plot, Player player)
+            throws ProviderFunctionalityNotFoundException {
+        throw new ProviderFunctionalityNotFoundException(
+            PROVIDER_NAME,
+            "isOwner",
             REASON
         );
     }

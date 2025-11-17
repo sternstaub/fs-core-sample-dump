@@ -130,7 +130,7 @@ public class ItemsModule extends JavaPlugin implements Listener {
         if (mmoItemsAvailable && itemProvider != null) {
             // Erstelle Singleton-Listener-Instanzen für Event-Handling
             ItemBrowserUI browserListener = new ItemBrowserUI(itemProvider);
-            TestTradeUI tradeListener = new TestTradeUI(itemProvider, specialItemManager);
+            TestTradeUI tradeListener = new TestTradeUI(this, itemProvider, specialItemManager);
 
             // Registriere als Event-Listener
             getServer().getPluginManager().registerEvents(browserListener, this);
@@ -149,7 +149,7 @@ public class ItemsModule extends JavaPlugin implements Listener {
                     "items-trade-test",
                     "Trade Test UI (MMOItems)",
                     "Demo-Händler mit Custom-Items und Münz-System",
-                    () -> new TestTradeUI(itemProvider, specialItemManager)
+                    () -> new TestTradeUI(this, itemProvider, specialItemManager)
             );
 
             getLogger().info("✓ Test-UIs registered (items-browser, items-trade-test)");
@@ -163,19 +163,28 @@ public class ItemsModule extends JavaPlugin implements Listener {
      * Registriert die Basiswährung "Sterne" (Bronze/Silber/Gold).
      *
      * Diese Methode registriert die drei Tier-Items der Basis-Währung:
-     * - Bronzestern (1er Münze, Wert: 1)
-     * - Silberstern (10er Münze, Wert: 10)
-     * - Goldstern (100er Münze, Wert: 100)
+     * - Bronzestern (1er Münze, Wert: 1) - COPPER_NUGGET (Kupferklumpen)
+     * - Silberstern (10er Münze, Wert: 10) - IRON_NUGGET (Eisenklumpen)
+     * - Goldstern (100er Münze, Wert: 100) - GOLD_NUGGET (Goldklumpen)
      *
      * Diese werden später vom Economy-Modul als CurrencyItemSet verwendet.
      */
     private void registerBaseCurrency() {
         getLogger().info("Registriere Basiswährung 'Sterne'...");
 
-        // Bronzestern (1er Münze)
+        // Lade Materialien aus Config (mit Defaults)
+        String bronzeMaterialName = getConfig().getString("currency.bronze-tier-material", "COPPER_INGOT");
+        String silverMaterialName = getConfig().getString("currency.silver-tier-material", "IRON_INGOT");
+        String goldMaterialName = getConfig().getString("currency.gold-tier-material", "GOLD_INGOT");
+
+        Material bronzeMaterial = parseMaterial(bronzeMaterialName, Material.COPPER_INGOT);
+        Material silverMaterial = parseMaterial(silverMaterialName, Material.IRON_INGOT);
+        Material goldMaterial = parseMaterial(goldMaterialName, Material.GOLD_INGOT);
+
+        // Bronzestern (1er Münze) - Kupferbarren (default)
         specialItemManager.registerVanillaItem(
                 "bronze_stern",
-                Material.COPPER_INGOT,
+                bronzeMaterial,
                 1,  // Custom Model Data
                 net.kyori.adventure.text.Component.text("Bronzestern")
                         .color(net.kyori.adventure.text.format.NamedTextColor.GOLD)
@@ -187,10 +196,10 @@ public class ItemsModule extends JavaPlugin implements Listener {
                 )
         );
 
-        // Silberstern (10er Münze)
+        // Silberstern (10er Münze) - Eisenbarren (default)
         specialItemManager.registerVanillaItem(
                 "silver_stern",
-                Material.IRON_INGOT,
+                silverMaterial,
                 2,  // Custom Model Data
                 net.kyori.adventure.text.Component.text("Silberstern")
                         .color(net.kyori.adventure.text.format.NamedTextColor.AQUA)
@@ -202,10 +211,10 @@ public class ItemsModule extends JavaPlugin implements Listener {
                 )
         );
 
-        // Goldstern (100er Münze)
+        // Goldstern (100er Münze) - Goldbarren (default)
         specialItemManager.registerVanillaItem(
                 "gold_stern",
-                Material.GOLD_INGOT,
+                goldMaterial,
                 3,  // Custom Model Data
                 net.kyori.adventure.text.Component.text("Goldstern")
                         .color(net.kyori.adventure.text.format.NamedTextColor.YELLOW)
@@ -218,6 +227,25 @@ public class ItemsModule extends JavaPlugin implements Listener {
         );
 
         getLogger().info("✓ Basiswährung 'Sterne' registriert (bronze_stern, silver_stern, gold_stern)");
+        getLogger().info("  - Bronze: " + bronzeMaterial.name());
+        getLogger().info("  - Silber: " + silverMaterial.name());
+        getLogger().info("  - Gold: " + goldMaterial.name());
+    }
+
+    /**
+     * Parst ein Material aus einem String.
+     *
+     * @param materialName Material-Name
+     * @param fallback Fallback-Material
+     * @return Material
+     */
+    private Material parseMaterial(String materialName, Material fallback) {
+        try {
+            return Material.valueOf(materialName.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            getLogger().warning("Ungültiges Material in config.yml: " + materialName + " - verwende " + fallback.name());
+            return fallback;
+        }
     }
 
     @Override

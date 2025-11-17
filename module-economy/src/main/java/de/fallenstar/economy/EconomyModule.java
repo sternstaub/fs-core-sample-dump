@@ -7,6 +7,7 @@ import de.fallenstar.core.registry.ProviderRegistry;
 import de.fallenstar.economy.command.EconomyAdminHandler;
 import de.fallenstar.economy.manager.CurrencyManager;
 import de.fallenstar.economy.model.CurrencyItemSet;
+import de.fallenstar.economy.pricing.ItemBasePriceProvider;
 import de.fallenstar.economy.provider.VaultEconomyProvider;
 import de.fallenstar.items.manager.SpecialItemManager;
 import org.bukkit.event.EventHandler;
@@ -21,6 +22,7 @@ import org.bukkit.plugin.java.JavaPlugin;
  * - Münzsystem (Bronze/Silber/Gold)
  * - Wechselkurse und Preisberechnungen
  * - Vault-Integration
+ * - Item-Basispreise (für Handelsgilden)
  *
  * Abhängigkeiten:
  * - FallenStar-Core (ProviderRegistry)
@@ -28,18 +30,22 @@ import org.bukkit.plugin.java.JavaPlugin;
  * - Vault (Economy-API)
  *
  * @author FallenStar
- * @version 1.0
+ * @version 2.0
  */
 public class EconomyModule extends JavaPlugin implements Listener {
 
     private ProviderRegistry providers;
     private CurrencyManager currencyManager;
+    private ItemBasePriceProvider priceProvider;
     private SpecialItemManager itemManager;
     private VaultEconomyProvider economyProvider;
 
     @Override
     public void onEnable() {
         getLogger().info("FallenStar Economy Modul wird gestartet...");
+
+        // Config speichern (falls nicht vorhanden)
+        saveDefaultConfig();
 
         // Event-Listener registrieren
         getServer().getPluginManager().registerEvents(this, this);
@@ -82,8 +88,16 @@ public class EconomyModule extends JavaPlugin implements Listener {
 
         getLogger().info("✓ Economy-Modul erfolgreich initialisiert!");
         getLogger().info("  - Registrierte Währungen: " + currencyManager.getCurrencyCount());
-        getLogger().info("  - Economy Provider: " + (economyProvider.isAvailable() ?
-                economyProvider.getEconomyName() : "Nicht verfügbar"));
+
+        String economyProviderName = "Nicht verfügbar";
+        if (economyProvider.isAvailable()) {
+            try {
+                economyProviderName = economyProvider.getEconomyName();
+            } catch (Exception e) {
+                economyProviderName = "Fehler: " + e.getMessage();
+            }
+        }
+        getLogger().info("  - Economy Provider: " + economyProviderName);
     }
 
     /**
@@ -126,7 +140,13 @@ public class EconomyModule extends JavaPlugin implements Listener {
         // Initialisiere CurrencyManager
         this.currencyManager = new CurrencyManager(getLogger(), itemManager);
 
+        // Initialisiere ItemBasePriceProvider
+        this.priceProvider = new ItemBasePriceProvider(getLogger());
+        priceProvider.loadFromConfig(getConfig());
+
         getLogger().info("✓ Manager initialisiert");
+        getLogger().info("  - Item-Basispreise: " + priceProvider.getVanillaPriceCount() +
+                " Vanilla, " + priceProvider.getCustomPriceCount() + " Custom");
     }
 
     /**
@@ -140,7 +160,11 @@ public class EconomyModule extends JavaPlugin implements Listener {
         providers.setEconomyProvider(economyProvider);
 
         if (economyProvider.isAvailable()) {
-            getLogger().info("✓ VaultEconomyProvider registriert: " + economyProvider.getEconomyName());
+            try {
+                getLogger().info("✓ VaultEconomyProvider registriert: " + economyProvider.getEconomyName());
+            } catch (Exception e) {
+                getLogger().info("✓ VaultEconomyProvider registriert (Name nicht abrufbar)");
+            }
         } else {
             getLogger().warning("✗ VaultEconomyProvider nicht verfügbar (Vault-Plugin fehlt?)");
         }
@@ -194,11 +218,35 @@ public class EconomyModule extends JavaPlugin implements Listener {
     }
 
     /**
+     * Gibt den ItemBasePriceProvider zurück.
+     *
+     * @return ItemBasePriceProvider
+     */
+    public ItemBasePriceProvider getPriceProvider() {
+        return priceProvider;
+    }
+
+    /**
      * Gibt die ProviderRegistry zurück.
      *
      * @return ProviderRegistry
      */
     public ProviderRegistry getProviders() {
         return providers;
+    }
+
+    /**
+     * Speichert die Config zurück auf die Festplatte.
+     *
+     * Diese Methode wird nach Preis-Änderungen aufgerufen.
+     */
+    public void saveConfiguration() {
+        // Speichere Preise in Config
+        priceProvider.saveToConfig(getConfig());
+
+        // Schreibe Config auf Festplatte
+        saveConfig();
+
+        getLogger().fine("Config gespeichert");
     }
 }

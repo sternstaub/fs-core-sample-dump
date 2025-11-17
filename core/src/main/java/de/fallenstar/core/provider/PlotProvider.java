@@ -65,12 +65,23 @@ public interface PlotProvider {
     /**
      * Prüft ob ein Spieler Admin-Rechte auf einem Grundstück hat.
      * (Mayor, Assistant, etc.)
-     * 
+     *
      * @param player Der Spieler
      * @param plot Das Grundstück
      * @return true wenn Admin-Rechte vorhanden
      * @throws ProviderFunctionalityNotFoundException wenn Feature nicht verfügbar
      */
-    boolean hasAdminRights(Player player, Plot plot) 
+    boolean hasAdminRights(Player player, Plot plot)
+            throws ProviderFunctionalityNotFoundException;
+
+    /**
+     * Prüft ob ein Spieler der Besitzer eines Grundstücks ist.
+     *
+     * @param plot Das Grundstück
+     * @param player Der Spieler
+     * @return true wenn Spieler der Besitzer ist
+     * @throws ProviderFunctionalityNotFoundException wenn Feature nicht verfügbar
+     */
+    boolean isOwner(Plot plot, Player player)
             throws ProviderFunctionalityNotFoundException;
 }

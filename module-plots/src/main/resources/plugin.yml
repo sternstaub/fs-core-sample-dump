@@ -6,12 +6,8 @@ authors: [FallenStar]
 description: Plot management and NPC spawning system
 
 # Abhängigkeiten
-depend: [FallenStar-Core]
-softdepend: [Towny, Citizens]
+depend: [FallenStar-Core, Towny, FallenStar-UI]
+softdepend: [Citizens]
 
-# Commands
-commands:
-  plot:
-    description: Plot-Verwaltung
-    usage: /plot <info|storage|npc> [args]
-    aliases: [p]
+# Commands werden über Towny Command Addon API registriert
+# Kein eigener /plot Command - wir erweitern Townys /plot

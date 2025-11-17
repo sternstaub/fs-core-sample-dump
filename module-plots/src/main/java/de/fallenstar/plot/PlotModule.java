@@ -1,5 +1,7 @@
 package de.fallenstar.plot;
 
+import com.palmergames.bukkit.towny.TownyCommandAddonAPI;
+import com.palmergames.bukkit.towny.TownyCommandAddonAPI.CommandType;
 import com.palmergames.bukkit.towny.event.TownBlockTypeRegisterEvent;
 import com.palmergames.bukkit.towny.exceptions.TownyException;
 import com.palmergames.bukkit.towny.object.TownBlockData;
@@ -50,6 +52,7 @@ public class PlotModule extends JavaPlugin implements Listener {
 
     private PlotStorageProvider storageProvider;
     private StorageManager storageManager;
+    private de.fallenstar.plot.command.PlotCommand plotCommand;
 
     private boolean plotSystemEnabled = false;
     private boolean townSystemEnabled = false;
@@ -217,45 +220,87 @@ public class PlotModule extends JavaPlugin implements Listener {
         registerCommands();
         registerAdminCommands();
 
+        // Registriere Listener
+        registerListeners();
+
         // Initialer Status-Log
         getLogger().info("=== Plot Module Initialized ===");
         getLogger().info("  Plot-System: " + (plotSystemEnabled ? "enabled" : "disabled"));
         getLogger().info("  Town-System: " + (townSystemEnabled ? "enabled" : "disabled"));
         getLogger().info("  NPC-System: " + (npcSystemEnabled ? "enabled" : "disabled"));
         getLogger().info("  Storage-System: " + (storageSystemEnabled ? "enabled" : "disabled"));
-        getLogger().info("  Commands: /plot info, /plot storage, /plot npc");
+        getLogger().info("  Commands: /plot info, /plot storage, /plot npc, /plot gui, /plot price");
     }
 
     /**
-     * Registriert den Custom-Plot-Typ "botschaft" in Towny.
+     * Registriert alle Listener.
+     */
+    private void registerListeners() {
+        // Registriere PriceSetListener (für Handelsgilde-Preisverwaltung)
+        if (plotCommand != null) {
+            de.fallenstar.plot.listener.PriceSetListener priceSetListener =
+                new de.fallenstar.plot.listener.PriceSetListener(
+                    getLogger(),
+                    providers,
+                    plotCommand.getPriceCommand()
+                );
+
+            getServer().getPluginManager().registerEvents(priceSetListener, this);
+            getLogger().info("✓ PriceSetListener registriert");
+        } else {
+            getLogger().warning("✗ PlotCommand nicht verfügbar - PriceSetListener konnte nicht registriert werden");
+        }
+    }
+
+    /**
+     * Registriert Custom-Plot-Typen ("botschaft", "handelsgilde") in Towny.
      *
      * Diese Methode wird in onLoad() aufgerufen und auch bei Towny-Reloads
      * via TownBlockTypeRegisterEvent.
      */
     private void registerCustomPlotType() {
-        // Prüfe ob der Typ bereits existiert
-        if (TownBlockTypeHandler.exists("botschaft")) {
-            return;
+        // Registriere "botschaft"
+        if (!TownBlockTypeHandler.exists("botschaft")) {
+            TownBlockType botschaftType = new TownBlockType("botschaft", new TownBlockData() {
+                @Override
+                public String getMapKey() {
+                    return "B"; // 'B' für Botschaft auf der Map
+                }
+
+                @Override
+                public double getCost() {
+                    return 150.0; // Kosten zum Setzen des Plot-Typs (etwas teurer als Embassy)
+                }
+            });
+
+            try {
+                TownBlockTypeHandler.registerType(botschaftType);
+                getLogger().info("✓ Custom-Plot-Typ 'botschaft' in Towny registriert");
+            } catch (TownyException e) {
+                getLogger().severe("✗ Fehler beim Registrieren von 'botschaft': " + e.getMessage());
+            }
         }
 
-        // Erstelle TownBlockType mit Custom TownBlockData
-        TownBlockType botschaftType = new TownBlockType("botschaft", new TownBlockData() {
-            @Override
-            public String getMapKey() {
-                return "B"; // 'B' für Botschaft auf der Map
-            }
+        // Registriere "handelsgilde"
+        if (!TownBlockTypeHandler.exists("handelsgilde")) {
+            TownBlockType handelsgildeType = new TownBlockType("handelsgilde", new TownBlockData() {
+                @Override
+                public String getMapKey() {
+                    return "H"; // 'H' für Handelsgilde auf der Map
+                }
 
-            @Override
-            public double getCost() {
-                return 150.0; // Kosten zum Setzen des Plot-Typs (etwas teurer als Embassy)
-            }
-        });
+                @Override
+                public double getCost() {
+                    return 200.0; // Kosten zum Setzen (höher als Botschaft wegen Economy-Features)
+                }
+            });
 
-        try {
-            TownBlockTypeHandler.registerType(botschaftType);
-            getLogger().info("✓ Custom-Plot-Typ 'botschaft' in Towny registriert");
-        } catch (TownyException e) {
-            getLogger().severe("✗ Fehler beim Registrieren von 'botschaft': " + e.getMessage());
+            try {
+                TownBlockTypeHandler.registerType(handelsgildeType);
+                getLogger().info("✓ Custom-Plot-Typ 'handelsgilde' in Towny registriert");
+            } catch (TownyException e) {
+                getLogger().severe("✗ Fehler beim Registrieren von 'handelsgilde': " + e.getMessage());
+            }
         }
     }
 
@@ -269,10 +314,17 @@ public class PlotModule extends JavaPlugin implements Listener {
     }
 
     /**
-     * Registriert alle Commands.
+     * Registriert alle Commands über Towny Command Addon API.
+     *
+     * Unsere Commands werden als Subcommands zu Townys /plot hinzugefügt:
+     * - /plot info - Plot-Informationen
+     * - /plot gui - Plot-GUI (typ-abhängig)
+     * - /plot price - Preisverwaltung (Handelsgilde)
+     * - /plot storage - Storage-Verwaltung
+     * - /plot npc - NPC-Verwaltung
      */
     private void registerCommands() {
-        PlotCommand plotCommand = new PlotCommand(
+        this.plotCommand = new de.fallenstar.plot.command.PlotCommand(
             this,
             providers,
             plotTypeRegistry,
@@ -284,10 +336,61 @@ public class PlotModule extends JavaPlugin implements Listener {
             storageManager
         );
 
-        getCommand("plot").setExecutor(plotCommand);
-        getCommand("plot").setTabCompleter(plotCommand);
+        // Registriere Subcommands über Towny API
+        // Jeder Command erhält einen eigenen Wrapper
+        try {
+            // /plot info
+            TownyCommandAddonAPI.addSubCommand(CommandType.PLOT, "info", (sender, cmd, label, args) -> {
+                String[] newArgs = new String[args.length + 1];
+                newArgs[0] = "info";
+                System.arraycopy(args, 0, newArgs, 1, args.length);
+                return plotCommand.onCommand(sender, cmd, "plot", newArgs);
+            });
 
-        getLogger().info("✓ Commands registriert");
+            // /plot gui
+            TownyCommandAddonAPI.addSubCommand(CommandType.PLOT, "gui", (sender, cmd, label, args) -> {
+                String[] newArgs = new String[args.length + 1];
+                newArgs[0] = "gui";
+                System.arraycopy(args, 0, newArgs, 1, args.length);
+                return plotCommand.onCommand(sender, cmd, "plot", newArgs);
+            });
+
+            // /plot price
+            TownyCommandAddonAPI.addSubCommand(CommandType.PLOT, "price", (sender, cmd, label, args) -> {
+                String[] newArgs = new String[args.length + 1];
+                newArgs[0] = "price";
+                System.arraycopy(args, 0, newArgs, 1, args.length);
+                return plotCommand.onCommand(sender, cmd, "plot", newArgs);
+            });
+
+            // /plot storage (optional)
+            if (storageSystemEnabled) {
+                TownyCommandAddonAPI.addSubCommand(CommandType.PLOT, "storage", (sender, cmd, label, args) -> {
+                    String[] newArgs = new String[args.length + 1];
+                    newArgs[0] = "storage";
+                    System.arraycopy(args, 0, newArgs, 1, args.length);
+                    return plotCommand.onCommand(sender, cmd, "plot", newArgs);
+                });
+            }
+
+            // /plot npc (optional)
+            if (npcSystemEnabled) {
+                TownyCommandAddonAPI.addSubCommand(CommandType.PLOT, "npc", (sender, cmd, label, args) -> {
+                    String[] newArgs = new String[args.length + 1];
+                    newArgs[0] = "npc";
+                    System.arraycopy(args, 0, newArgs, 1, args.length);
+                    return plotCommand.onCommand(sender, cmd, "plot", newArgs);
+                });
+            }
+
+            getLogger().info("✓ Commands über Towny API registriert");
+            getLogger().info("  Verfügbar: /plot info, /plot gui, /plot price" +
+                (storageSystemEnabled ? ", /plot storage" : "") +
+                (npcSystemEnabled ? ", /plot npc" : ""));
+        } catch (Exception e) {
+            getLogger().severe("Fehler beim Registrieren der Towny-Commands: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     /**
