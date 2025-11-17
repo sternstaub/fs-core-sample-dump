@@ -14,9 +14,11 @@ cat REPOSITORY_INDEX.md
 mvn clean package
 
 # Testbefehle im Spiel
-/fscore admin gui list       # Zeigt alle Test-UIs
-/fscore admin gui confirm    # Ja/Nein Dialog
-/fscore admin gui trade      # Trading Demo
+/fscore admin gui list                          # Zeigt alle Test-UIs
+/fscore admin gui confirm                       # Ja/Nein Dialog
+/fscore admin economy getcoin sterne bronze 10  # 10 Bronzesterne holen
+/plot price set                                 # Preis festlegen (Owner)
+/plot gui                                       # Plot-Verwaltung (Owner/Guest)
 ```
 
 ---
@@ -37,12 +39,11 @@ mvn clean package
 | Modul | Status | Beschreibung |
 |-------|--------|--------------|
 | [Core](core/) | ✅ Abgeschlossen | Provider-Interfaces, NoOp-Implementierungen, UI-Framework |
-| [FallenStar Plots](module-plots/) | ✅ Abgeschlossen | Plot-System + Storage + TownyPlotProvider |
+| [FallenStar Plots](module-plots/) | ✅ Abgeschlossen | Plot-System + Storage + Slot-System + TownyPlotProvider |
 | [FallenStar Items](module-items/) | ✅ Abgeschlossen | Vanilla Currency Items + Optional MMOItems |
 | [FallenStar UI](module-ui/) | ✅ Abgeschlossen | ConfirmationUI, SimpleTradeUI, UIButtonManager |
-| [FallenStar Economy](module-economy/) | 📋 Geplant | Weltwirtschaft + VaultEconomyProvider |
-| [FallenStar WorldAnchors](module-worldanchors/) | 📋 Geplant | Schnellreisen, POIs, Wegpunkte |
-| [FallenStar NPCs](module-npcs/) | 📋 Geplant | NPC-System + CitizensNPCProvider |
+| [FallenStar Economy](module-economy/) | ✅ Abgeschlossen | Weltwirtschaft + VaultEconomyProvider + Währungssystem |
+| [FallenStar NPCs](module-npcs/) | 📋 Geplant | NPC-System + CitizensNPCProvider + Botschafter-NPCs |
 
 ---
 
@@ -70,7 +71,22 @@ mvn clean package
 - ✅ BaseUI Abstraktionsklassen
 - ✅ SmallChestUI, LargeChestUI, SignUI, AnvilUI, BookUI
 - ✅ UIRegistry für zentrale UI-Verwaltung
+- ✅ Guest/Owner View Pattern für Plot-UIs
 - ✅ Testbefehle: `/fscore admin gui <ui-id>`
+
+**Economy-System:**
+- ✅ Währungssystem (Basiswährung "Sterne")
+- ✅ VaultEconomyProvider mit Withdraw-Funktionalität
+- ✅ ItemBasePriceProvider (Vanilla + Custom Items)
+- ✅ Data Persistence (Preise überleben Server-Neustarts)
+- ✅ Multi-Currency Support (Wechselkurse)
+
+**Plot-Slots System:**
+- ✅ NPC-Slot-Objekte mit SlotType (TRADER, BANKER, CRAFTSMAN, etc.)
+- ✅ SlottedPlot Interface für slottable Grundstücke
+- ✅ SlottedPlotForMerchants mit Händler-spezifischen Limits
+- ✅ Slot-Verwaltung (addSlot, removeSlot, assignNPC)
+- ✅ Slot-Status-Tracking (occupied, active, assigned NPC)
 
 **KI-optimierte Entwicklung:**
 - ✅ Sprint-basierte Planung (20 Sprints)
@@ -101,25 +117,30 @@ mvn clean package
 
 **Phase:** 🚀 Aktive Entwicklung
 **Version:** 1.0-SNAPSHOT
-**Sprint:** 7-8 (UI-Modul) - ✅ Abgeschlossen
+**Sprint:** 9-10 (Economy-Modul) - ✅ Abgeschlossen
 
 **Fertiggestellt:**
 - ✅ Architektur-Design & Provider-System
 - ✅ Core-Plugin (Interfaces + NoOp + UI-Framework)
-- ✅ FallenStar Plots (Sprint 3-4 - Plot-System + Storage)
+- ✅ FallenStar Plots (Sprint 3-4 - Plot-System + Storage + Slot-System)
 - ✅ FallenStar Items (Sprint 5-6 - Vanilla Coins + MMOItems)
 - ✅ FallenStar UI (Sprint 7-8 - ConfirmationUI + SimpleTradeUI)
-- ✅ Testbefehl-Struktur (`/fscore admin [gui/items/plots]`)
+- ✅ FallenStar Economy (Sprint 9-10 - Weltwirtschaft + Vault + Währungssystem)
+- ✅ Testbefehl-Struktur (`/fscore admin [gui/items/plots/economy]`)
 
 **Nächster Sprint:**
-- 📋 FallenStar Economy (Sprint 9-10 - Weltwirtschaft + Vault)
+- 📋 FallenStar NPCs (Sprint 13-14 - NPC-System + Botschafter + Citizens)
+- 📋 Plot-Slots Integration (Sprint 11-12 - Slot-Manager + Commands)
 
 **Wichtige Architektur-Änderungen:**
 - ✅ Storage-Modul in Plots-Modul integriert
+- ✅ WorldAnchors-Modul entfernt → Plot-Slots System
 - ✅ MMOItems ist jetzt OPTIONAL (Graceful Degradation)
 - ✅ Vanilla Currency Items unabhängig von MMOItems
 - ✅ UI-Framework mit Test-UI-System
-- ✅ Admin-Command-Struktur für Modul-Tests
+- ✅ Admin-Command-Handler-Registry (kein Reflection mehr!)
+- ✅ VaultEconomyProvider mit Withdraw-Funktionalität
+- ✅ Data Persistence Pattern (loadFromConfig/saveToConfig)
 
 ---
 
@@ -132,16 +153,26 @@ mvn clean package
 /fscore admin gui trade       # Öffnet Simple Trade UI (Vanilla Demo)
 ```
 
+**Economy-Tests:**
+```bash
+/fscore admin economy getcoin <währung> [tier] [anzahl]    # Kostenlose Münzen
+/fscore admin economy withdraw <währung> [tier] [anzahl]   # Vault-basierte Auszahlung
+# Beispiele:
+#   /fscore admin economy getcoin sterne bronze 10
+#   /fscore admin economy withdraw sterne silver 5
+```
+
+**Plot-Tests:**
+```bash
+/plot price set              # Preis für Item festlegen (Owner)
+/plot price list             # Alle Preise anzeigen (Public)
+/plot gui                    # Öffnet Plot-Verwaltungs-UI (Owner/Guest View)
+```
+
 **Item-Tests:** (Placeholder)
 ```bash
 /fscore admin items list      # Zeigt alle Items
 /fscore admin items browse    # Item-Browser (nur mit MMOItems)
-```
-
-**Plot-Tests:** (Placeholder)
-```bash
-/fscore admin plots info      # Plot-Info am Standort
-/fscore admin plots storage view  # Zeigt Storage-Materialien
 ```
 
 ---
@@ -161,6 +192,43 @@ boolean isCurrency = manager.isCurrencyItem(itemStack);
 int value = manager.getCurrencyValue(itemStack); // Berechnet Gesamtwert
 ```
 
+### Economy-System
+```java
+// Währungen registrieren
+CurrencyItemSet sterne = CurrencyItemSet.createBaseCurrency();
+currencyManager.registerCurrency(sterne);
+
+// Münzen auszahlen (kostenlos)
+currencyManager.payoutCoins(player, "sterne", CurrencyTier.BRONZE, 10);
+
+// Vault-basierter Withdraw
+BigDecimal withdrawn = currencyManager.withdrawCoins(player, "sterne", CurrencyTier.SILVER, 5);
+// Zieht 50 Sterne vom Vault-Konto ab und gibt 5 Silbersterne
+
+// Item-Preise verwalten
+priceProvider.registerVanillaPrice(Material.DIAMOND, BigDecimal.valueOf(100));
+BigDecimal price = priceProvider.getVanillaPriceOrDefault(Material.DIAMOND);
+```
+
+### Plot-Slots System
+```java
+// NPC-Slots auf Grundstücken
+PlotSlot slot = new PlotSlot(location, PlotSlot.SlotType.TRADER);
+merchantPlot.addSlot(slot);
+
+// NPC auf Slot platzieren
+slot.assignNPC(npcUuid);
+
+// Slot-Status prüfen
+if (slot.isOccupied()) {
+    UUID npcId = slot.getAssignedNPC().orElse(null);
+}
+
+// Slot-Limits prüfen
+int freeSlots = merchantPlot.getFreeSlots();
+int maxTraders = merchantPlot.getMaxTraderSlots(); // Default: 5
+```
+
 ### UI-System
 ```java
 // ConfirmationUI - Generisches Ja/Nein Dialog
@@ -171,8 +239,9 @@ ConfirmationUI ui = ConfirmationUI.createSimple(
 );
 ui.open(player);
 
-// Automatische Registrierung in UIRegistry
-uiRegistry.registerUI("my-ui", "Display Name", "Description", () -> new MyUI());
+// Guest/Owner View Pattern
+HandelsgildeUI ui = new HandelsgildeUI(providers, priceCommand, plot, isOwner);
+ui.open(player); // Zeigt unterschiedliche Ansicht basierend auf Besitzrechten
 ```
 
 ### Graceful Degradation
@@ -182,6 +251,13 @@ if (mmoItemsAvailable) {
     // Full Mode: Custom Items + Vanilla Coins
 } else {
     // Vanilla Mode: Nur Coins (kein Crash!)
+}
+
+// Economy-Modul läuft MIT und OHNE Vault
+if (economyProvider.isAvailable()) {
+    // Vault-basierte Transaktionen
+} else {
+    // Nur Item-basierte Wirtschaft
 }
 ```
 
