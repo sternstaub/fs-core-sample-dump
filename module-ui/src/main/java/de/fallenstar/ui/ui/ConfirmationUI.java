@@ -47,7 +47,7 @@ public class ConfirmationUI extends SmallChestUI {
      */
     public ConfirmationUI(Plugin plugin, UIButtonManager buttonManager, String title, String message,
                           Consumer<Player> onConfirm, Consumer<Player> onCancel) {
-        super(plugin, title);
+        super(title);
         this.buttonManager = buttonManager;
         this.message = message;
         this.onConfirm = onConfirm;

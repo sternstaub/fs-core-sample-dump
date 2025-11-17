@@ -3,6 +3,7 @@ package de.fallenstar.core.ui;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.Plugin;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,6 +16,7 @@ import java.util.function.Consumer;
  * - Click-Handler mit ProviderFunction-Integration
  * - Item-Button-Verwaltung
  * - Spieler-spezifische UI-Instanzen
+ * - Event-Registrierung (für Listener-Subklassen)
  *
  * Implementierungen:
  * - SmallChestUI (27 Slots, 3 Zeilen)
@@ -33,6 +35,12 @@ public abstract class BaseUI {
     protected final Map<Integer, Consumer<Player>> clickHandlers;
 
     /**
+     * Statisches Plugin-Feld für Event-Registrierung.
+     * Wird von FallenStarCore beim Start gesetzt.
+     */
+    private static Plugin pluginInstance;
+
+    /**
      * Konstruktor für BaseUI.
      *
      * @param title Titel des UI
@@ -41,6 +49,26 @@ public abstract class BaseUI {
         this.title = title;
         this.items = new HashMap<>();
         this.clickHandlers = new HashMap<>();
+    }
+
+    /**
+     * Setzt die Plugin-Instanz für alle UIs.
+     *
+     * MUSS von FallenStarCore beim Start aufgerufen werden!
+     *
+     * @param plugin Die Plugin-Instanz
+     */
+    public static void setPlugin(Plugin plugin) {
+        pluginInstance = plugin;
+    }
+
+    /**
+     * Gibt die Plugin-Instanz zurück.
+     *
+     * @return Die Plugin-Instanz oder null wenn nicht gesetzt
+     */
+    protected static Plugin getPlugin() {
+        return pluginInstance;
     }
 
     /**

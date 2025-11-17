@@ -23,6 +23,7 @@ import java.util.Set;
  * - /fscore admin items - Item-Modul Testbefehle
  * - /fscore admin plots - Plot-Modul Testbefehle
  * - /fscore admin economy - Economy-Modul Testbefehle
+ * - /fscore admin npcs - NPC-Roadmap (Sprint 13-14)
  *
  * Erfordert Permission: fallenstar.core.admin
  *
@@ -78,6 +79,7 @@ public class AdminCommand {
             case "items" -> handleItemsCommand(sender, Arrays.copyOfRange(args, 1, args.length));
             case "plots" -> handlePlotsCommand(sender, Arrays.copyOfRange(args, 1, args.length));
             case "economy" -> handleEconomyCommand(sender, Arrays.copyOfRange(args, 1, args.length));
+            case "npcs" -> handleNpcsCommand(sender, Arrays.copyOfRange(args, 1, args.length));
             default -> {
                 sender.sendMessage(Component.text("Unbekannter Admin-Befehl: " + subCommand, NamedTextColor.RED));
                 sendAdminHelp(sender);
@@ -265,6 +267,72 @@ public class AdminCommand {
     }
 
     /**
+     * Behandelt /fscore admin npcs Subcommands.
+     *
+     * Zeigt geplante NPC-Features (Roadmap für Sprint 13-14).
+     *
+     * @param sender Command-Sender
+     * @param args Argumente (ohne "npcs")
+     */
+    private void handleNpcsCommand(CommandSender sender, String[] args) {
+        sender.sendMessage(Component.text("╔═══════════════════════════════════════╗", NamedTextColor.GOLD));
+        sender.sendMessage(Component.text("║  NPC-Modul Testbefehle              ║", NamedTextColor.GOLD));
+        sender.sendMessage(Component.text("╚═══════════════════════════════════════╝", NamedTextColor.GOLD));
+        sender.sendMessage(Component.empty());
+        sender.sendMessage(Component.text("⚠ NPC-System noch nicht implementiert!", NamedTextColor.YELLOW, TextDecoration.BOLD));
+        sender.sendMessage(Component.text("Geplant für Sprint 13-14 (NPCs-Modul)", NamedTextColor.GRAY));
+        sender.sendMessage(Component.empty());
+        sender.sendMessage(Component.text("Geplante Features:", NamedTextColor.WHITE, TextDecoration.BOLD));
+        sender.sendMessage(Component.empty());
+
+        // Weltbankier NPC
+        sender.sendMessage(Component.text("  📋 Weltbankier NPC", NamedTextColor.AQUA, TextDecoration.BOLD));
+        sender.sendMessage(Component.text("    - Globale Bank ohne Limits", NamedTextColor.GRAY));
+        sender.sendMessage(Component.text("    - Sterne ↔ Vault-Guthaben umwandeln", NamedTextColor.GRAY));
+        sender.sendMessage(Component.text("    - Verfügbar auf Admin-Plots", NamedTextColor.GRAY));
+        sender.sendMessage(Component.empty());
+
+        // Lokaler Bankier NPC
+        sender.sendMessage(Component.text("  📋 Lokaler Bankier NPC", NamedTextColor.AQUA, TextDecoration.BOLD));
+        sender.sendMessage(Component.text("    - Bank mit eigenem Münzbestand", NamedTextColor.GRAY));
+        sender.sendMessage(Component.text("    - Währungsumtausch (Sterne ↔ Lokal)", NamedTextColor.GRAY));
+        sender.sendMessage(Component.text("    - Plot-gebunden, kann leer werden", NamedTextColor.GRAY));
+        sender.sendMessage(Component.empty());
+
+        // Botschafter NPC
+        sender.sendMessage(Component.text("  📋 Botschafter NPC", NamedTextColor.AQUA, TextDecoration.BOLD));
+        sender.sendMessage(Component.text("    - Schnellreise-System zwischen Botschaften", NamedTextColor.GRAY));
+        sender.sendMessage(Component.text("    - Konfigurierbare Teleportationskosten", NamedTextColor.GRAY));
+        sender.sendMessage(Component.text("    - Integration mit Plot-Slots", NamedTextColor.GRAY));
+        sender.sendMessage(Component.empty());
+
+        // Gildenhändler NPC
+        sender.sendMessage(Component.text("  📋 Gildenhändler NPC", NamedTextColor.AQUA, TextDecoration.BOLD));
+        sender.sendMessage(Component.text("    - Automatischer Handelsgilde-Shop", NamedTextColor.GRAY));
+        sender.sendMessage(Component.text("    - Nutzt Plot-Storage als Inventar", NamedTextColor.GRAY));
+        sender.sendMessage(Component.text("    - Preise via /plot price set", NamedTextColor.GRAY));
+        sender.sendMessage(Component.empty());
+
+        // Spielerhändler NPC
+        sender.sendMessage(Component.text("  📋 Spielerhändler NPC", NamedTextColor.AQUA, TextDecoration.BOLD));
+        sender.sendMessage(Component.text("    - Persönlicher Händler für Spieler", NamedTextColor.GRAY));
+        sender.sendMessage(Component.text("    - Eigenes virtuelles Inventar", NamedTextColor.GRAY));
+        sender.sendMessage(Component.text("    - Kaufbar via /plot gui", NamedTextColor.GRAY));
+        sender.sendMessage(Component.empty());
+
+        // NPC-Reisesystem
+        sender.sendMessage(Component.text("  📋 NPC-Reisesystem", NamedTextColor.AQUA, TextDecoration.BOLD));
+        sender.sendMessage(Component.text("    - NPCs reisen zwischen Grundstücken", NamedTextColor.GRAY));
+        sender.sendMessage(Component.text("    - Verzögerung: 10s pro Chunk-Entfernung", NamedTextColor.GRAY));
+        sender.sendMessage(Component.text("    - Kosten: 5 Sterne pro Chunk", NamedTextColor.GRAY));
+        sender.sendMessage(Component.text("    - Restart-Safe (direkt ans Ziel bei Neustart)", NamedTextColor.GRAY));
+        sender.sendMessage(Component.empty());
+
+        sender.sendMessage(Component.text("Status: Infrastruktur vorhanden, NPCs folgen in Sprint 13-14", NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("Benötigt: Citizens-Plugin für NPC-Spawning", NamedTextColor.GRAY));
+    }
+
+    /**
      * Zeigt Admin-Hilfe.
      *
      * @param sender Command-Sender
@@ -283,6 +351,8 @@ public class AdminCommand {
                 .append(Component.text(" - Plot-Testbefehle", NamedTextColor.GRAY)));
         sender.sendMessage(Component.text("  /fscore admin economy", NamedTextColor.GOLD)
                 .append(Component.text(" - Economy-Testbefehle", NamedTextColor.GRAY)));
+        sender.sendMessage(Component.text("  /fscore admin npcs", NamedTextColor.GOLD)
+                .append(Component.text(" - NPC-Roadmap (Sprint 13-14)", NamedTextColor.GRAY)));
         sender.sendMessage(Component.empty());
         sender.sendMessage(Component.text("Verwende ", NamedTextColor.GRAY)
                 .append(Component.text("/fscore admin <kategorie>", NamedTextColor.YELLOW))
@@ -300,7 +370,7 @@ public class AdminCommand {
 
         if (args.length == 1) {
             // /fscore admin <?>
-            List<String> subCommands = Arrays.asList("gui", "items", "plots", "economy");
+            List<String> subCommands = Arrays.asList("gui", "items", "plots", "economy", "npcs");
             for (String sub : subCommands) {
                 if (sub.startsWith(args[0].toLowerCase())) {
                     completions.add(sub);

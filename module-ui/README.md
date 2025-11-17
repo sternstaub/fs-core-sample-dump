@@ -9,6 +9,7 @@
 Das UI-Modul implementiert konkrete UI-Klassen basierend auf dem Core UI-Framework. Es stellt wiederverwendbare UIs bereit, die von anderen Modulen genutzt werden können.
 
 **Sprint 7-8** - ✅ Abgeschlossen
+**Sprint 11-12** - ✅ TradeUI hinzugefügt
 
 ---
 
@@ -58,6 +59,39 @@ ui.open(player);
 5. 64 Weizen + 32 Karotten → 16 Goldene Karotten
 6. 16 Smaragde → Elytra
 
+### 3. TradeUI (Sprint 11-12)
+**Dynamisches Trading-Interface für TradingEntities**
+
+- Nutzt Vanilla Merchant Interface
+- Dynamische TradeSets von TradingEntity
+- Reflection-basierter TradeSet-Zugriff (Economy-Modul)
+- Inventar-Validierung gegen TradingEntity.getTradeInventory()
+
+**Features:**
+- Universell für alle TradingEntity-Typen
+- Automatische MerchantRecipe-Konvertierung
+- Ankauf/Verkauf-Logik aus TradeSet
+- Max-Uses Unterstützung
+
+**Verwendung:**
+```java
+// Öffne Trading-UI für beliebige TradingEntity
+TradingEntity trader = getGuildTrader();  // Gildenhändler
+TradeUI.openTradeUI(player, trader);
+
+// Funktioniert mit allen Typen:
+// - GUILD_TRADER (Gildenhändler)
+// - PLAYER_TRADER (Spielerhändler)
+// - TRAVELING_MERCHANT (Fahrender Händler)
+// - WORLD_BANKER (Weltbankier)
+```
+
+**Unterstützte TradingEntity-Typen:**
+1. **GUILD_TRADER** - Gildenhändler (nutzt Plot-Storage)
+2. **PLAYER_TRADER** - Spielerhändler (nutzt virtuelles Inventar)
+3. **TRAVELING_MERCHANT** - Fahrender Händler (eigenes Inventar)
+4. **WORLD_BANKER** - Weltbankier (unbegrenztes Inventar)
+
 ---
 
 ## 🛠️ UIButtonManager
@@ -103,8 +137,11 @@ Optional<ItemStack> customConfirm = buttonManager.createButton(
 # ConfirmationUI öffnen
 /fscore admin gui confirm
 
-# SimpleTradeUI öffnen
+# SimpleTradeUI öffnen (Vanilla-Demo)
 /fscore admin gui trade
+
+# TradeUI - wird über TradingEntity geöffnet (kein direkter Testbefehl)
+# Beispiel: Rechtsklick auf Gildenhändler-NPC
 ```
 
 ---

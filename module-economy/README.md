@@ -3,7 +3,7 @@
 **Weltwirtschaft, Währungen, Münzsystem mit Vault-Integration**
 
 Version: 1.0-SNAPSHOT
-Sprint: 9-10 (Economy-Modul)
+Sprint: 11-12 (Trading-System & Händler-Infrastruktur)
 
 ---
 
@@ -21,7 +21,7 @@ Das Economy-Modul erweitert FallenStar um ein flexibles, erweiterbares Wirtschaf
 
 ## Features
 
-### ✅ Implementiert (Sprint 9-10)
+### ✅ Implementiert (Sprint 9-10 + 11-12)
 
 #### 1. Währungssystem
 - **CurrencyItemSet**: Währungs-Modell mit Exchange Rates
@@ -48,6 +48,16 @@ Das Economy-Modul erweitert FallenStar um ein flexibles, erweiterbares Wirtschaf
   - Tab-Completion für alle Parameter
   - Tier: bronze, silver, gold
   - Menge: 1-64
+
+#### 5. TradeSet-System (Sprint 11-12)
+- **TradeSet**: Handels-Modell für NPC-Händler
+  - Input1 + Input2 (optional) → Output
+  - Ankaufpreis (NPC zahlt Spieler)
+  - Verkaufspreis (Spieler zahlt NPC)
+  - Max-Uses (Handels-Limit, -1 = unbegrenzt)
+  - MerchantRecipe-Konvertierung für Vanilla Trading
+- **TradingEntity-Integration**: Provider-Interface aus Core
+- **Verwendung**: Gildenhändler, Spielerhändler, Weltbankier
 
 ### 📋 Geplant (zukünftige Sprints)
 
@@ -80,7 +90,8 @@ de.fallenstar.economy/
 ├── manager/
 │   └── CurrencyManager.java        # Währungsverwaltung
 ├── model/
-│   └── CurrencyItemSet.java        # Währungs-Modell (Record)
+│   ├── CurrencyItemSet.java        # Währungs-Modell (Record)
+│   └── TradeSet.java               # Handels-Modell (Input → Output)
 └── provider/                       # (geplant)
     └── VaultEconomyProvider.java   # Vault-Integration
 ```
@@ -133,6 +144,41 @@ manager.payoutCoins(player, "sterne", CurrencyTier.GOLD, 1);
 **Hilfe anzeigen:**
 ```
 /fscore admin economy
+```
+
+### TradeSets erstellen
+
+**Einfacher Trade (1 Input → 1 Output):**
+```java
+// 10 Diamanten → 100 Bronze-Sterne
+TradeSet diamondTrade = new TradeSet(
+    new ItemStack(Material.DIAMOND, 10),     // Input1
+    null,                                     // Kein Input2
+    coinManager.createCoin("sterne", BRONZE, 100),  // Output
+    BigDecimal.valueOf(90),                   // Ankaufpreis (NPC zahlt 90)
+    BigDecimal.valueOf(110),                  // Verkaufspreis (Spieler zahlt 110)
+    -1                                        // Unbegrenzte Trades
+);
+```
+
+**Komplexer Trade (2 Inputs → 1 Output):**
+```java
+// 5 Diamanten + 10 Gold → 1 Silber-Stern
+TradeSet complexTrade = new TradeSet(
+    new ItemStack(Material.DIAMOND, 5),      // Input1
+    new ItemStack(Material.GOLD_INGOT, 10),  // Input2
+    coinManager.createCoin("sterne", SILVER, 1),  // Output
+    BigDecimal.valueOf(50),                   // Ankaufpreis
+    BigDecimal.valueOf(60),                   // Verkaufspreis
+    100                                       // Max. 100 Trades
+);
+```
+
+**MerchantRecipe erstellen:**
+```java
+// Für Vanilla Merchant Interface
+MerchantRecipe recipe = diamondTrade.createRecipe();
+merchant.setRecipes(List.of(recipe));
 ```
 
 ---

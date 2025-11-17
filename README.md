@@ -81,12 +81,32 @@ mvn clean package
 - ✅ Data Persistence (Preise überleben Server-Neustarts)
 - ✅ Multi-Currency Support (Wechselkurse)
 
+**Trading-System:**
+- ✅ TradeSet-System (Ankauf/Verkauf-Preise, Input → Output)
+- ✅ TradingEntity-Interface (Provider-Pattern für Händler-NPCs)
+- ✅ TradeUI (Dynamisches Vanilla Merchant-Interface)
+- ✅ PlotRegistry (Auto-Registration von Handelsgilden via Towny)
+- ✅ Virtuelles Händler-Inventar (54 Slots, Base64-Serialisierung)
+
 **Plot-Slots System:**
 - ✅ NPC-Slot-Objekte mit SlotType (TRADER, BANKER, CRAFTSMAN, etc.)
 - ✅ SlottedPlot Interface für slottable Grundstücke
 - ✅ SlottedPlotForMerchants mit Händler-spezifischen Limits
 - ✅ Slot-Verwaltung (addSlot, removeSlot, assignNPC)
 - ✅ Slot-Status-Tracking (occupied, active, assigned NPC)
+- ✅ SlotManagementUI (Händler auf Slots platzieren)
+- ✅ TraderSelectionUI (Händler-Auswahl aus Handelsgilden)
+
+**NPC-Reisesystem:**
+- ✅ NPCTravelSystem (10s/Chunk Verzögerung, 5 Sterne/Chunk Kosten)
+- ✅ TravelTicket (Reise-Details, Status-Tracking, Fortschritts-Berechnung)
+- ✅ Restart-Handling (Aktive Reisen überleben Server-Neustart)
+- ✅ NPCSkinPool (Zufällige Skins für 5 NPC-Typen)
+
+**Plot-Namen-Feature:**
+- ✅ NamedPlot-Interface (Custom-Namen für Grundstücke)
+- ✅ PlotNameManager (Zentrale Verwaltung, Persistierung)
+- ✅ PlotNameInputUI (Namen-Eingabe via Chat)
 
 **KI-optimierte Entwicklung:**
 - ✅ Sprint-basierte Planung (20 Sprints)
@@ -117,7 +137,7 @@ mvn clean package
 
 **Phase:** 🚀 Aktive Entwicklung
 **Version:** 1.0-SNAPSHOT
-**Sprint:** 9-10 (Economy-Modul) - ✅ Abgeschlossen
+**Sprint:** 11-12 (Trading-System & Händler-Infrastruktur) - ✅ Abgeschlossen
 
 **Fertiggestellt:**
 - ✅ Architektur-Design & Provider-System
@@ -126,11 +146,11 @@ mvn clean package
 - ✅ FallenStar Items (Sprint 5-6 - Vanilla Coins + MMOItems)
 - ✅ FallenStar UI (Sprint 7-8 - ConfirmationUI + SimpleTradeUI)
 - ✅ FallenStar Economy (Sprint 9-10 - Weltwirtschaft + Vault + Währungssystem)
+- ✅ Trading-System (Sprint 11-12 - TradeSet, TradingEntity, PlotRegistry, NPC-Reisen)
 - ✅ Testbefehl-Struktur (`/fscore admin [gui/items/plots/economy]`)
 
 **Nächster Sprint:**
 - 📋 FallenStar NPCs (Sprint 13-14 - NPC-System + Botschafter + Citizens)
-- 📋 Plot-Slots Integration (Sprint 11-12 - Slot-Manager + Commands)
 
 **Wichtige Architektur-Änderungen:**
 - ✅ Storage-Modul in Plots-Modul integriert

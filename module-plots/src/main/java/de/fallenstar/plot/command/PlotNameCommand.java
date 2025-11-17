@@ -151,9 +151,11 @@ public class PlotNameCommand {
      * @return true
      */
     private boolean handleSetName(Player player, Plot plot, String name) {
-        // Validierung
-        if (name.length() > 50) {
-            player.sendMessage("§cName zu lang! Maximal 50 Zeichen.");
+        // Validierung via NamedPlot
+        if (!de.fallenstar.plot.model.NamedPlot.isValidName(name)) {
+            player.sendMessage("§cUngültiger Plot-Name!");
+            player.sendMessage("§7Namen müssen 1-32 Zeichen lang sein.");
+            player.sendMessage("§7Erlaubt: Buchstaben, Zahlen, Leerzeichen, -, _");
             return true;
         }
 
@@ -163,8 +165,9 @@ public class PlotNameCommand {
         if (success) {
             player.sendMessage("§aPlot-Name gesetzt: §e" + name);
             player.sendMessage("§7Grundstück: §7" + plot.getIdentifier());
+            player.sendMessage("§7§oGespeichert in Towny MetaData");
 
-            // Speichere Config
+            // Speichere Config (Fallback)
             plugin.saveConfiguration();
         } else {
             player.sendMessage("§cFehler beim Setzen des Plot-Namens!");

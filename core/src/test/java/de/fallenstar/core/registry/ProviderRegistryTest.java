@@ -89,8 +89,8 @@ class ProviderRegistryTest {
     }
 
     @Test
-    @DisplayName("detectAndRegister() mit Towny sollte TownyProvider registrieren")
-    void testDetectAndRegister_WithTowny_RegistersTownyProviders() {
+    @DisplayName("detectAndRegister() mit Towny sollte Provider registrieren")
+    void testDetectAndRegister_WithTowny_RegistersProviders() {
         // Arrange - Towny Plugin mocken
         Plugin townyPlugin = MockBukkit.createMockPlugin("Towny");
         server.getPluginManager().enablePlugin(townyPlugin);
@@ -105,31 +105,26 @@ class ProviderRegistryTest {
         assertNotNull(plotProvider, "PlotProvider sollte nicht null sein");
         assertNotNull(townProvider, "TownProvider sollte nicht null sein");
 
-        // NOTE: In Test-Umgebung kann Towny-API nicht vollständig initialisiert werden
-        // Provider fallen auf NoOp zurück wenn Towny-Klassen fehlen
-        // Das ist erwartetes Verhalten - in echter Server-Umgebung funktioniert es
+        // NOTE: In Test-Umgebung werden konkrete Provider-Implementierungen
+        // (TownyPlotProvider, TownyTownProvider) nicht geladen, da sie in
+        // module-plots liegen und nicht im Core-Modul verfügbar sind.
+        // Das Core-Modul enthält gemäß Architektur nur NoOp-Implementierungen.
+        // Provider sollten daher NoOp sein (nicht verfügbar)
 
-        // Nur Typ-Prüfung wenn Provider verfügbar ist
-        if (plotProvider.isAvailable()) {
-            assertTrue(plotProvider instanceof TownyPlotProvider,
-                "PlotProvider sollte TownyPlotProvider sein wenn verfügbar");
-        } else {
-            assertTrue(plotProvider instanceof NoOpPlotProvider,
-                "PlotProvider sollte NoOpPlotProvider sein wenn Towny-API fehlt");
-        }
+        assertTrue(plotProvider instanceof NoOpPlotProvider,
+            "PlotProvider sollte NoOpPlotProvider sein (keine Module geladen)");
+        assertFalse(plotProvider.isAvailable(),
+            "PlotProvider sollte nicht verfügbar sein ohne Plots-Modul");
 
-        if (townProvider.isAvailable()) {
-            assertTrue(townProvider instanceof TownyTownProvider,
-                "TownProvider sollte TownyTownProvider sein wenn verfügbar");
-        } else {
-            assertTrue(townProvider instanceof NoOpTownProvider,
-                "TownProvider sollte NoOpTownProvider sein wenn Towny-API fehlt");
-        }
+        assertTrue(townProvider instanceof NoOpTownProvider,
+            "TownProvider sollte NoOpTownProvider sein (keine Module geladen)");
+        assertFalse(townProvider.isAvailable(),
+            "TownProvider sollte nicht verfügbar sein ohne Plots-Modul");
     }
 
     @Test
-    @DisplayName("detectAndRegister() mit Citizens sollte CitizensNPCProvider registrieren")
-    void testDetectAndRegister_WithCitizens_RegistersCitizensProvider() {
+    @DisplayName("detectAndRegister() mit Citizens sollte NPCProvider registrieren")
+    void testDetectAndRegister_WithCitizens_RegistersNPCProvider() {
         // Arrange - Citizens Plugin mocken
         Plugin citizensPlugin = MockBukkit.createMockPlugin("Citizens");
         server.getPluginManager().enablePlugin(citizensPlugin);
@@ -142,18 +137,16 @@ class ProviderRegistryTest {
 
         assertNotNull(npcProvider, "NPCProvider sollte nicht null sein");
 
-        // NOTE: In Test-Umgebung kann Citizens-API nicht vollständig initialisiert werden
-        // Provider fällt auf NoOp zurück wenn Citizens-Klassen fehlen
-        // Das ist erwartetes Verhalten - in echter Server-Umgebung funktioniert es
+        // NOTE: In Test-Umgebung werden konkrete Provider-Implementierungen
+        // (CitizensNPCProvider) nicht geladen, da sie in module-npcs liegen
+        // und nicht im Core-Modul verfügbar sind.
+        // Das Core-Modul enthält gemäß Architektur nur NoOp-Implementierungen.
+        // Provider sollte daher NoOp sein (nicht verfügbar)
 
-        // Nur Typ-Prüfung wenn Provider verfügbar ist
-        if (npcProvider.isAvailable()) {
-            assertTrue(npcProvider instanceof CitizensNPCProvider,
-                "NPCProvider sollte CitizensNPCProvider sein wenn verfügbar");
-        } else {
-            assertTrue(npcProvider instanceof NoOpNPCProvider,
-                "NPCProvider sollte NoOpNPCProvider sein wenn Citizens-API fehlt");
-        }
+        assertTrue(npcProvider instanceof NoOpNPCProvider,
+            "NPCProvider sollte NoOpNPCProvider sein (keine Module geladen)");
+        assertFalse(npcProvider.isAvailable(),
+            "NPCProvider sollte nicht verfügbar sein ohne NPCs-Modul");
     }
 
     @Test

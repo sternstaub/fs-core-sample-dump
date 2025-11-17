@@ -30,7 +30,7 @@ public class TestTradeUI extends SmallChestUI {
     private final SpecialItemManager specialItemManager;
 
     public TestTradeUI(Plugin plugin, MMOItemsItemProvider itemProvider, SpecialItemManager specialItemManager) {
-        super(plugin, "§6Test Händler - Prototype");
+        super("§6Test Händler - Prototype");
         this.itemProvider = itemProvider;
         this.specialItemManager = specialItemManager;
     }

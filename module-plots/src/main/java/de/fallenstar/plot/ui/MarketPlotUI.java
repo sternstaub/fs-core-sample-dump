@@ -43,6 +43,7 @@ import java.util.List;
  */
 public class MarketPlotUI extends SmallChestUI {
 
+    private final Plugin plugin;
     private final ProviderRegistry providers;
     private final PlotSlotManager slotManager;
     private final Plot plot;
@@ -67,7 +68,8 @@ public class MarketPlotUI extends SmallChestUI {
             MarketPlot marketPlot,
             boolean isOwner
     ) {
-        super(plugin, isOwner ? "§6§lMarkt - Verwaltung" : "§e§lMarkt - Übersicht");
+        super(isOwner ? "§6§lMarkt - Verwaltung" : "§e§lMarkt - Übersicht");
+        this.plugin = plugin;
         this.providers = providers;
         this.slotManager = slotManager;
         this.plot = plot;

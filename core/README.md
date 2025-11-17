@@ -24,6 +24,7 @@ Located in `src/main/java/de/fallenstar/core/provider/`
 - **EconomyProvider** - Abstraction for Vault
 - **NPCProvider** - Abstraction for Citizens, ZNPC
 - **ItemProvider** - Abstraction for MMOItems, ItemsAdder
+- **TradingEntity** - Interface for trading NPCs and shops (Sprint 11-12)
 - **ChatProvider** - Abstraction for Matrix, Discord
 - **NetworkProvider** - Abstraction for Velocity, BungeeCord
 
