@@ -4,7 +4,10 @@ import de.fallenstar.core.provider.Plot;
 import de.fallenstar.core.provider.PlotProvider;
 import de.fallenstar.core.registry.ProviderRegistry;
 import de.fallenstar.core.ui.SmallChestUI;
+import de.fallenstar.plot.PlotModule;
 import de.fallenstar.plot.command.PlotPriceCommand;
+import de.fallenstar.plot.storage.manager.StorageManager;
+import de.fallenstar.plot.storage.model.PlotStorage;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -138,13 +141,20 @@ public class HandelsgildeUI extends SmallChestUI {
 
         // Owner-exklusive Optionen
         if (isOwner) {
-            // Slot 8: Storage-Zugriff (Platzhalter)
+            // Slot 8: Storage-Zugriff
             ItemStack storageButton = createNavigationItem(
                     Material.CHEST,
                     "§6Storage anzeigen",
-                    List.of("§cNoch nicht implementiert")
+                    List.of(
+                            "§7Zeigt alle Materialien",
+                            "§7auf diesem Grundstück",
+                            "§7",
+                            "§a§lKlicke zum Öffnen"
+                    )
             );
-            setItem(8, storageButton);
+            setItem(8, storageButton, player -> {
+                openPlotStorageUI(player);
+            });
         }
     }
 
@@ -213,11 +223,11 @@ public class HandelsgildeUI extends SmallChestUI {
                         "§7Verwalte das Plot-Storage",
                         "§7für Handelswaren",
                         "§7",
-                        "§c§lNoch nicht implementiert"
+                        "§a§lKlicke zum Öffnen"
                 )
         );
         setItem(16, storageButton, player -> {
-            player.sendMessage("§c§lStorage-Verwaltung noch nicht implementiert!");
+            openPlotStorageUI(player);
         });
 
         // Zeile 2: Weitere Optionen
@@ -590,5 +600,37 @@ public class HandelsgildeUI extends SmallChestUI {
         }
 
         return result.toString().trim();
+    }
+
+    /**
+     * Öffnet die PlotStorageUI für den Spieler.
+     *
+     * @param player Der Spieler
+     */
+    private void openPlotStorageUI(Player player) {
+        // Cast Plugin zu PlotModule
+        PlotModule plotModule = (PlotModule) plugin;
+
+        // Hole Storage-Provider und Manager
+        de.fallenstar.plot.storage.provider.PlotStorageProvider storageProvider = plotModule.getStorageProvider();
+        StorageManager storageManager = plotModule.getStorageManager();
+
+        if (storageProvider == null || storageManager == null) {
+            player.sendMessage("§cStorage-System nicht verfügbar!");
+            return;
+        }
+
+        // Hole PlotStorage für aktuellen Plot
+        PlotStorage plotStorage = storageProvider.getPlotStorage(plot);
+
+        // Öffne PlotStorageUI
+        PlotStorageUI storageUI = new PlotStorageUI(
+                plot,
+                plotStorage,
+                storageProvider,
+                storageManager,
+                isOwner
+        );
+        storageUI.open(player);
     }
 }

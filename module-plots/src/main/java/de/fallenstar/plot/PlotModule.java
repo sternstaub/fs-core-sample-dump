@@ -18,6 +18,8 @@ import de.fallenstar.core.registry.PlotTypeRegistry;
 import de.fallenstar.core.registry.ProviderRegistry;
 import de.fallenstar.plot.command.PlotCommand;
 import de.fallenstar.plot.command.PlotsAdminHandler;
+import de.fallenstar.plot.npc.manager.NPCManager;
+import de.fallenstar.plot.slot.PlotSlotManager;
 import de.fallenstar.plot.storage.listener.ChestInteractListener;
 import de.fallenstar.plot.storage.manager.ChestScanService;
 import de.fallenstar.plot.storage.manager.StorageManager;
@@ -52,12 +54,15 @@ public class PlotModule extends JavaPlugin implements Listener {
 
     private PlotStorageProvider storageProvider;
     private StorageManager storageManager;
+    private PlotSlotManager plotSlotManager;
+    private NPCManager npcManager;
     private de.fallenstar.plot.command.PlotCommand plotCommand;
 
     private boolean plotSystemEnabled = false;
     private boolean townSystemEnabled = false;
     private boolean npcSystemEnabled = false;
     private boolean storageSystemEnabled = false;
+    private boolean slotSystemEnabled = false;
 
     @Override
     public void onLoad() {
@@ -86,7 +91,28 @@ public class PlotModule extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        // Speichere Slot-Daten und NPC-Daten
+        if ((slotSystemEnabled && plotSlotManager != null) || (npcSystemEnabled && npcManager != null)) {
+            saveConfiguration();
+        }
+
         getLogger().info("Plot Module disabled");
+    }
+
+    /**
+     * Speichert die Config auf Festplatte.
+     *
+     * MUSS nach JEDER Daten-Änderung aufgerufen werden!
+     */
+    public void saveConfiguration() {
+        if (plotSlotManager != null) {
+            plotSlotManager.saveToConfig(getConfig());
+        }
+        if (npcManager != null) {
+            npcManager.saveToConfig(getConfig());
+        }
+        saveConfig();
+        getLogger().fine("Config gespeichert");
     }
 
     /**
@@ -111,6 +137,12 @@ public class PlotModule extends JavaPlugin implements Listener {
 
         // Storage-System initialisieren (jetzt Teil des Plot-Moduls)
         initializeStorageSystem();
+
+        // Plot-Slot-System initialisieren
+        initializeSlotSystem();
+
+        // NPC-System initialisieren
+        initializeNPCSystem();
 
         // Module vollständig initialisieren
         initializeModule();
@@ -173,6 +205,55 @@ public class PlotModule extends JavaPlugin implements Listener {
     }
 
     /**
+     * Initialisiert das Plot-Slot-System.
+     */
+    private void initializeSlotSystem() {
+        try {
+            this.plotSlotManager = new PlotSlotManager(getLogger());
+            this.plotSlotManager.loadFromConfig(getConfig());
+
+            slotSystemEnabled = true;
+            getLogger().info("✓ Plot-Slot-System aktiviert");
+            getLogger().info("  Market-Plots: " + plotSlotManager.getMarketPlotCount() + " geladen");
+            getLogger().info("  Initial Slots: " + plotSlotManager.getInitialSlots());
+            getLogger().info("  Max Slots: " + plotSlotManager.getMaxSlots());
+
+        } catch (Exception e) {
+            slotSystemEnabled = false;
+            getLogger().warning("✗ Plot-Slot-System konnte nicht initialisiert werden: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Initialisiert das NPC-System.
+     */
+    private void initializeNPCSystem() {
+        // Prüfe ob NPC-System in Config aktiviert ist
+        boolean npcEnabled = getConfig().getBoolean("npc.enabled", true);
+
+        if (!npcEnabled) {
+            npcSystemEnabled = false;
+            getLogger().info("○ NPC-System deaktiviert (Config)");
+            return;
+        }
+
+        try {
+            this.npcManager = new NPCManager(getLogger());
+            this.npcManager.loadFromConfig(getConfig());
+
+            npcSystemEnabled = true;
+            getLogger().info("✓ NPC-System aktiviert");
+            getLogger().info("  NPCs geladen: " + npcManager.getNPCCount());
+
+        } catch (Exception e) {
+            npcSystemEnabled = false;
+            getLogger().warning("✗ NPC-System konnte nicht initialisiert werden: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
      * Initialisiert das Storage-System (integriert im Plot-Modul).
      */
     private void initializeStorageSystem() {
@@ -229,7 +310,8 @@ public class PlotModule extends JavaPlugin implements Listener {
         getLogger().info("  Town-System: " + (townSystemEnabled ? "enabled" : "disabled"));
         getLogger().info("  NPC-System: " + (npcSystemEnabled ? "enabled" : "disabled"));
         getLogger().info("  Storage-System: " + (storageSystemEnabled ? "enabled" : "disabled"));
-        getLogger().info("  Commands: /plot info, /plot storage, /plot npc, /plot gui, /plot price");
+        getLogger().info("  Slot-System: " + (slotSystemEnabled ? "enabled" : "disabled"));
+        getLogger().info("  Commands: /plot info, /plot storage, /plot npc, /plot gui, /plot price, /plot slots");
     }
 
     /**
@@ -322,6 +404,7 @@ public class PlotModule extends JavaPlugin implements Listener {
      * - /plot price - Preisverwaltung (Handelsgilde)
      * - /plot storage - Storage-Verwaltung
      * - /plot npc - NPC-Verwaltung
+     * - /plot slots - Händler-Slots Verwaltung (Market)
      */
     private void registerCommands() {
         this.plotCommand = new de.fallenstar.plot.command.PlotCommand(
@@ -383,10 +466,21 @@ public class PlotModule extends JavaPlugin implements Listener {
                 });
             }
 
+            // /plot slots (optional)
+            if (slotSystemEnabled) {
+                TownyCommandAddonAPI.addSubCommand(CommandType.PLOT, "slots", (sender, cmd, label, args) -> {
+                    String[] newArgs = new String[args.length + 1];
+                    newArgs[0] = "slots";
+                    System.arraycopy(args, 0, newArgs, 1, args.length);
+                    return plotCommand.onCommand(sender, cmd, "plot", newArgs);
+                });
+            }
+
             getLogger().info("✓ Commands über Towny API registriert");
             getLogger().info("  Verfügbar: /plot info, /plot gui, /plot price" +
                 (storageSystemEnabled ? ", /plot storage" : "") +
-                (npcSystemEnabled ? ", /plot npc" : ""));
+                (npcSystemEnabled ? ", /plot npc" : "") +
+                (slotSystemEnabled ? ", /plot slots" : ""));
         } catch (Exception e) {
             getLogger().severe("Fehler beim Registrieren der Towny-Commands: " + e.getMessage());
             e.printStackTrace();
@@ -478,6 +572,15 @@ public class PlotModule extends JavaPlugin implements Listener {
     }
 
     /**
+     * Gibt den NPCManager zurück.
+     *
+     * @return NPCManager oder null
+     */
+    public NPCManager getNPCManager() {
+        return npcManager;
+    }
+
+    /**
      * Gibt den ChestScanService zurück (über StorageManager).
      *
      * @return ChestScanService oder null
@@ -495,5 +598,23 @@ public class PlotModule extends JavaPlugin implements Listener {
             }
         }
         return null;
+    }
+
+    /**
+     * Gibt den PlotSlotManager zurück.
+     *
+     * @return PlotSlotManager oder null
+     */
+    public PlotSlotManager getPlotSlotManager() {
+        return plotSlotManager;
+    }
+
+    /**
+     * Prüft ob das Slot-System aktiviert ist.
+     *
+     * @return true wenn aktiviert
+     */
+    public boolean isSlotSystemEnabled() {
+        return slotSystemEnabled;
     }
 }

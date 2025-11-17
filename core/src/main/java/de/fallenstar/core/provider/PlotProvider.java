@@ -84,4 +84,35 @@ public interface PlotProvider {
      */
     boolean isOwner(Plot plot, Player player)
             throws ProviderFunctionalityNotFoundException;
+
+    /**
+     * Gibt alle assoziierten Spieler (Stadtbewohner) eines Plots zurück.
+     *
+     * Assoziierte Spieler sind:
+     * - Bei Towny: Alle Residents der Town
+     * - Bei Factions: Alle Mitglieder der Faction
+     *
+     * Diese Spieler erhalten spezielle Vergünstigungen (z.B. Rabatte).
+     *
+     * @param plot Das Grundstück
+     * @return Liste der UUIDs aller assoziierten Spieler
+     * @throws ProviderFunctionalityNotFoundException wenn Feature nicht verfügbar
+     */
+    java.util.List<java.util.UUID> getAssociates(Plot plot)
+            throws ProviderFunctionalityNotFoundException;
+
+    /**
+     * Gibt alle Grundstücke zurück, die einem Spieler gehören.
+     *
+     * Verwendung:
+     * - Auswahl von Source-Plots für Spielerhändler
+     * - Übersicht über eigene Grundstücke
+     * - Plot-Verwaltungs-UIs
+     *
+     * @param playerUUID UUID des Spielers
+     * @return Liste aller Plots des Spielers (kann leer sein)
+     * @throws ProviderFunctionalityNotFoundException wenn Feature nicht verfügbar
+     */
+    java.util.List<Plot> getPlayerPlots(java.util.UUID playerUUID)
+            throws ProviderFunctionalityNotFoundException;
 }
