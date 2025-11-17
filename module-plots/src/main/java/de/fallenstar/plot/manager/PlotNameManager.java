@@ -182,7 +182,7 @@ public class PlotNameManager {
                     return value;
                 }
             }
-        } catch (NoSuchMethodError | NoSuchMethodException | Exception e) {
+        } catch (NoSuchMethodError | Exception e) {
             // Towny MetaData API nicht verfügbar oder fehlerhaft
             logger.fine("Towny MetaData API nicht verfügbar, nutze Config-Fallback: " + e.getMessage());
         }
