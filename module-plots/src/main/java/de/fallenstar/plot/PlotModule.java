@@ -58,6 +58,7 @@ public class PlotModule extends JavaPlugin implements Listener {
     private NPCManager npcManager;
     private de.fallenstar.plot.manager.PlotNameManager plotNameManager;
     private de.fallenstar.plot.command.PlotCommand plotCommand;
+    private de.fallenstar.plot.registry.PlotRegistry plotRegistry;
 
     private boolean plotSystemEnabled = false;
     private boolean townSystemEnabled = false;
@@ -119,6 +120,9 @@ public class PlotModule extends JavaPlugin implements Listener {
         if (plotNameManager != null) {
             plotNameManager.saveToConfig(getConfig());
         }
+        if (plotRegistry != null) {
+            plotRegistry.saveToConfig(getConfig());
+        }
         saveConfig();
         getLogger().fine("Config gespeichert");
     }
@@ -145,6 +149,9 @@ public class PlotModule extends JavaPlugin implements Listener {
 
         // OPTIONALE Features prüfen
         checkOptionalFeatures();
+
+        // Plot-Registry initialisieren
+        initializePlotRegistry();
 
         // Storage-System initialisieren (jetzt Teil des Plot-Moduls)
         initializeStorageSystem();
@@ -290,6 +297,33 @@ public class PlotModule extends JavaPlugin implements Listener {
         } catch (Exception e) {
             npcSystemEnabled = false;
             getLogger().warning("✗ NPC-System konnte nicht initialisiert werden: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Initialisiert die Plot-Registry.
+     */
+    private void initializePlotRegistry() {
+        try {
+            this.plotRegistry = new de.fallenstar.plot.registry.PlotRegistry(getLogger());
+            this.plotRegistry.loadFromConfig(getConfig());
+
+            getLogger().info("✓ PlotRegistry initialisiert");
+            getLogger().info("  Registrierte Handelsgilden: " + plotRegistry.getPlotsByType(de.fallenstar.plot.registry.PlotRegistry.PlotType.MERCHANT_GUILD).size());
+
+            // Registriere PlotRegistryListener für Auto-Updates
+            de.fallenstar.plot.registry.PlotRegistryListener registryListener =
+                new de.fallenstar.plot.registry.PlotRegistryListener(
+                    plotRegistry,
+                    providers.getPlotProvider(),
+                    getLogger()
+                );
+            getServer().getPluginManager().registerEvents(registryListener, this);
+            getLogger().info("✓ PlotRegistryListener registriert");
+
+        } catch (Exception e) {
+            getLogger().warning("✗ PlotRegistry konnte nicht initialisiert werden: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -656,6 +690,15 @@ public class PlotModule extends JavaPlugin implements Listener {
      */
     public PlotSlotManager getPlotSlotManager() {
         return plotSlotManager;
+    }
+
+    /**
+     * Gibt die PlotRegistry zurück.
+     *
+     * @return PlotRegistry oder null
+     */
+    public de.fallenstar.plot.registry.PlotRegistry getPlotRegistry() {
+        return plotRegistry;
     }
 
     /**

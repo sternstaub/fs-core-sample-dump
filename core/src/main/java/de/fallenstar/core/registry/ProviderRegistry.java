@@ -25,6 +25,7 @@ public class ProviderRegistry {
     private final Plugin plugin;
 
     private PlotProvider plotProvider;
+    private PlotStorageProvider plotStorageProvider;
     private TownProvider townProvider;
     private EconomyProvider economyProvider;
     private NPCProvider npcProvider;
@@ -66,6 +67,10 @@ public class ProviderRegistry {
         } else {
             logger.info("○ No plot plugin found - plot features disabled");
         }
+
+        // Plot Storage Provider - Default NoOp (Plots-Modul registriert konkrete Implementierung)
+        plotStorageProvider = new NoOpPlotStorageProvider();
+        logger.info("○ PlotStorageProvider: NoOp (Plots-Modul wird Implementierung registrieren)");
 
         // Town Provider - Towny support
         if (isPluginEnabled("Towny") || isPluginEnabled("TownyAdvanced")) {
@@ -149,6 +154,7 @@ public class ProviderRegistry {
     
     // Getter für Provider
     public PlotProvider getPlotProvider() { return plotProvider; }
+    public PlotStorageProvider getPlotStorageProvider() { return plotStorageProvider; }
     public TownProvider getTownProvider() { return townProvider; }
     public EconomyProvider getEconomyProvider() { return economyProvider; }
     public NPCProvider getNpcProvider() { return npcProvider; }
@@ -168,6 +174,11 @@ public class ProviderRegistry {
     public void setPlotProvider(PlotProvider plotProvider) {
         this.plotProvider = plotProvider;
         logger.info("✓ PlotProvider updated: " + plotProvider.getClass().getSimpleName());
+    }
+
+    public void setPlotStorageProvider(PlotStorageProvider plotStorageProvider) {
+        this.plotStorageProvider = plotStorageProvider;
+        logger.info("✓ PlotStorageProvider updated: " + plotStorageProvider.getClass().getSimpleName());
     }
 
     public void setTownProvider(TownProvider townProvider) {
