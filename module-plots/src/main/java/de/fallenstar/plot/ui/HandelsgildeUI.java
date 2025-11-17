@@ -69,7 +69,7 @@ public class HandelsgildeUI extends SmallChestUI {
             Plot plot,
             boolean isOwner
     ) {
-        super(plugin, isOwner ? "§6§lHandelsgilde - Verwaltung" : "§e§lHandelsgilde - Shop");
+        super(isOwner ? "§6§lHandelsgilde - Verwaltung" : "§e§lHandelsgilde - Shop");
         this.providers = providers;
         this.priceCommand = priceCommand;
         this.plot = plot;

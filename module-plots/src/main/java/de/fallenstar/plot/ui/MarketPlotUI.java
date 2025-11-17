@@ -67,7 +67,7 @@ public class MarketPlotUI extends SmallChestUI {
             MarketPlot marketPlot,
             boolean isOwner
     ) {
-        super(plugin, isOwner ? "§6§lMarkt - Verwaltung" : "§e§lMarkt - Übersicht");
+        super(isOwner ? "§6§lMarkt - Verwaltung" : "§e§lMarkt - Übersicht");
         this.providers = providers;
         this.slotManager = slotManager;
         this.plot = plot;

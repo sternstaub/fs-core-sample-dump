@@ -93,7 +93,7 @@ public class PriceEditorUI extends SmallChestUI {
      */
     public PriceEditorUI(Plugin plugin, String title, PriceCallback callback,
                          ItemStack coinBronze, ItemStack coinSilver, ItemStack coinGold) {
-        super(plugin, title);
+        super(title);
         this.callback = callback;
         this.coinBronze = coinBronze;
         this.coinSilver = coinSilver;
