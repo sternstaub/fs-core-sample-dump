@@ -7,6 +7,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.plugin.Plugin;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -83,15 +84,16 @@ public class PriceEditorUI extends SmallChestUI {
     /**
      * Erstellt eine neue PriceEditorUI.
      *
+     * @param plugin Plugin-Instanz
      * @param title Titel des UI
      * @param callback Callback für Preis-Änderungen
      * @param coinBronze Bronze-Münze (für +1/-1)
      * @param coinSilver Silber-Münze (für +10/-10)
      * @param coinGold Gold-Münze (für +100/-100)
      */
-    public PriceEditorUI(String title, PriceCallback callback,
+    public PriceEditorUI(Plugin plugin, String title, PriceCallback callback,
                          ItemStack coinBronze, ItemStack coinSilver, ItemStack coinGold) {
-        super(title);
+        super(plugin, title);
         this.callback = callback;
         this.coinBronze = coinBronze;
         this.coinSilver = coinSilver;
