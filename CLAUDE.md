@@ -863,6 +863,46 @@ Das Projekt folgt einem 20-Sprint-Fahrplan (40 Wochen):
 - ✅ Testbefehle: `/fscore admin gui confirm`, `/fscore admin gui trade`
 - 📋 Weitere UIs (AmbassadorUI, DialogUI, etc.) folgen...
 
+### Build & Testing Workflow (für AI-Assistenten)
+
+**WICHTIG:** AI-Assistenten müssen **NICHT** kompilieren!
+
+**Workflow:**
+1. **Code schreiben** - Implementiere Features vollständig
+2. **Git commit** - Sobald logische Einheit fertig
+3. **Git push** - Sofort pushen zum Remote Branch
+4. **User testet** - User kompiliert und testet lokal
+
+**Warum nicht kompilieren?**
+- Maven benötigt externe Repositories (oft Netzwerkprobleme in Claude-Umgebung)
+- User hat lokale Maven-Cache und Test-Server
+- Schnellerer Entwicklungszyklus
+- User gibt Feedback zu Compile-Fehlern
+
+**Best Practices:**
+- ✅ **Code vollständig implementieren** - Keine Platzhalter/TODOs bei kritischen Features
+- ✅ **Syntax-korrekt schreiben** - Java-Syntax muss stimmen (auch ohne Compile-Check)
+- ✅ **Imports prüfen** - Alle verwendeten Klassen importieren
+- ✅ **Sofort pushen** - Nicht mehrere Features sammeln
+- ✅ **Klare Commit-Messages** - User muss verstehen was implementiert wurde
+
+**Git-Befehle:**
+```bash
+# Änderungen hinzufügen
+git add -A
+
+# Committen (mit ausführlicher Message)
+git commit -m "Feature: XYZ implementiert"
+
+# Pushen zum Branch
+git push -u origin <branch-name>
+```
+
+**Bei Fehlern:**
+- User meldet Compile-/Runtime-Fehler
+- AI fixt Fehler
+- Erneut committen und pushen
+
 **Wichtige Architektur-Änderungen:**
 - **Core** enthält nur Interfaces + NoOp-Implementierungen + UI-Framework-Basis-Klassen
 - **Provider-Implementierungen** liegen in den jeweiligen Modulen

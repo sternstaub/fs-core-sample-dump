@@ -1,6 +1,7 @@
 package de.fallenstar.npc;
 
 import de.fallenstar.core.FallenStarCore;
+import de.fallenstar.core.command.AdminCommandRegistry;
 import de.fallenstar.core.event.ProvidersReadyEvent;
 import de.fallenstar.core.provider.NPCProvider;
 import de.fallenstar.core.provider.PlotProvider;
@@ -8,6 +9,7 @@ import de.fallenstar.core.provider.TownProvider;
 import de.fallenstar.core.provider.EconomyProvider;
 import de.fallenstar.core.registry.PlotTypeRegistry;
 import de.fallenstar.core.registry.ProviderRegistry;
+import de.fallenstar.npc.command.NPCAdminHandler;
 import de.fallenstar.npc.manager.NPCManager;
 import de.fallenstar.npc.manager.GuildTraderManager;
 import de.fallenstar.npc.npctype.AmbassadorNPC;
@@ -187,12 +189,16 @@ public class NPCModule extends JavaPlugin implements Listener {
         // NPC-Typen registrieren
         registerNPCTypes();
 
+        // Admin-Command-Handler registrieren
+        registerAdminCommands();
+
         // Initialer Status-Log
         getLogger().info("=== NPC Module Initialized ===");
         getLogger().info("  NPC-System: " + (npcSystemEnabled ? "enabled" : "disabled"));
         getLogger().info("  Town-System: " + (townSystemEnabled ? "enabled" : "disabled"));
         getLogger().info("  Economy-System: " + (economySystemEnabled ? "enabled" : "disabled"));
-        getLogger().info("  Registered NPC Types: Ambassador");
+        getLogger().info("  Plot-System: " + (plotSystemEnabled ? "enabled" : "disabled"));
+        getLogger().info("  Registered NPC Types: Ambassador, GuildTrader");
     }
 
     /**
@@ -240,6 +246,27 @@ public class NPCModule extends JavaPlugin implements Listener {
         // TODO: Banker-NPC registrieren
         // BankerNPC bankerNPC = new BankerNPC(...);
         // npcManager.registerNPCType("banker", bankerNPC);
+    }
+
+    /**
+     * Registriert Admin-Command-Handler.
+     */
+    private void registerAdminCommands() {
+        AdminCommandRegistry registry = corePlugin.getAdminCommandRegistry();
+        if (registry == null) {
+            getLogger().warning("AdminCommandRegistry not available - commands disabled");
+            return;
+        }
+
+        // NPC-Command-Handler registrieren
+        NPCAdminHandler npcHandler = new NPCAdminHandler(
+            npcManager,
+            guildTraderManager,
+            providers
+        );
+
+        registry.registerHandler("npc", npcHandler);
+        getLogger().info("✓ Registered /fscore npc command handler");
     }
 
     /**
