@@ -368,11 +368,17 @@ public class TownyPlotProvider implements PlotProvider {
                 UUID plotId = generatePlotUUID(townBlock);
                 String identifier = generatePlotIdentifier(townBlock);
 
+                // Hole World
+                org.bukkit.World world = org.bukkit.Bukkit.getWorld(townBlock.getWorldCoord().getWorldName());
+                if (world == null) {
+                    continue; // Skip wenn Welt nicht geladen
+                }
+
                 // Erstelle Plot-Objekt
                 Plot plot = new Plot(
                     plotId,
                     identifier,
-                    townBlock.getWorldCoord().getCoord().getBukkitWorld().getBlockAt(
+                    world.getBlockAt(
                         townBlock.getX() * 16,
                         64,
                         townBlock.getZ() * 16

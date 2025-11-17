@@ -8,17 +8,22 @@ import java.util.UUID;
 /**
  * Metadaten zu einer registrierten Truhe.
  *
- * Speichert Position, Typ (normal/Empfangskiste) und Plot-Zugehörigkeit.
+ * Speichert Position, Typ (INPUT/OUTPUT/STORAGE) und Plot-Zugehörigkeit.
+ *
+ * **ChestType:**
+ * - INPUT: Empfangskiste für gekaufte Items
+ * - OUTPUT: Verkaufskiste für zum Verkauf angebotene Items
+ * - STORAGE: Normale Storage-Truhe
  *
  * @author FallenStar
- * @version 1.0
+ * @version 2.0
  */
 public class ChestData {
 
     private final UUID chestId;
     private final UUID plotId;
     private final Location location;
-    private boolean receiverChest;
+    private ChestType chestType;
     private long lastAccessed;
 
     /**
@@ -29,10 +34,22 @@ public class ChestData {
      * @param location Location der Truhe
      */
     public ChestData(UUID chestId, UUID plotId, Location location) {
+        this(chestId, plotId, location, ChestType.STORAGE);
+    }
+
+    /**
+     * Erstellt ein neues ChestData-Objekt mit Typ.
+     *
+     * @param chestId Eindeutige ID der Truhe
+     * @param plotId ID des zugehörigen Plots
+     * @param location Location der Truhe
+     * @param chestType Typ der Truhe
+     */
+    public ChestData(UUID chestId, UUID plotId, Location location, ChestType chestType) {
         this.chestId = chestId;
         this.plotId = plotId;
         this.location = location;
-        this.receiverChest = false;
+        this.chestType = chestType;
         this.lastAccessed = System.currentTimeMillis();
     }
 
@@ -58,19 +75,66 @@ public class ChestData {
     }
 
     /**
-     * @return true wenn diese Truhe die Empfangskiste ist
+     * @return Typ der Truhe (INPUT/OUTPUT/STORAGE)
      */
-    public boolean isReceiverChest() {
-        return receiverChest;
+    public ChestType getChestType() {
+        return chestType;
     }
 
     /**
-     * Setzt den Empfangskisten-Status.
+     * Setzt den Truhen-Typ.
+     *
+     * @param chestType Neuer Typ
+     */
+    public void setChestType(ChestType chestType) {
+        this.chestType = chestType;
+    }
+
+    /**
+     * @return true wenn diese Truhe eine Input-Chest ist
+     */
+    public boolean isInputChest() {
+        return chestType == ChestType.INPUT;
+    }
+
+    /**
+     * @return true wenn diese Truhe eine Output-Chest ist
+     */
+    public boolean isOutputChest() {
+        return chestType == ChestType.OUTPUT;
+    }
+
+    /**
+     * @return true wenn diese Truhe eine Storage-Chest ist
+     */
+    public boolean isStorageChest() {
+        return chestType == ChestType.STORAGE;
+    }
+
+    /**
+     * Legacy-Kompatibilität: Receiver-Chest = Input-Chest.
+     *
+     * @return true wenn diese Truhe die Empfangskiste ist
+     * @deprecated Verwende {@link #isInputChest()} stattdessen
+     */
+    @Deprecated
+    public boolean isReceiverChest() {
+        return isInputChest();
+    }
+
+    /**
+     * Legacy-Kompatibilität: Receiver-Chest = Input-Chest.
      *
      * @param receiverChest true um als Empfangskiste zu markieren
+     * @deprecated Verwende {@link #setChestType(ChestType)} mit ChestType.INPUT stattdessen
      */
+    @Deprecated
     public void setReceiverChest(boolean receiverChest) {
-        this.receiverChest = receiverChest;
+        if (receiverChest) {
+            this.chestType = ChestType.INPUT;
+        } else if (this.chestType == ChestType.INPUT) {
+            this.chestType = ChestType.STORAGE;
+        }
     }
 
     /**
@@ -105,7 +169,7 @@ public class ChestData {
         return "ChestData{" +
                 "chestId=" + chestId +
                 ", plotId=" + plotId +
-                ", receiverChest=" + receiverChest +
+                ", chestType=" + chestType +
                 ", location=" + location +
                 '}';
     }

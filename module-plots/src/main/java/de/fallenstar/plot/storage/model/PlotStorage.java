@@ -144,6 +144,56 @@ public class PlotStorage {
     }
 
     /**
+     * Gibt die Input-Chest (Empfangskiste) zurück.
+     *
+     * @return ChestData der Input-Chest oder null
+     */
+    public ChestData getInputChest() {
+        return chestDataMap.values().stream()
+                          .filter(ChestData::isInputChest)
+                          .findFirst()
+                          .orElse(null);
+    }
+
+    /**
+     * Gibt alle Output-Chests (Verkaufskisten) zurück.
+     *
+     * @return Liste aller Output-Chests
+     */
+    public List<ChestData> getOutputChests() {
+        return chestDataMap.values().stream()
+                          .filter(ChestData::isOutputChest)
+                          .collect(java.util.stream.Collectors.toList());
+    }
+
+    /**
+     * Gibt alle Storage-Chests (normale Kisten) zurück.
+     *
+     * @return Liste aller Storage-Chests
+     */
+    public List<ChestData> getStorageChests() {
+        return chestDataMap.values().stream()
+                          .filter(ChestData::isStorageChest)
+                          .collect(java.util.stream.Collectors.toList());
+    }
+
+    /**
+     * Entfernt eine Chest aus dem Storage.
+     * Wird aufgerufen wenn eine Truhe zerstört wird.
+     *
+     * @param chestId Chest-ID
+     * @return true wenn erfolgreich entfernt
+     */
+    public boolean unregisterChest(UUID chestId) {
+        ChestData removed = chestDataMap.remove(chestId);
+        if (removed != null) {
+            updateTimestamp();
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Leert den gesamten Storage (z.B. bei Rescan).
      */
     public void clear() {
