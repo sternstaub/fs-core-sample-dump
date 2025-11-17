@@ -223,19 +223,87 @@ public class GuildTraderNPC implements NPCType, TradingEntity {
 
     @Override
     public boolean canExecuteTrade(Object trade, Player player) {
-        // TODO: Implementiere Trade-Validierung
-        // Prüfe ob genug Items im Plot-Storage vorhanden sind
-        return true;
+        try {
+            // Hole TradeSet-Daten via Reflection
+            var tradeClass = trade.getClass();
+            var getInput1 = tradeClass.getMethod("getInput1");
+            var getOutput = tradeClass.getMethod("getOutput");
+
+            ItemStack input = (ItemStack) getInput1.invoke(trade);
+            ItemStack output = (ItemStack) getOutput.invoke(trade);
+
+            // Prüfe ob Spieler genug Input-Items hat
+            if (!player.getInventory().containsAtLeast(input, input.getAmount())) {
+                return false;
+            }
+
+            // Prüfe ob genug Platz im Spieler-Inventar für Output
+            if (player.getInventory().firstEmpty() == -1) {
+                // Inventar voll - prüfe ob Output-Item stackbar ist
+                int freeSpace = 0;
+                for (ItemStack item : player.getInventory().getContents()) {
+                    if (item != null && item.isSimilar(output)) {
+                        freeSpace += (output.getMaxStackSize() - item.getAmount());
+                    }
+                }
+                if (freeSpace < output.getAmount()) {
+                    return false;
+                }
+            }
+
+            // Trade ist möglich
+            return true;
+
+        } catch (Exception e) {
+            logger.warning("Failed to validate trade: " + e.getMessage());
+            return false;
+        }
     }
 
     @Override
     public boolean executeTrade(Object trade, Player player) {
-        // TODO: Implementiere Trade-Ausführung
-        // 1. Items aus Plot-Storage entfernen (Output)
-        // 2. Items zu Plot-Storage hinzufügen (Input)
-        // 3. Items aus Spieler-Inventar entfernen (Input)
-        // 4. Items zu Spieler-Inventar hinzufügen (Output)
-        return false;
+        try {
+            // Validiere Trade
+            if (!canExecuteTrade(trade, player)) {
+                player.sendMessage("§cDieser Handel kann nicht ausgeführt werden!");
+                return false;
+            }
+
+            // Hole TradeSet-Daten
+            var tradeClass = trade.getClass();
+            var getInput1 = tradeClass.getMethod("getInput1");
+            var getOutput = tradeClass.getMethod("getOutput");
+
+            ItemStack input = (ItemStack) getInput1.invoke(trade);
+            ItemStack output = (ItemStack) getOutput.invoke(trade);
+
+            // 1. Entferne Input aus Spieler-Inventar (Münzen)
+            player.getInventory().removeItem(input);
+
+            // 2. Füge Output zu Spieler-Inventar hinzu (gekauftes Item)
+            player.getInventory().addItem(output);
+
+            // 3. TODO: Füge Input zu Plot-Storage hinzu (Münzen ins Storage)
+            //    Dies erfordert Zugriff auf PlotStorageProvider
+
+            // 4. TODO: Entferne Output aus Plot-Storage (Item aus Storage)
+            //    Dies erfordert Zugriff auf PlotStorageProvider
+
+            // Erfolgs-Nachricht
+            player.sendMessage("§aHandel erfolgreich! Du hast " + output.getAmount() + "x " +
+                             output.getType() + " für " + input.getAmount() + " Münzen gekauft.");
+
+            logger.info("Player " + player.getName() + " traded " + input.getAmount() +
+                       " coins for " + output.getAmount() + "x " + output.getType());
+
+            return true;
+
+        } catch (Exception e) {
+            logger.severe("Failed to execute trade: " + e.getMessage());
+            e.printStackTrace();
+            player.sendMessage("§cFehler beim Ausführen des Handels!");
+            return false;
+        }
     }
 
     @Override
@@ -406,11 +474,41 @@ public class GuildTraderNPC implements NPCType, TradingEntity {
                     continue;
                 }
 
-                // TODO: Erstelle TradeSet mit Economy-Modul
-                // TradeSet trade = new TradeSet(...)
-                // tradeSets.add(trade);
+                // Erstelle Münzen für den Preis
+                ItemStack coinStack = createCoinsForPrice(economyPlugin, price);
+                if (coinStack == null) {
+                    logger.warning("Failed to create coins for price " + price);
+                    continue;
+                }
 
-                logger.fine("Generated TradeSet for " + item.getType() + " @ " + price + " Sterne");
+                // Erstelle TradeSet via Reflection (Economy-Modul)
+                try {
+                    Class<?> tradeSetClass = Class.forName("de.fallenstar.economy.model.TradeSet");
+
+                    // Konstruktor: (ItemStack input1, ItemStack input2, ItemStack output,
+                    //                BigDecimal buyPrice, BigDecimal sellPrice, int maxUses)
+                    var constructor = tradeSetClass.getConstructor(
+                        ItemStack.class, ItemStack.class, ItemStack.class,
+                        BigDecimal.class, BigDecimal.class, int.class
+                    );
+
+                    // Spieler kauft Item vom NPC: Münzen → Item
+                    // Input: Münzen, Output: Item
+                    Object tradeSet = constructor.newInstance(
+                        coinStack,              // Input1: Münzen (Spieler zahlt)
+                        null,                   // Input2: Keiner
+                        item.clone(),           // Output: Item (Spieler erhält)
+                        price,                  // Buy Price (nicht verwendet für Verkauf)
+                        price,                  // Sell Price (Spieler zahlt)
+                        -1                      // Unbegrenzte Trades
+                    );
+
+                    tradeSets.add(tradeSet);
+                    logger.fine("Generated TradeSet for " + item.getType() + " @ " + price + " Sterne");
+
+                } catch (Exception e) {
+                    logger.warning("Failed to create TradeSet for " + item.getType() + ": " + e.getMessage());
+                }
             }
 
         } catch (Exception e) {
@@ -441,6 +539,55 @@ public class GuildTraderNPC implements NPCType, TradingEntity {
         } catch (Exception e) {
             logger.fine("Failed to get price for " + item.getType() + ": " + e.getMessage());
             return BigDecimal.ZERO;
+        }
+    }
+
+    /**
+     * Erstellt Münz-ItemStack für einen Preis.
+     *
+     * Nutzt CurrencyManager aus Economy-Modul via Reflection.
+     *
+     * @param economyPlugin Economy-Plugin-Instanz
+     * @param price Preis in Basiswährung
+     * @return ItemStack mit Münzen oder null bei Fehler
+     */
+    private ItemStack createCoinsForPrice(Object economyPlugin, BigDecimal price) {
+        try {
+            // Hole CurrencyManager
+            var getCurrencyManager = economyPlugin.getClass().getMethod("getCurrencyManager");
+            var currencyManager = getCurrencyManager.invoke(economyPlugin);
+
+            // Konvertiere Preis zu int (Sterne sind ganzzahlig)
+            int amount = price.intValue();
+
+            // Erstelle Münzen via createCoin(String currencyId, CurrencyTier tier, int amount)
+            // Tier bestimmen: Bronze (1-99), Silber (100-9999), Gold (10000+)
+            String tier = "BRONZE";
+            if (amount >= 10000) {
+                tier = "GOLD";
+                amount = amount / 100; // Gold = 100 Sterne
+            } else if (amount >= 100) {
+                tier = "SILVER";
+                amount = amount / 10; // Silber = 10 Sterne
+            }
+
+            // Reflection: createCoin(String, CurrencyTier, int)
+            Class<?> currencyTierClass = Class.forName("de.fallenstar.economy.model.CurrencyTier");
+            var tierEnum = Enum.valueOf((Class<Enum>) currencyTierClass, tier);
+
+            var createCoinMethod = currencyManager.getClass().getMethod(
+                "createCoin", String.class, currencyTierClass, int.class
+            );
+
+            ItemStack coinStack = (ItemStack) createCoinMethod.invoke(
+                currencyManager, "sterne", tierEnum, amount
+            );
+
+            return coinStack;
+
+        } catch (Exception e) {
+            logger.warning("Failed to create coins: " + e.getMessage());
+            return null;
         }
     }
 

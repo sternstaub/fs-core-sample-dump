@@ -1,7 +1,9 @@
 package de.fallenstar.npc.manager;
 
+import de.fallenstar.core.provider.NPCProvider;
 import de.fallenstar.core.provider.Plot;
 import de.fallenstar.core.provider.PlotProvider;
+import de.fallenstar.core.registry.ProviderRegistry;
 import de.fallenstar.npc.npctype.GuildTraderNPC;
 import org.bukkit.Location;
 import org.bukkit.configuration.ConfigurationSection;
@@ -43,6 +45,7 @@ public class GuildTraderManager {
     private final NPCManager npcManager;
     private final PlotProvider plotProvider;
     private final GuildTraderNPC guildTraderType;
+    private final ProviderRegistry providers;
     private final Logger logger;
 
     /**
@@ -62,17 +65,20 @@ public class GuildTraderManager {
      * @param npcManager NPCManager
      * @param plotProvider PlotProvider
      * @param guildTraderType GuildTraderNPC-Instanz
+     * @param providers ProviderRegistry
      * @param logger Logger
      */
     public GuildTraderManager(
             NPCManager npcManager,
             PlotProvider plotProvider,
             GuildTraderNPC guildTraderType,
+            ProviderRegistry providers,
             Logger logger
     ) {
         this.npcManager = npcManager;
         this.plotProvider = plotProvider;
         this.guildTraderType = guildTraderType;
+        this.providers = providers;
         this.logger = logger;
 
         this.npcPlotMapping = new HashMap<>();
@@ -88,12 +94,18 @@ public class GuildTraderManager {
      */
     public UUID spawnGuildTrader(Plot plot, Location location) {
         try {
-            // Erstelle NPC-UUID
-            UUID npcId = UUID.randomUUID();
+            // Hole NPCProvider
+            NPCProvider npcProvider = providers.getNpcProvider();
+            if (!npcProvider.isAvailable()) {
+                logger.severe("NPCProvider nicht verfügbar!");
+                return null;
+            }
 
-            // TODO: Spawn via NPCProvider (Citizens)
-            // NPCProvider npcProvider = providers.getNpcProvider();
-            // npcProvider.createNPC(npcId, location, guildTraderType.getDisplayName());
+            // Spawn NPC via NPCProvider (Citizens)
+            String npcName = guildTraderType.getDisplayName();
+            String npcSkin = guildTraderType.getSkin();
+
+            UUID npcId = npcProvider.createNPC(location, npcName, npcSkin);
 
             // Registriere NPC beim NPCManager
             npcManager.registerNPC(npcId, "guildtrader");
@@ -105,7 +117,8 @@ public class GuildTraderManager {
             npcPlotMapping.put(npcId, plot.getUuid());
             plotNPCMapping.computeIfAbsent(plot.getUuid(), k -> new ArrayList<>()).add(npcId);
 
-            logger.info("Spawned GuildTrader " + npcId + " on plot " + plot.getUuid());
+            logger.info("Spawned GuildTrader " + npcId + " on plot " + plot.getUuid() +
+                       " at " + location.getBlockX() + "," + location.getBlockY() + "," + location.getBlockZ());
 
             return npcId;
 
@@ -131,9 +144,16 @@ public class GuildTraderManager {
                 return false;
             }
 
-            // TODO: Despawn via NPCProvider (Citizens)
-            // NPCProvider npcProvider = providers.getNpcProvider();
-            // npcProvider.removeNPC(npcId);
+            // Despawn via NPCProvider (Citizens)
+            NPCProvider npcProvider = providers.getNpcProvider();
+            if (npcProvider.isAvailable()) {
+                try {
+                    npcProvider.removeNPC(npcId);
+                    logger.fine("Despawned NPC " + npcId + " via NPCProvider");
+                } catch (Exception e) {
+                    logger.warning("Failed to despawn NPC " + npcId + ": " + e.getMessage());
+                }
+            }
 
             // Unregistriere NPC
             npcManager.unregisterNPC(npcId);

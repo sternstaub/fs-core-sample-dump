@@ -232,6 +232,7 @@ public class NPCModule extends JavaPlugin implements Listener {
                 npcManager,
                 providers.getPlotProvider(),
                 guildTraderNPC,
+                providers,
                 getLogger()
             );
 
