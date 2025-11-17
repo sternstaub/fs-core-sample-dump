@@ -3,6 +3,7 @@ package de.fallenstar.plot.command;
 import de.fallenstar.core.registry.PlotTypeRegistry;
 import de.fallenstar.core.registry.ProviderRegistry;
 import de.fallenstar.plot.PlotModule;
+import de.fallenstar.plot.slot.PlotSlotManager;
 import de.fallenstar.plot.storage.command.StorageInfoCommand;
 import de.fallenstar.plot.storage.command.StorageListCommand;
 import de.fallenstar.plot.storage.command.StorageSetReceiverCommand;
@@ -28,6 +29,7 @@ import java.util.stream.Collectors;
  * - /plot info - Zeigt Plot-Informationen
  * - /plot storage [view/list/setreceiver] - Storage-Verwaltung
  * - /plot npc [spawn/remove/list] - NPC-Verwaltung
+ * - /plot slots [list/buy/set/remove] - Händler-Slots Verwaltung
  *
  * @author FallenStar
  * @version 1.0
@@ -42,11 +44,13 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
     private final boolean townSystemEnabled;
     private final boolean npcSystemEnabled;
     private final boolean storageSystemEnabled;
+    private final boolean slotSystemEnabled;
 
     // Subcommands
     private final PlotInfoCommand infoCommand;
     private final PlotNpcCommand npcCommand;
     private final PlotPriceCommand priceCommand;
+    private final PlotSlotCommand slotCommand;
     private final StorageListCommand storageListCommand;
     private final StorageInfoCommand storageInfoCommand;
     private final StorageSetReceiverCommand storageSetReceiverCommand;
@@ -82,11 +86,19 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
         this.townSystemEnabled = townSystemEnabled;
         this.npcSystemEnabled = npcSystemEnabled;
         this.storageSystemEnabled = storageSystemEnabled;
+        this.slotSystemEnabled = plugin.isSlotSystemEnabled();
 
         // Subcommands initialisieren
         this.infoCommand = new PlotInfoCommand(providers, plotTypeRegistry);
         this.npcCommand = new PlotNpcCommand(plugin, providers, plotTypeRegistry);
         this.priceCommand = new PlotPriceCommand(providers);
+
+        // Slot-Command initialisieren (wenn Slot-System aktiviert)
+        if (slotSystemEnabled && plugin.getPlotSlotManager() != null) {
+            this.slotCommand = new PlotSlotCommand(plugin, providers, plugin.getPlotSlotManager());
+        } else {
+            this.slotCommand = null;
+        }
 
         // Storage-Commands initialisieren (wenn Storage aktiviert)
         if (storageSystemEnabled && storageProvider != null && storageManager != null) {
@@ -156,6 +168,14 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
 
             case "price" -> {
                 return priceCommand.execute(player, subArgs);
+            }
+
+            case "slots" -> {
+                if (!slotSystemEnabled || slotCommand == null) {
+                    player.sendMessage("§cSlot-System ist nicht verfügbar!");
+                    return true;
+                }
+                return slotCommand.execute(player, subArgs);
             }
 
             case "help" -> {
@@ -418,6 +438,15 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
         player.sendMessage("§e/plot price set §7- Handelspreis festlegen §8[Handelsgilde]");
         player.sendMessage("§e/plot price list §7- Preisliste anzeigen §8[Handelsgilde]");
 
+        // Slot-Commands (nur auf Market-Plots)
+        if (slotSystemEnabled) {
+            player.sendMessage("§e/plot slots list §7- Händler-Slots anzeigen §8[Market]");
+            player.sendMessage("§e/plot slots buy §7- Neuen Slot kaufen §8[Market]");
+            player.sendMessage("§e/plot slots set <nr> §7- Slot-Position setzen §8[Market]");
+        } else {
+            player.sendMessage("§7/plot slots §8[deaktiviert - Slot-System nicht verfügbar]");
+        }
+
         player.sendMessage("§8§m-----------------------------");
     }
 
@@ -438,6 +467,9 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
             }
             completions.add("gui");
             completions.add("price");  // Handelsgilde-Preisverwaltung
+            if (slotSystemEnabled) {
+                completions.add("slots");  // Market-Slot-Verwaltung
+            }
             completions.add("help");
 
         } else if (args.length == 2) {
@@ -462,6 +494,11 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
                 case "price" -> {
                     completions.add("set");
                     completions.add("list");
+                }
+                case "slots" -> {
+                    if (slotSystemEnabled && slotCommand != null) {
+                        return slotCommand.getTabCompletions(Arrays.copyOfRange(args, 1, args.length));
+                    }
                 }
             }
         }

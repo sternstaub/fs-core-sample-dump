@@ -12,6 +12,21 @@ plot:
     # Standard-Skin für NPCs
     default-skin: "Steve"
 
+# Market-Plot Einstellungen
+market:
+  # Händler-Slots Konfiguration
+  trader-slots:
+    # Anzahl Slots beim Plot-Start (Standard: 1)
+    initial-slots: 1
+    # Maximale Anzahl kaufbarer Slots (Standard: 5)
+    max-slots: 5
+    # Preis pro zusätzlichem Slot in Sternen (Standard: 100)
+    slot-price: 100.0
+    # Währung für Slot-Kauf (Standard: sterne)
+    currency: "sterne"
+    # Tier der Währung (bronze, silver, gold)
+    currency-tier: "gold"
+
 # Storage-Integration
 storage:
   # Plot-basiertes Storage aktivieren
@@ -23,3 +38,14 @@ messages:
   no-permissions: "§cDu hast keine Berechtigung für diese Aktion!"
   npc-spawned: "§aNPC wurde erfolgreich gespawnt!"
   npc-removed: "§aNPC wurde erfolgreich entfernt!"
+
+  # Market-Plot Nachrichten
+  market:
+    slot-purchased: "§aHändler-Slot erfolgreich gekauft! ({0}/{1})"
+    slot-limit-reached: "§cDu hast bereits die maximale Anzahl an Slots!"
+    slot-insufficient-funds: "§cNicht genug {0}! Benötigt: {1}"
+    slot-position-set: "§aSlot-Position wurde festgelegt!"
+    slot-created: "§aNeuer Händler-Slot erstellt!"
+    slot-removed: "§aHändler-Slot entfernt!"
+    slot-occupied: "§cDieser Slot ist belegt und kann nicht entfernt werden!"
+    not-market-plot: "§cDieses Grundstück ist kein Market-Grundstück!"
