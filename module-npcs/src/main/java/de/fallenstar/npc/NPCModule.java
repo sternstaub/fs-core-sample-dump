@@ -3,12 +3,15 @@ package de.fallenstar.npc;
 import de.fallenstar.core.FallenStarCore;
 import de.fallenstar.core.event.ProvidersReadyEvent;
 import de.fallenstar.core.provider.NPCProvider;
+import de.fallenstar.core.provider.PlotProvider;
 import de.fallenstar.core.provider.TownProvider;
 import de.fallenstar.core.provider.EconomyProvider;
 import de.fallenstar.core.registry.PlotTypeRegistry;
 import de.fallenstar.core.registry.ProviderRegistry;
 import de.fallenstar.npc.manager.NPCManager;
+import de.fallenstar.npc.manager.GuildTraderManager;
 import de.fallenstar.npc.npctype.AmbassadorNPC;
+import de.fallenstar.npc.npctype.GuildTraderNPC;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -37,10 +40,12 @@ public class NPCModule extends JavaPlugin implements Listener {
     private FallenStarCore corePlugin;
 
     private NPCManager npcManager;
+    private GuildTraderManager guildTraderManager;
 
     private boolean npcSystemEnabled = false;
     private boolean townSystemEnabled = false;
     private boolean economySystemEnabled = false;
+    private boolean plotSystemEnabled = false;
 
     @Override
     public void onEnable() {
@@ -63,7 +68,18 @@ public class NPCModule extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        // Speichere Config (Gildenhändler)
+        if (guildTraderManager != null) {
+            guildTraderManager.saveToConfig(getConfig());
+            saveConfig();
+            getLogger().info("GuildTrader config saved");
+        }
+
         // Cleanup NPCs
+        if (guildTraderManager != null) {
+            guildTraderManager.shutdown();
+        }
+
         if (npcManager != null) {
             npcManager.shutdown();
         }
@@ -133,6 +149,16 @@ public class NPCModule extends JavaPlugin implements Listener {
      * Prüft welche optionalen Features verfügbar sind.
      */
     private void checkOptionalFeatures() {
+        // PlotProvider (für Gildenhändler)
+        PlotProvider plotProvider = providers.getPlotProvider();
+        if (plotProvider != null && plotProvider.isAvailable()) {
+            plotSystemEnabled = true;
+            getLogger().info("✓ PlotProvider enabled (Gildenhändler verfügbar)");
+        } else {
+            plotSystemEnabled = false;
+            getLogger().info("○ PlotProvider not available - Gildenhändler deaktiviert");
+        }
+
         // EconomyProvider
         EconomyProvider economyProvider = providers.getEconomyProvider();
         if (economyProvider != null && economyProvider.isAvailable()) {
@@ -185,6 +211,32 @@ public class NPCModule extends JavaPlugin implements Listener {
         npcManager.registerNPCType("ambassador", ambassadorNPC);
         getLogger().info("✓ Ambassador NPC registered");
 
+        // Gildenhändler-NPC registrieren (nur wenn PlotProvider verfügbar)
+        if (plotSystemEnabled) {
+            GuildTraderNPC guildTraderNPC = new GuildTraderNPC(
+                npcManager,
+                providers.getPlotProvider(),
+                getConfig()
+            );
+
+            npcManager.registerNPCType("guildtrader", guildTraderNPC);
+
+            // GuildTraderManager erstellen
+            this.guildTraderManager = new GuildTraderManager(
+                npcManager,
+                providers.getPlotProvider(),
+                guildTraderNPC,
+                getLogger()
+            );
+
+            // Config laden
+            guildTraderManager.loadFromConfig(getConfig());
+
+            getLogger().info("✓ GuildTrader NPC registered (" + guildTraderManager.getGuildTraderCount() + " loaded)");
+        } else {
+            getLogger().warning("○ GuildTrader NPC skipped (PlotProvider not available)");
+        }
+
         // TODO: Banker-NPC registrieren
         // BankerNPC bankerNPC = new BankerNPC(...);
         // npcManager.registerNPCType("banker", bankerNPC);
@@ -200,11 +252,29 @@ public class NPCModule extends JavaPlugin implements Listener {
     }
 
     /**
+     * Gibt den GuildTraderManager zurück.
+     *
+     * @return GuildTraderManager oder null wenn nicht aktiviert
+     */
+    public GuildTraderManager getGuildTraderManager() {
+        return guildTraderManager;
+    }
+
+    /**
      * Prüft ob Economy-System aktiviert ist.
      *
      * @return true wenn aktiviert
      */
     public boolean isEconomySystemEnabled() {
         return economySystemEnabled;
+    }
+
+    /**
+     * Prüft ob Plot-System aktiviert ist.
+     *
+     * @return true wenn aktiviert
+     */
+    public boolean isPlotSystemEnabled() {
+        return plotSystemEnabled;
     }
 }
