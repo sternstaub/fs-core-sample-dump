@@ -45,6 +45,10 @@ public abstract class SmallChestUI extends BaseUI implements Listener {
 
     @Override
     public void open(Player player) {
+        // Deregistriere alte Listener BEVOR wir einen neuen registrieren
+        // (verhindert mehrfache Listener bei rebuild())
+        org.bukkit.event.HandlerList.unregisterAll(this);
+
         // Event-Listener registrieren (benötigt BaseUI.setPlugin() beim Server-Start!)
         if (getPlugin() != null) {
             Bukkit.getPluginManager().registerEvents(this, getPlugin());
