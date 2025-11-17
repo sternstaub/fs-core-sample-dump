@@ -10,6 +10,7 @@ import de.fallenstar.core.registry.AdminCommandRegistry;
 import de.fallenstar.core.registry.PlotTypeRegistry;
 import de.fallenstar.core.registry.ProviderRegistry;
 import de.fallenstar.core.registry.UIRegistry;
+import de.fallenstar.core.ui.BaseUI;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -44,9 +45,13 @@ public class FallenStarCore extends JavaPlugin {
         getLogger().info("║   FallenStar Paper Core v1.0      ║");
         getLogger().info("║   Modular Plugin System            ║");
         getLogger().info("╚════════════════════════════════════╝");
-        
+
         // Config laden/erstellen
         saveDefaultConfig();
+
+        // UI-Framework initialisieren (Plugin-Instanz setzen)
+        BaseUI.setPlugin(this);
+        getLogger().info("✓ UI-Framework initialized");
 
         // DataStore initialisieren
         initializeDataStore();

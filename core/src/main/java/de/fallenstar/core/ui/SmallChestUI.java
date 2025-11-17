@@ -34,23 +34,21 @@ public abstract class SmallChestUI extends BaseUI implements Listener {
     public static final int SIZE = 27; // 3 Zeilen
     protected static final Map<UUID, SmallChestUI> activeUIs = new HashMap<>();
 
-    protected final Plugin plugin;
-
     /**
      * Konstruktor für SmallChestUI.
      *
-     * @param plugin Plugin-Instanz (für Event-Registrierung)
      * @param title Titel des Chest-UI
      */
-    public SmallChestUI(Plugin plugin, String title) {
+    public SmallChestUI(String title) {
         super(title);
-        this.plugin = plugin;
     }
 
     @Override
     public void open(Player player) {
-        // Event-Listener registrieren
-        Bukkit.getPluginManager().registerEvents(this, plugin);
+        // Event-Listener registrieren (benötigt BaseUI.setPlugin() beim Server-Start!)
+        if (getPlugin() != null) {
+            Bukkit.getPluginManager().registerEvents(this, getPlugin());
+        }
 
         Inventory inventory = Bukkit.createInventory(null, SIZE, title);
 

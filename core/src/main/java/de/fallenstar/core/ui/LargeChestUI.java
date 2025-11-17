@@ -44,6 +44,11 @@ public abstract class LargeChestUI extends BaseUI implements Listener {
 
     @Override
     public void open(Player player) {
+        // Event-Listener registrieren (benötigt BaseUI.setPlugin() beim Server-Start!)
+        if (getPlugin() != null) {
+            Bukkit.getPluginManager().registerEvents(this, getPlugin());
+        }
+
         Inventory inventory = Bukkit.createInventory(null, SIZE, title);
 
         // Items in Inventory laden
