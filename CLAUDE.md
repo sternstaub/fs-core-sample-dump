@@ -1872,11 +1872,386 @@ registry.registerHandler("economy", new EconomyAdminHandler(currencyManager, pro
 
 ---
 
-**Last Updated:** 2025-11-16
+## Plot-System: Owner-Berechtigungen
+
+**Regel:** Grundstücks-Befehle erfordern Owner-Rechte!
+
+### Owner-Check Pattern
+
+Alle Plot-Verwaltungsbefehle müssen prüfen, ob der Spieler der Besitzer des Grundstücks ist:
+
+```java
+/**
+ * Prüft ob ein Spieler der Besitzer eines Plots ist.
+ *
+ * @param player Der Spieler
+ * @param plot Der Plot
+ * @return true wenn Besitzer
+ */
+private boolean isPlotOwner(Player player, Plot plot) {
+    PlotProvider plotProvider = providers.getPlotProvider();
+    try {
+        return plotProvider.isOwner(plot, player);
+    } catch (Exception e) {
+        // Bei Fehler: kein Zugriff
+        return false;
+    }
+}
+```
+
+### Berechtigungsmatrix
+
+#### Public Commands (ALLE Spieler):
+- `/plot info` - Plot-Informationen anzeigen
+- `/plot price list` - Preisliste anzeigen
+
+#### Owner-Only Commands (NUR Besitzer):
+- `/plot price set` - Preise festlegen
+- `/plot storage setreceiver` - Empfangskiste setzen
+- `/plot npc spawn` - NPCs spawnen
+- `/plot gui` - Verwaltungs-GUI öffnen (Owner-Ansicht)
+
+### Implementierungsbeispiel
+
+```java
+public boolean execute(Player player, String[] args) {
+    Plot plot = getCurrentPlot(player);
+
+    // Public Commands
+    if (subCommand.equals("list")) {
+        handleListPrices(player, plot);
+        return true;
+    }
+
+    // Owner-Check für alle anderen Befehle
+    if (!isPlotOwner(player, plot)) {
+        player.sendMessage("§cDu musst der Besitzer dieses Grundstücks sein!");
+        try {
+            String owner = plotProvider.getOwnerName(plot);
+            player.sendMessage("§7Besitzer: §e" + owner);
+        } catch (Exception e) {
+            // Ignoriere Fehler
+        }
+        return true;
+    }
+
+    // Owner-exklusive Befehle
+    switch (subCommand) {
+        case "set" -> handleSetPrice(player, plot);
+        // ...
+    }
+}
+```
+
+---
+
+## NPC-Modul: Geplante Features (Sprint 13-14)
+
+### NPC-Typen
+
+#### 1. Weltbankier NPC
+**Funktion:** Globale Bank ohne Limits
+- Sterne einzahlen → Vault-Guthaben
+- Sterne auszahlen ← Vault-Guthaben
+- **Kein Limit** für Transaktionen
+- Verfügbar auf speziellen Admin-Plots
+
+**Verwendung:**
+```
+/npc create weltbankier
+Rechtsklick auf NPC → Banking-UI öffnet sich
+```
+
+#### 2. Lokaler Bankier NPC
+**Funktion:** Bank mit eigenem Münzbestand
+- Gehört zu einer spezifischen Bank (Plot-gebunden)
+- Kann Sterne UND eigene Währung handeln
+- **Eigener Münzbestand** (kann zur Neige gehen!)
+- Verwendet Plot-Storage für Münzreserven
+
+**Features:**
+- Währungsumtausch (Sterne ↔ Lokale Währung)
+- Münzbestand einsehbar (Owner)
+- Automatische Nachfüllung via Plot-Storage
+
+**Verwendung:**
+```
+/plot npc spawn bankier
+/plot npc config bankier currency <währung>
+Rechtsklick → Banking-UI (zeigt Münzbestand)
+```
+
+#### 3. Botschafter NPC
+**Funktion:** Schnellreise-System
+- Teleportiert Spieler zu anderen Botschaftern
+- **Entgelt konfigurierbar** (Default: 100 Sterne)
+- Preis wird vom Plot-Besitzer festgelegt
+- Falls kein Plot → Standard-Config-Wert
+
+**Features:**
+- Liste aller verbundenen Botschafter
+- Teleportations-Kosten variabel
+- Integration mit WorldAnchors-System
+
+**Verwendung:**
+```
+/plot npc spawn botschafter
+/plot npc price botschafter <preis>  # Default: 100 Sterne
+Rechtsklick → Botschafter-Liste UI
+```
+
+#### 4. Gildenhändler NPC
+**Funktion:** Automatischer Handelsgilde-Händler
+- Wird über Handelsgilde-Plot erstellt
+- Verkauft/Kauft zu Gilden-Preisen
+- **Nutzt Plot-Storage** des Handelsgilde-Grundstücks
+- Items aus Storage = verkaufbar
+
+**Features:**
+- Preise via `/plot price set` definiert
+- Automatisches Inventar (Plot-Storage)
+- Einnahmen → Plot-Storage
+- Ausgaben ← Plot-Storage
+
+**Verwendung:**
+```
+/plot npc spawn gildenhändler  # Nur auf Handelsgilde-Plots
+Rechtsklick → Handelsgilde-Shop UI (Preisliste)
+```
+
+#### 5. Spielerhändler NPC
+**Funktion:** Persönlicher Händler für Spieler
+- Spieler kauft Händler-Slot auf Grundstück
+- Spieler konfiguriert eigenen Shop
+- Nutzt eigenes Inventar (nicht Plot-Storage)
+
+**Features:**
+- Kauf via `/plot gui` → "Händler kaufen"
+- Slotten via `/plot slots` auf Grundstück
+- Eigene Preise festlegbar
+- Eigenes Inventar verwalten
+
+**Verwendung:**
+```
+/plot gui  # Auf Gilde-Grundstück
+→ "Händler kaufen" Button (kostet Sterne)
+/plot slots  # Zeigt freie Händler-Slots
+→ Händler auf Slot platzieren
+/npc config myhändler inventory  # Inventar verwalten
+```
+
+---
+
+## WorldAnchors-Modul: NPC-Slots (Sprint 11-12)
+
+### NPC-Slot-System
+
+**Konzept:** Grundstücke haben definierte NPC-Slots für Positionierung.
+
+### Plot-basierte NPC-Slots
+
+```java
+public class PlotNPCSlots {
+    private final Plot plot;
+    private final Map<String, NPCSlot> slots;  // Slot-ID → NPCSlot
+
+    /**
+     * Erstellt einen neuen NPC-Slot auf diesem Plot.
+     *
+     * @param slotId Eindeutige Slot-ID
+     * @param location Position des Slots
+     * @param type Erlaubter NPC-Typ (optional)
+     */
+    public void createSlot(String slotId, Location location, String type) {
+        slots.put(slotId, new NPCSlot(slotId, location, type));
+    }
+
+    /**
+     * Slottet einen NPC auf diesen Plot.
+     *
+     * @param slotId Slot-ID
+     * @param npc NPC-Instanz
+     */
+    public void assignNPC(String slotId, NPC npc) {
+        NPCSlot slot = slots.get(slotId);
+        if (slot != null && slot.isEmpty()) {
+            slot.assign(npc);
+        }
+    }
+}
+```
+
+### Commands
+
+```bash
+# Slot erstellen (Owner)
+/plot slots create <slot-id> [typ]  # Erstellt Slot an aktueller Position
+
+# Slots anzeigen
+/plot slots list  # Zeigt alle Slots + Status
+
+# NPC slotten
+/plot slots assign <slot-id> <npc-id>  # Weist NPC einem Slot zu
+
+# Slot entfernen
+/plot slots remove <slot-id>  # Entfernt Slot (nur wenn leer)
+```
+
+### Slot-Typen
+
+- **Freier Slot:** Akzeptiert alle NPC-Typen
+- **Händler-Slot:** Nur für Gildenhändler/Spielerhändler
+- **Bankier-Slot:** Nur für Bankier-NPCs
+- **Botschafter-Slot:** Nur für Botschafter-NPCs
+
+### Integration mit Handelsgilde
+
+Handelsgilde-Plots erhalten automatisch Händler-Slots:
+
+```yaml
+# config.yml
+plot-types:
+  handelsgilde:
+    default-slots:
+      - type: gildenhändler
+        count: 3  # 3 automatische Händler-Slots
+      - type: spielerhändler
+        count: 5  # 5 Slots für Spieler-Händler (käuflich)
+```
+
+---
+
+## UI-System: Guest vs. Owner Pattern
+
+**Regel:** Jedes UI hat zwei Ansichten - für Besucher und für Besitzer.
+
+### UI-Ansichten-Pattern
+
+```java
+public interface PlotUI {
+    /**
+     * Öffnet die Guest-Ansicht (read-only).
+     *
+     * @param player Der Spieler (Besucher)
+     * @param plot Der Plot
+     */
+    void openGuestView(Player player, Plot plot);
+
+    /**
+     * Öffnet die Owner-Ansicht (read-write).
+     *
+     * @param player Der Spieler (Besitzer)
+     * @param plot Der Plot
+     */
+    void openOwnerView(Player player, Plot plot);
+}
+```
+
+### Automatische Ansichtswahl
+
+```java
+public void openPlotUI(Player player, Plot plot) {
+    PlotProvider plotProvider = providers.getPlotProvider();
+
+    try {
+        if (plotProvider.isOwner(plot, player)) {
+            // Besitzer → Owner-Ansicht (Verwaltung)
+            ui.openOwnerView(player, plot);
+        } else {
+            // Gast → Guest-Ansicht (Nutzung)
+            ui.openGuestView(player, plot);
+        }
+    } catch (Exception e) {
+        // Fehler → Guest-Ansicht
+        ui.openGuestView(player, plot);
+    }
+}
+```
+
+### Beispiel: Handelsgilde-UI
+
+#### Guest-Ansicht (Besucher)
+```
+┌─────────────────────────────────┐
+│    Handelsgilde - Shop          │
+├─────────────────────────────────┤
+│ [Item 1] - 10 Sterne   [Kaufen] │
+│ [Item 2] - 25 Sterne   [Kaufen] │
+│ [Item 3] - 50 Sterne   [Kaufen] │
+│                                  │
+│ [Schließen]                      │
+└─────────────────────────────────┘
+```
+- **Read-Only:** Nur Preise sichtbar
+- **Aktion:** Kaufen (falls Guthaben vorhanden)
+
+#### Owner-Ansicht (Besitzer)
+```
+┌─────────────────────────────────┐
+│  Handelsgilde - Verwaltung      │
+├─────────────────────────────────┤
+│ [Item 1] - 10 ⭐ [Preis ändern]  │
+│ [Item 2] - 25 ⭐ [Preis ändern]  │
+│ [Item 3] - 50 ⭐ [Preis ändern]  │
+│                                  │
+│ [Händler verwalten]              │
+│ [Storage anzeigen]               │
+│ [Schließen]                      │
+└─────────────────────────────────┘
+```
+- **Read-Write:** Preise änderbar
+- **Extra-Features:** Händler-Verwaltung, Storage-Zugriff
+
+### UI-Implementierung
+
+```java
+public class HandelsgildeUI extends LargeChestUI {
+
+    public void openGuestView(Player player, Plot plot) {
+        setTitle("Handelsgilde - Shop");
+
+        // Zeige nur Verkaufs-Items
+        loadShopItems(plot);
+
+        // Kaufen-Buttons
+        addBuyButtons();
+
+        // Keine Verwaltungs-Optionen
+        open(player);
+    }
+
+    public void openOwnerView(Player player, Plot plot) {
+        setTitle("Handelsgilde - Verwaltung");
+
+        // Zeige Items + Preise
+        loadShopItems(plot);
+
+        // Preis-Ändern-Buttons
+        addPriceEditButtons();
+
+        // Verwaltungs-Optionen
+        addManagementButtons();
+
+        open(player);
+    }
+}
+```
+
+### Best Practices
+
+1. ✅ **Immer Owner-Check:** Vor `openOwnerView()` prüfen
+2. ✅ **Fallback zu Guest:** Bei Fehler → Guest-Ansicht
+3. ✅ **Unterschiedliche Items:** Owner sieht mehr Optionen
+4. ✅ **UI-Titel unterscheiden:** "Shop" vs. "Verwaltung"
+5. ✅ **Permissions:** Owner-Buttons nur für Besitzer anzeigen
+
+---
+
+**Last Updated:** 2025-11-17
 **Repository:** fs-core-sample-dump
-**Branch:** claude/ui-items-implementation-018dv6yDuyau5iAYBKeGSMHg
+**Branch:** claude/integrate-vault-economy-01BK4oPAgZ6Eutu9QZsJTv2h
 **Version:** 1.0-SNAPSHOT
-**Sprint Status:** Sprint 9-10 ✅ **ABGESCHLOSSEN** (Economy: CurrencyManager ✅, VaultEconomyProvider ✅, Withdraw ✅, Reflection eliminiert ✅, Plot Storage Integration ✅)
+**Sprint Status:** Sprint 9-10 ✅ **ABGESCHLOSSEN** (Economy: CurrencyManager ✅, VaultEconomyProvider ✅, Withdraw ✅, Reflection eliminiert ✅, Plot Storage Integration ✅, Owner-Checks ✅)
 **Architektur:** Command-Handler-Registry-Pattern (kein Reflection mehr!)
 **Build Status:** ✅ Alle Module kompilieren erfolgreich (Core, Plots, Items, UI, Economy)
 **Testbefehle:** `/fscore admin [gui/items/plots/economy]` - Handler-basierte Struktur aktiv

@@ -76,6 +76,8 @@ public class PlotPriceCommand {
         }
 
         PlotProvider plotProvider = providers.getPlotProvider();
+
+        // Prüfe Plot-Typ
         String plotType;
         try {
             plotType = plotProvider.getPlotType(plot);
@@ -97,9 +99,28 @@ public class PlotPriceCommand {
         }
 
         String subCommand = args[0].toLowerCase();
+
+        // /plot price list ist für ALLE sichtbar
+        if (subCommand.equals("list")) {
+            handleListPrices(player, plot);
+            return true;
+        }
+
+        // ALLE anderen Befehle erfordern Besitzer-Rechte
+        if (!isPlotOwner(player, plot)) {
+            player.sendMessage("§cDu musst der Besitzer dieses Grundstücks sein!");
+            try {
+                String owner = plotProvider.getOwnerName(plot);
+                player.sendMessage("§7Besitzer: §e" + owner);
+            } catch (Exception e) {
+                // Ignoriere Fehler
+            }
+            return true;
+        }
+
+        // Owner-exklusive Befehle
         switch (subCommand) {
             case "set" -> handleSetPrice(player, plot);
-            case "list" -> handleListPrices(player, plot);
             case "adjust" -> {
                 if (args.length < 3) {
                     player.sendMessage("§cFehler: /plot price adjust <sessionId> <amount>");
@@ -129,6 +150,23 @@ public class PlotPriceCommand {
         }
 
         return true;
+    }
+
+    /**
+     * Prüft ob ein Spieler der Besitzer eines Plots ist.
+     *
+     * @param player Der Spieler
+     * @param plot Der Plot
+     * @return true wenn Besitzer
+     */
+    private boolean isPlotOwner(Player player, Plot plot) {
+        PlotProvider plotProvider = providers.getPlotProvider();
+        try {
+            return plotProvider.isOwner(plot, player);
+        } catch (Exception e) {
+            // Bei Fehler: kein Zugriff
+            return false;
+        }
     }
 
     /**
