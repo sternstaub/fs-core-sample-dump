@@ -130,7 +130,7 @@ public class ItemsModule extends JavaPlugin implements Listener {
         if (mmoItemsAvailable && itemProvider != null) {
             // Erstelle Singleton-Listener-Instanzen für Event-Handling
             ItemBrowserUI browserListener = new ItemBrowserUI(itemProvider);
-            TestTradeUI tradeListener = new TestTradeUI(itemProvider, specialItemManager);
+            TestTradeUI tradeListener = new TestTradeUI(this, itemProvider, specialItemManager);
 
             // Registriere als Event-Listener
             getServer().getPluginManager().registerEvents(browserListener, this);
@@ -149,7 +149,7 @@ public class ItemsModule extends JavaPlugin implements Listener {
                     "items-trade-test",
                     "Trade Test UI (MMOItems)",
                     "Demo-Händler mit Custom-Items und Münz-System",
-                    () -> new TestTradeUI(itemProvider, specialItemManager)
+                    () -> new TestTradeUI(this, itemProvider, specialItemManager)
             );
 
             getLogger().info("✓ Test-UIs registered (items-browser, items-trade-test)");

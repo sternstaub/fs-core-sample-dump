@@ -9,6 +9,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.plugin.Plugin;
 
 import java.util.List;
 
@@ -28,8 +29,8 @@ public class TestTradeUI extends SmallChestUI {
     private final MMOItemsItemProvider itemProvider;
     private final SpecialItemManager specialItemManager;
 
-    public TestTradeUI(MMOItemsItemProvider itemProvider, SpecialItemManager specialItemManager) {
-        super("§6Test Händler - Prototype");
+    public TestTradeUI(Plugin plugin, MMOItemsItemProvider itemProvider, SpecialItemManager specialItemManager) {
+        super(plugin, "§6Test Händler - Prototype");
         this.itemProvider = itemProvider;
         this.specialItemManager = specialItemManager;
     }
