@@ -157,6 +157,7 @@ public class PriceSetListener implements Listener {
 
         // Erstelle und öffne UI
         PriceEditorUI ui = new PriceEditorUI(
+                Bukkit.getPluginManager().getPlugin("FallenStar-Plots"),
                 "Preis festlegen - " + getItemDisplayName(item),
                 callback,
                 coinBronze,
