@@ -1,12 +1,12 @@
 package de.fallenstar.npc;
 
 import de.fallenstar.core.FallenStarCore;
-import de.fallenstar.core.command.AdminCommandRegistry;
 import de.fallenstar.core.event.ProvidersReadyEvent;
 import de.fallenstar.core.provider.NPCProvider;
 import de.fallenstar.core.provider.PlotProvider;
 import de.fallenstar.core.provider.TownProvider;
 import de.fallenstar.core.provider.EconomyProvider;
+import de.fallenstar.core.registry.AdminCommandRegistry;
 import de.fallenstar.core.registry.PlotTypeRegistry;
 import de.fallenstar.core.registry.ProviderRegistry;
 import de.fallenstar.npc.command.NPCAdminHandler;
