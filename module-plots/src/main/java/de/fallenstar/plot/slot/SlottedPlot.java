@@ -1,7 +1,5 @@
 package de.fallenstar.plot.slot;
 
-import de.fallenstar.core.provider.Plot;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -32,7 +30,7 @@ import java.util.UUID;
  * @author FallenStar
  * @version 1.0
  */
-public interface SlottedPlot extends Plot {
+public interface SlottedPlot {
 
     /**
      * Gibt alle aktiven Slots auf diesem Grundstück zurück.

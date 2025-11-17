@@ -223,19 +223,7 @@ fs-core-sample-dump/
 │       ├── plugin.yml
 │       └── config.yml
 │
-├── module-worldanchors/             # FallenStar WorldAnchors (Sprint 9-10)
-│   ├── pom.xml                      # Schnellreisen, POIs, Wegpunkte
-│   ├── src/main/java/de/fallenstar/worldanchors/
-│   │   ├── WorldAnchorsModule.java            # Main class
-│   │   ├── command/                           # Reise-Befehle
-│   │   ├── manager/                           # Reise-Manager
-│   │   ├── model/                             # POI-Modelle
-│   │   └── task/                              # Reise-Tasks
-│   └── src/main/resources/
-│       ├── plugin.yml
-│       └── config.yml
-│
-├── module-npcs/                     # FallenStar NPCs (Sprint 11-12)
+├── module-npcs/                     # FallenStar NPCs (Sprint 13-14)
 │   ├── pom.xml                      # NPC-System (Citizens-Integration)
 │   ├── src/main/java/de/fallenstar/npcs/
 │   │   ├── NPCsModule.java                    # Main class
@@ -257,12 +245,11 @@ fs-core-sample-dump/
 ```
 Core (UI-Framework + alle Provider-Interfaces + NoOp-Implementierungen)
  ↑
- ├── Plots            (Plot-System + Storage ✅, Towny → TownyPlotProvider)
+ ├── Plots            (Plot-System + Storage ✅, Slot-System ✅, Towny → TownyPlotProvider)
  ├── Items            (MMOItems-Wrapper ✅, registriert MMOItemsItemProvider)
- ├── UI               (Konkrete UIs 🔨: ConfirmationUI, SimpleTradeUI, UIButtonManager)
- ├── Economy          (Weltwirtschaft, Vault, nutzt ItemProvider + UI)
- ├── WorldAnchors     (Schnellreisen, POIs, Wegpunkte)
- ├── NPCs             (NPC-System, Denizen-Ersatz, nutzt ItemProvider + PlotProvider + UI)
+ ├── UI               (Konkrete UIs ✅: ConfirmationUI, SimpleTradeUI, UIButtonManager)
+ ├── Economy          (Weltwirtschaft ✅, Vault ✅, nutzt ItemProvider + UI)
+ ├── NPCs             (NPC-System, Botschafter-NPCs, Denizen-Ersatz, nutzt ItemProvider + PlotProvider + UI)
  ├── Chat             (Matrix-Bridge → MatrixChatProvider)
  ├── Auth             (Keycloak → KeycloakAuthProvider)
  └── WebHooks         (Wiki/Forum-Integration)
@@ -1245,8 +1232,8 @@ mvn clean package
 - `core/target/FallenStar-Core-1.0.jar`
 - `module-plots/target/FallenStar-Plots-1.0.jar`
 - `module-items/target/FallenStar-Items-1.0.jar`
+- `module-ui/target/FallenStar-UI-1.0.jar`
 - `module-economy/target/FallenStar-Economy-1.0.jar`
-- `module-worldanchors/target/FallenStar-WorldAnchors-1.0.jar`
 - `module-npcs/target/FallenStar-NPCs-1.0.jar`
 
 ### Implementing Missing Classes
@@ -1991,7 +1978,7 @@ Rechtsklick → Banking-UI (zeigt Münzbestand)
 **Features:**
 - Liste aller verbundenen Botschafter
 - Teleportations-Kosten variabel
-- Integration mit WorldAnchors-System
+- Integration mit Plot-Slots System (AMBASSADOR-Slots)
 
 **Verwendung:**
 ```

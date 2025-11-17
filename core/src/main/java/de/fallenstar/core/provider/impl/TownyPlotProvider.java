@@ -222,6 +222,49 @@ public class TownyPlotProvider implements PlotProvider {
         }
     }
 
+    @Override
+    public boolean isOwner(Plot plot, Player player)
+            throws ProviderFunctionalityNotFoundException {
+        if (!isAvailable()) {
+            throw new ProviderFunctionalityNotFoundException(
+                "PlotProvider", "isOwner", "Towny API not available"
+            );
+        }
+
+        try {
+            TownBlock townBlock = plot.getNativePlot();
+
+            if (townBlock == null) {
+                return false;
+            }
+
+            // Hole Resident des Spielers
+            Resident resident = townyAPI.getResident(player.getUniqueId());
+            if (resident == null) {
+                return false;
+            }
+
+            // Prüfe ob Spieler der Resident-Owner des TownBlocks ist
+            if (townBlock.hasResident()) {
+                return townBlock.getResident().equals(resident);
+            }
+
+            // Wenn kein Resident-Owner: Prüfe ob Spieler der Mayor ist
+            Town town = townBlock.getTownOrNull();
+            if (town != null && town.isMayor(resident)) {
+                return true;
+            }
+
+            return false;
+
+        } catch (Exception e) {
+            throw new ProviderFunctionalityNotFoundException(
+                "PlotProvider", "isOwner",
+                "Error checking ownership: " + e.getMessage()
+            );
+        }
+    }
+
     /**
      * Generiert eine eindeutige UUID für ein Plot.
      *
