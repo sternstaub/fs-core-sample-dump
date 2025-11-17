@@ -3,7 +3,7 @@ package de.fallenstar.plot.ui;
 import de.fallenstar.core.provider.Plot;
 import de.fallenstar.core.provider.PlotProvider;
 import de.fallenstar.core.registry.ProviderRegistry;
-import de.fallenstar.core.ui.LargeChestUI;
+import de.fallenstar.core.ui.SmallChestUI;
 import de.fallenstar.plot.command.PlotPriceCommand;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;

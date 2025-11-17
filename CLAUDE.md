@@ -2044,79 +2044,198 @@ Rechtsklick → Handelsgilde-Shop UI (Preisliste)
 
 ## Plot-Slots System (Sprint 11-12)
 
-### NPC-Slot-System
+### Konzept
 
-**Konzept:** Grundstücke haben definierte NPC-Slots für Positionierung.
+**Slots sind Positionen auf Grundstücken, an denen NPCs platziert werden können.**
 
-### Plot-basierte NPC-Slots
+Dies ermöglicht:
+- Feste NPC-Platzierung durch Grundstücksbesitzer
+- Dynamische NPC-Platzierung (fahrende Händler, Handwerker)
+- Slot-Verwaltung über UI
+- Verschiedene Slot-Typen für verschiedene NPC-Arten
+
+### Architektur
+
+#### PlotSlot-Klasse
 
 ```java
-public class PlotNPCSlots {
-    private final Plot plot;
-    private final Map<String, NPCSlot> slots;  // Slot-ID → NPCSlot
+package de.fallenstar.plot.slot;
 
-    /**
-     * Erstellt einen neuen NPC-Slot auf diesem Plot.
-     *
-     * @param slotId Eindeutige Slot-ID
-     * @param location Position des Slots
-     * @param type Erlaubter NPC-Typ (optional)
-     */
-    public void createSlot(String slotId, Location location, String type) {
-        slots.put(slotId, new NPCSlot(slotId, location, type));
+public class PlotSlot {
+    private final UUID slotId;           // Eindeutige Slot-ID
+    private final Location location;     // Position des Slots
+    private final SlotType slotType;     // Typ des Slots
+    private UUID assignedNPC;            // Zugewiesener NPC (optional)
+    private boolean active;              // Aktiv-Status
+
+    public enum SlotType {
+        TRADER("Händler"),
+        BANKER("Bankier"),
+        AMBASSADOR("Botschafter"),
+        CRAFTSMAN("Handwerker"),
+        TRAVELING_MERCHANT("Fahrender Händler")
     }
 
-    /**
-     * Slottet einen NPC auf diesen Plot.
-     *
-     * @param slotId Slot-ID
-     * @param npc NPC-Instanz
-     */
-    public void assignNPC(String slotId, NPC npc) {
-        NPCSlot slot = slots.get(slotId);
-        if (slot != null && slot.isEmpty()) {
-            slot.assign(npc);
-        }
-    }
+    // Methoden: assignNPC(), removeNPC(), isOccupied()
 }
 ```
 
-### Commands
+#### SlottedPlot-Interface
+
+```java
+package de.fallenstar.plot.slot;
+
+public interface SlottedPlot extends Plot {
+    // Slot-Verwaltung
+    List<PlotSlot> getActiveSlots();
+    List<PlotSlot> getAllSlots();
+    Optional<PlotSlot> getSlot(UUID slotId);
+    List<PlotSlot> getSlotsByType(PlotSlot.SlotType slotType);
+
+    // Slot-Operationen
+    boolean addSlot(PlotSlot slot);
+    boolean removeSlot(UUID slotId);
+
+    // Slot-Limits
+    int getMaxSlots();
+    int getUsedSlots();
+    int getFreeSlots();
+    boolean hasFreeSlots();
+}
+```
+
+#### SlottedPlotForMerchants-Interface
+
+```java
+package de.fallenstar.plot.slot;
+
+public interface SlottedPlotForMerchants extends SlottedPlot {
+    // Händler-Slots
+    int getTraderSlotAmount();
+    List<PlotSlot> getTraderSlots();
+    int getMaxTraderSlots();  // Default: 5
+
+    // Bankier-Slots
+    int getBankerSlotAmount();
+    List<PlotSlot> getBankerSlots();
+    int getMaxBankerSlots();  // Default: 2
+
+    // Handwerker-Slots
+    int getCraftsmanSlotAmount();
+    List<PlotSlot> getCraftsmanSlots();
+    int getMaxCraftsmanSlots();  // Default: 3
+}
+```
+
+### Slot-Typen
+
+| Slot-Typ | Verwendung | Max. Anzahl (Handelsgilde) |
+|----------|------------|----------------------------|
+| **TRADER** | Gildenhändler, Spielerhändler | 5 |
+| **BANKER** | Lokale Bankiers (eigene Münzbestände) | 2 |
+| **AMBASSADOR** | Botschafter-NPCs (Schnellreisen) | - |
+| **CRAFTSMAN** | Handwerks-NPCs (Rüstungsschmied, etc.) | 3 |
+| **TRAVELING_MERCHANT** | Fahrende Händler (selbstplatzierend) | - |
+
+### Commands (geplant)
 
 ```bash
 # Slot erstellen (Owner)
-/plot slots create <slot-id> [typ]  # Erstellt Slot an aktueller Position
+/plot slots create <typ>          # Erstellt Slot an aktueller Position
 
 # Slots anzeigen
-/plot slots list  # Zeigt alle Slots + Status
+/plot slots list                  # Zeigt alle Slots + Status
 
 # NPC slotten
 /plot slots assign <slot-id> <npc-id>  # Weist NPC einem Slot zu
 
 # Slot entfernen
-/plot slots remove <slot-id>  # Entfernt Slot (nur wenn leer)
+/plot slots remove <slot-id>      # Entfernt Slot (nur wenn leer)
+
+# Slot aktivieren/deaktivieren
+/plot slots toggle <slot-id>      # Aktiviert/Deaktiviert Slot
 ```
 
-### Slot-Typen
+### Use Cases
 
-- **Freier Slot:** Akzeptiert alle NPC-Typen
-- **Händler-Slot:** Nur für Gildenhändler/Spielerhändler
-- **Bankier-Slot:** Nur für Bankier-NPCs
-- **Botschafter-Slot:** Nur für Botschafter-NPCs
+#### 1. Feste NPC-Platzierung (Owner)
+```java
+// Besitzer erstellt Händler-Slot an Position
+PlotSlot slot = new PlotSlot(location, PlotSlot.SlotType.TRADER);
+merchantPlot.addSlot(slot);
 
-### Integration mit Handelsgilde
+// Besitzer platziert NPC auf Slot
+slot.assignNPC(npcUuid);
+```
 
-Handelsgilde-Plots erhalten automatisch Händler-Slots:
+#### 2. Dynamische NPC-Platzierung (Traveling Merchants)
+```java
+// Fahrender Händler sucht freien Slot
+SlottedPlotForMerchants plot = ...;
+List<PlotSlot> freeSlots = plot.getTraderSlots().stream()
+    .filter(slot -> !slot.isOccupied())
+    .toList();
+
+if (!freeSlots.isEmpty()) {
+    PlotSlot slot = freeSlots.get(0);
+    slot.assignNPC(travelingMerchantUuid);
+    // NPC teleportiert sich auf Slot-Position
+}
+```
+
+#### 3. Slot-Limits prüfen
+```java
+// Prüfe ob noch Händler-Slots verfügbar
+if (plot.getTraderSlotAmount() < plot.getMaxTraderSlots()) {
+    // Neuer Slot kann erstellt werden
+}
+```
+
+### Integration mit HandelsgildeUI
+
+```java
+// HandelsgildeUI zeigt Slots im Owner-View
+private void buildOwnerOptions() {
+    // Slot 20: Händler-Slots verwalten
+    ItemStack slotsButton = createButton(
+        Material.ARMOR_STAND,
+        "§6Händler-Slots",
+        "§7Slots: " + plot.getUsedSlots() + "/" + plot.getMaxSlots()
+    );
+
+    setItem(20, slotsButton, player -> {
+        // Öffne Slot-Management-UI
+        openSlotManagementUI(player, plot);
+    });
+}
+```
+
+### Persistierung
+
+Slots werden in der Plot-Config persistent gespeichert:
 
 ```yaml
-# config.yml
-plot-types:
-  handelsgilde:
-    default-slots:
-      - type: gildenhändler
-        count: 3  # 3 automatische Händler-Slots
-      - type: spielerhändler
-        count: 5  # 5 Slots für Spieler-Händler (käuflich)
+# Plot-Config (Towny MetaData oder eigene Config)
+slots:
+  slot-1:
+    uuid: "abc-123-def-456"
+    type: TRADER
+    location:
+      world: "world"
+      x: 100.5
+      y: 64.0
+      z: 200.5
+      yaw: 0.0
+      pitch: 0.0
+    assigned-npc: "npc-uuid-789"
+    active: true
+
+  slot-2:
+    uuid: "xyz-789-uvw-012"
+    type: BANKER
+    location: ...
+    assigned-npc: null
+    active: true
 ```
 
 ---
