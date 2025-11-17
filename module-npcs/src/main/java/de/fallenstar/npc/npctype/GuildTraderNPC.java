@@ -111,8 +111,11 @@ public class GuildTraderNPC implements NPCType, TradingEntity {
                 return;
             }
 
-            // Öffne Trading-UI
-            openTradeUI(player, npcId);
+            // Erstelle NPC-spezifische TradingEntity-Instanz
+            GuildTraderInstance traderInstance = new GuildTraderInstance(npcId);
+
+            // Öffne Trading-UI mit NPC-spezifischer Instanz
+            openTradeUIForInstance(player, traderInstance);
 
         } catch (Exception e) {
             player.sendMessage("§cEin Fehler ist beim Öffnen des Händlers aufgetreten!");
@@ -275,31 +278,56 @@ public class GuildTraderNPC implements NPCType, TradingEntity {
     }
 
     /**
-     * Öffnet das Trading-UI für einen Spieler.
+     * Öffnet das Trading-UI für einen Spieler mit einer NPC-spezifischen Instanz.
+     *
+     * Nutzt das TradeUI aus dem UI-Modul (Reflection-basiert).
+     * Falls UI-Modul nicht verfügbar → Fallback zu einfacher Chat-Liste.
      *
      * @param player Der Spieler
-     * @param npcId UUID des NPCs
+     * @param traderInstance Die NPC-spezifische TradingEntity-Instanz
      */
-    private void openTradeUI(Player player, UUID npcId) {
+    private void openTradeUIForInstance(Player player, GuildTraderInstance traderInstance) {
         try {
-            // Hole UI-Modul
+            // Prüfe ob UI-Modul geladen ist
             var uiPlugin = Bukkit.getPluginManager().getPlugin("FallenStar-UI");
             if (uiPlugin == null) {
                 // Fallback: Zeige einfache Nachricht
                 player.sendMessage("§eUI-Modul nicht geladen - Trading UI nicht verfügbar");
-                showSimpleTradeList(player, npcId);
+                showSimpleTradeList(player, traderInstance.getNpcId());
                 return;
             }
 
-            // TODO: Reflection - hole TradeUI und öffne es
-            // TradeUI.openTradeUI(player, this);
+            // Reflection: Hole TradeUI-Klasse
+            Class<?> tradeUIClass = Class.forName("de.fallenstar.ui.ui.TradeUI");
 
-            // Vorläufig: Zeige einfache Liste
-            showSimpleTradeList(player, npcId);
+            // Reflection: Hole openTradeUI(Player, TradingEntity) Methode
+            var openMethod = tradeUIClass.getMethod("openTradeUI", Player.class,
+                Class.forName("de.fallenstar.core.provider.TradingEntity"));
+
+            // Aufruf: TradeUI.openTradeUI(player, traderInstance)
+            openMethod.invoke(null, player, traderInstance);
+
+            logger.fine("Opened TradeUI for player " + player.getName() +
+                       " with GuildTrader " + traderInstance.getNpcId());
+
+        } catch (ClassNotFoundException e) {
+            // TradeUI-Klasse nicht gefunden → Fallback
+            logger.warning("TradeUI class not found - UI module may not be loaded");
+            player.sendMessage("§eTrading-UI nicht verfügbar");
+            showSimpleTradeList(player, traderInstance.getNpcId());
+
+        } catch (NoSuchMethodException e) {
+            // openTradeUI Methode nicht gefunden → API-Änderung?
+            logger.warning("TradeUI.openTradeUI() method not found - API may have changed");
+            player.sendMessage("§cFehler: Trading-UI API inkompatibel!");
+            showSimpleTradeList(player, traderInstance.getNpcId());
 
         } catch (Exception e) {
+            // Unerwarteter Fehler
             logger.warning("Failed to open TradeUI: " + e.getMessage());
+            e.printStackTrace();
             player.sendMessage("§cFehler beim Öffnen des Handels!");
+            showSimpleTradeList(player, traderInstance.getNpcId());
         }
     }
 
@@ -438,5 +466,82 @@ public class GuildTraderNPC implements NPCType, TradingEntity {
             .filter(e -> e.getValue().equals(plot))
             .map(Map.Entry::getKey)
             .forEach(this::invalidateCache);
+    }
+
+    // ==================== Inner Class: GuildTraderInstance ====================
+
+    /**
+     * NPC-spezifische TradingEntity-Instanz für einen einzelnen Gildenhändler.
+     *
+     * Diese Klasse wraps einen spezifischen NPC und delegiert an GuildTraderNPC.
+     * Sie ermöglicht es dem TradeUI, TradeSets für einen konkreten NPC abzurufen.
+     *
+     * **Architektur:**
+     * - GuildTraderNPC = NPC-Typ (verwaltet ALLE Gildenhändler)
+     * - GuildTraderInstance = Einzelner NPC (TradingEntity für TradeUI)
+     *
+     * **Verwendung:**
+     * <pre>
+     * GuildTraderInstance instance = new GuildTraderInstance(npcId);
+     * TradeUI.openTradeUI(player, instance);
+     * </pre>
+     */
+    public class GuildTraderInstance implements TradingEntity {
+
+        private final UUID npcId;
+
+        /**
+         * Erstellt eine neue GuildTraderInstance.
+         *
+         * @param npcId UUID des NPCs
+         */
+        public GuildTraderInstance(UUID npcId) {
+            this.npcId = npcId;
+        }
+
+        /**
+         * Gibt die NPC-ID zurück.
+         *
+         * @return NPC-UUID
+         */
+        public UUID getNpcId() {
+            return npcId;
+        }
+
+        @Override
+        public List<?> getTradeSets() {
+            // Delegiere an GuildTraderNPC mit NPC-ID
+            return GuildTraderNPC.this.getTradeSets(npcId);
+        }
+
+        @Override
+        public Optional<Inventory> getTradeInventory() {
+            // Delegiere an GuildTraderNPC
+            return GuildTraderNPC.this.getPlotStorageInventory(npcId);
+        }
+
+        @Override
+        public boolean canExecuteTrade(Object trade, Player player) {
+            // Delegiere an GuildTraderNPC
+            return GuildTraderNPC.this.canExecuteTrade(trade, player);
+        }
+
+        @Override
+        public boolean executeTrade(Object trade, Player player) {
+            // Delegiere an GuildTraderNPC
+            return GuildTraderNPC.this.executeTrade(trade, player);
+        }
+
+        @Override
+        public String getName() {
+            // Delegiere an GuildTraderNPC
+            return GuildTraderNPC.this.getName();
+        }
+
+        @Override
+        public TradingEntityType getEntityType() {
+            // Delegiere an GuildTraderNPC
+            return GuildTraderNPC.this.getEntityType();
+        }
     }
 }
