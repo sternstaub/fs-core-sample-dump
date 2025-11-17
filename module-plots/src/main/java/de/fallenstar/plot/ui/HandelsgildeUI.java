@@ -48,6 +48,7 @@ import java.util.List;
  */
 public class HandelsgildeUI extends SmallChestUI {
 
+    private final Plugin plugin;
     private final ProviderRegistry providers;
     private final PlotPriceCommand priceCommand;
     private final Plot plot;
@@ -70,6 +71,7 @@ public class HandelsgildeUI extends SmallChestUI {
             boolean isOwner
     ) {
         super(isOwner ? "§6§lHandelsgilde - Verwaltung" : "§e§lHandelsgilde - Shop");
+        this.plugin = plugin;
         this.providers = providers;
         this.priceCommand = priceCommand;
         this.plot = plot;

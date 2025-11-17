@@ -166,13 +166,23 @@ public class PlotNameManager {
     private String getTownyPlotName(TownBlock townBlock) {
         try {
             // Versuche Towny MetaData API (bevorzugt)
-            if (townBlock.hasMetaData(METADATA_KEY)) {
-                StringDataField field = (StringDataField) townBlock.getMetaData(METADATA_KEY);
-                String value = field.getValue();
-                logger.fine("Plot-Name aus Towny MetaData geladen: " + value);
-                return value;
+            // HINWEIS: MetaData API ist in dieser Towny-Version nicht verfügbar
+            // Nutze Reflection für API-Kompatibilität
+            java.lang.reflect.Method hasMetaDataMethod = townBlock.getClass().getMethod("hasMetaData", String.class);
+            boolean hasMetaData = (boolean) hasMetaDataMethod.invoke(townBlock, METADATA_KEY);
+
+            if (hasMetaData) {
+                java.lang.reflect.Method getMetaDataMethod = townBlock.getClass().getMethod("getMetaData", String.class);
+                Object metaDataObj = getMetaDataMethod.invoke(townBlock, METADATA_KEY);
+
+                if (metaDataObj instanceof StringDataField) {
+                    StringDataField field = (StringDataField) metaDataObj;
+                    String value = field.getValue();
+                    logger.fine("Plot-Name aus Towny MetaData geladen: " + value);
+                    return value;
+                }
             }
-        } catch (NoSuchMethodError | Exception e) {
+        } catch (NoSuchMethodError | NoSuchMethodException | Exception e) {
             // Towny MetaData API nicht verfügbar oder fehlerhaft
             logger.fine("Towny MetaData API nicht verfügbar, nutze Config-Fallback: " + e.getMessage());
         }
