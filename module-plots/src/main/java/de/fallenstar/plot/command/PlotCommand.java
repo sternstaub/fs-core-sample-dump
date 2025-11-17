@@ -281,42 +281,37 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
     }
 
     /**
-     * Öffnet die Handelsgilde-UI.
+     * Öffnet die Handelsgilde-UI (Guest/Owner Views).
      *
      * @param player Der Spieler
      * @param uiProvider UIProvider-Instanz
      */
     private void openHandelsgildeUI(Player player, de.fallenstar.core.provider.UIProvider uiProvider) {
-        var menu = new de.fallenstar.core.ui.UIMenu(
-            "Handelsgilde - Verwaltung",
-            "Optionen für Handelsgilde-Grundstücke"
-        );
-
-        // Button: Handelspreis festlegen
-        menu.addButton(de.fallenstar.core.ui.UIButton.of(
-            "set_price",
-            "Handelspreis festlegen",
-            "/plot price set"
-        ));
-
-        // Button: Preisliste anzeigen
-        menu.addButton(de.fallenstar.core.ui.UIButton.of(
-            "list_prices",
-            "Preisliste anzeigen",
-            "/plot price list"
-        ));
-
-        // Button: Handelsgilde-Infos
-        menu.addButton(de.fallenstar.core.ui.UIButton.of(
-            "info",
-            "Grundstücks-Info",
-            "/plot info"
-        ));
-
+        // Hole aktuellen Plot
+        var plotProvider = providers.getPlotProvider();
         try {
-            uiProvider.showMenu(player, menu);
+            var plot = plotProvider.getPlot(player.getLocation());
+            if (plot == null) {
+                player.sendMessage("§cDu stehst nicht auf einem Grundstück!");
+                return;
+            }
+
+            // Prüfe ob Spieler Owner ist
+            boolean isOwner = plotProvider.isOwner(plot, player);
+
+            // Öffne HandelsgildeUI (mit Guest/Owner View)
+            de.fallenstar.plot.ui.HandelsgildeUI ui = new de.fallenstar.plot.ui.HandelsgildeUI(
+                    providers,
+                    priceCommand,
+                    plot,
+                    isOwner
+            );
+
+            ui.open(player);
+
         } catch (Exception e) {
-            player.sendMessage("§cFehler beim Öffnen der UI: " + e.getMessage());
+            player.sendMessage("§cFehler beim Öffnen der Handelsgilde-UI: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
