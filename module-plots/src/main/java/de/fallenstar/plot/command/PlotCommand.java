@@ -254,6 +254,8 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
     /**
      * Handhabt GUI-Commands - öffnet grundstückstyp-abhängige UIs.
      *
+     * Öffnet IMMER ein grafisches GUI (kein Text-UI).
+     *
      * @param player Der Spieler
      * @param args GUI-Subcommand Args
      * @return true wenn erfolgreich
@@ -261,13 +263,6 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
     private boolean handleGuiCommand(Player player, String[] args) {
         if (!plotSystemEnabled) {
             player.sendMessage("§cPlot-System ist nicht verfügbar!");
-            return true;
-        }
-
-        // Hole UIProvider
-        var uiProvider = providers.getUIProvider();
-        if (uiProvider == null || !uiProvider.isAvailable()) {
-            player.sendMessage("§cUI-System ist nicht verfügbar!");
             return true;
         }
 
@@ -280,6 +275,9 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
 
+            // Prüfe ob Spieler Owner ist
+            boolean isOwner = plotProvider.isOwner(plot, player);
+
             // Öffne grundstückstyp-spezifische UI
             String plotType = plotProvider.getPlotType(plot);
             if (plotType == null) {
@@ -287,15 +285,17 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
             }
 
             switch (plotType.toLowerCase()) {
-                case "handelsgilde" -> openHandelsgildeUI(player, uiProvider);
-                case "botschaft" -> openBotschaftUI(player, uiProvider);
-                default -> openDefaultPlotUI(player, uiProvider, plot, plotType);
+                case "handelsgilde" -> openHandelsgildeUI(player, plot, isOwner);
+                case "market" -> openMarketPlotUI(player, plot, isOwner);
+                case "botschaft" -> openBotschaftUI(player, plot, isOwner);
+                default -> openDefaultPlotUI(player, plot, plotType, isOwner);
             }
 
             return true;
 
         } catch (Exception e) {
             player.sendMessage("§cFehler beim Abrufen der Plot-Informationen: " + e.getMessage());
+            e.printStackTrace();
             return true;
         }
     }
@@ -304,21 +304,11 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
      * Öffnet die Handelsgilde-UI (Guest/Owner Views).
      *
      * @param player Der Spieler
-     * @param uiProvider UIProvider-Instanz
+     * @param plot Der Plot
+     * @param isOwner Ob Spieler Owner ist
      */
-    private void openHandelsgildeUI(Player player, de.fallenstar.core.provider.UIProvider uiProvider) {
-        // Hole aktuellen Plot
-        var plotProvider = providers.getPlotProvider();
+    private void openHandelsgildeUI(Player player, de.fallenstar.core.provider.Plot plot, boolean isOwner) {
         try {
-            var plot = plotProvider.getPlot(player.getLocation());
-            if (plot == null) {
-                player.sendMessage("§cDu stehst nicht auf einem Grundstück!");
-                return;
-            }
-
-            // Prüfe ob Spieler Owner ist
-            boolean isOwner = plotProvider.isOwner(plot, player);
-
             // Öffne HandelsgildeUI (mit Guest/Owner View)
             de.fallenstar.plot.ui.HandelsgildeUI ui = new de.fallenstar.plot.ui.HandelsgildeUI(
                     plugin,
@@ -337,73 +327,83 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
     }
 
     /**
-     * Öffnet die Botschaft-UI (Placeholder).
+     * Öffnet die Market-Plot-UI (Guest/Owner Views).
      *
      * @param player Der Spieler
-     * @param uiProvider UIProvider-Instanz
+     * @param plot Der Plot
+     * @param isOwner Ob Spieler Owner ist
      */
-    private void openBotschaftUI(Player player, de.fallenstar.core.provider.UIProvider uiProvider) {
-        var menu = new de.fallenstar.core.ui.UIMenu(
-            "Botschaft - Verwaltung",
-            "Optionen für Botschafts-Grundstücke"
-        );
-
-        menu.addButton(de.fallenstar.core.ui.UIButton.of(
-            "info",
-            "Grundstücks-Info",
-            "/plot info"
-        ));
-
-        player.sendMessage("§7[Roadmap] Botschaft-UI noch nicht vollständig implementiert");
+    private void openMarketPlotUI(Player player, de.fallenstar.core.provider.Plot plot, boolean isOwner) {
         try {
-            uiProvider.showMenu(player, menu);
+            // Prüfe ob Slot-System verfügbar
+            if (!slotSystemEnabled || plugin.getPlotSlotManager() == null) {
+                player.sendMessage("§cSlot-System ist nicht verfügbar!");
+                return;
+            }
+
+            // Hole/Erstelle MarketPlot
+            de.fallenstar.plot.slot.PlotSlotManager slotManager = plugin.getPlotSlotManager();
+            de.fallenstar.plot.slot.MarketPlot marketPlot = slotManager.getOrCreateMarketPlot(plot);
+
+            // Öffne MarketPlotUI
+            de.fallenstar.plot.ui.MarketPlotUI ui = new de.fallenstar.plot.ui.MarketPlotUI(
+                    plugin,
+                    providers,
+                    slotManager,
+                    plot,
+                    marketPlot,
+                    isOwner
+            );
+
+            ui.open(player);
+
         } catch (Exception e) {
-            player.sendMessage("§cFehler beim Öffnen der UI: " + e.getMessage());
+            player.sendMessage("§cFehler beim Öffnen der Market-UI: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
     /**
-     * Öffnet die Default-Plot-UI.
+     * Öffnet die Botschaft-UI (Placeholder).
      *
      * @param player Der Spieler
-     * @param uiProvider UIProvider-Instanz
+     * @param plot Der Plot
+     * @param isOwner Ob Spieler Owner ist
+     */
+    private void openBotschaftUI(Player player, de.fallenstar.core.provider.Plot plot, boolean isOwner) {
+        player.sendMessage("§7[Roadmap] Botschaft-UI noch nicht implementiert");
+        player.sendMessage("§7Geplant für zukünftige Sprints");
+        player.sendMessage("§7Nutze §e/plot info§7 für Plot-Informationen");
+    }
+
+    /**
+     * Öffnet die Default-Plot-UI (Text-basiert, da kein GUI vorhanden).
+     *
+     * @param player Der Spieler
      * @param plot Der Plot
      * @param plotType Der Plot-Typ
+     * @param isOwner Ob Spieler Owner ist
      */
-    private void openDefaultPlotUI(Player player, de.fallenstar.core.provider.UIProvider uiProvider,
-                                     de.fallenstar.core.provider.Plot plot, String plotType) {
-        var menu = new de.fallenstar.core.ui.UIMenu(
-            "Plot-Verwaltung",
-            "Grundstück: " + plotType
-        );
-
-        menu.addButton(de.fallenstar.core.ui.UIButton.of(
-            "info",
-            "Grundstücks-Info",
-            "/plot info"
-        ));
+    private void openDefaultPlotUI(Player player, de.fallenstar.core.provider.Plot plot,
+                                     String plotType, boolean isOwner) {
+        player.sendMessage("§e§m-----§r §6Plot-Verwaltung §e§m-----");
+        player.sendMessage("§7Grundstück-Typ: §e" + plotType);
+        player.sendMessage("");
+        player.sendMessage("§7Verfügbare Commands:");
+        player.sendMessage("§e/plot info §7- Grundstücks-Informationen");
 
         if (storageSystemEnabled) {
-            menu.addButton(de.fallenstar.core.ui.UIButton.of(
-                "storage",
-                "Storage-Verwaltung",
-                "/plot storage list"
-            ));
+            player.sendMessage("§e/plot storage list §7- Storage-Verwaltung");
         }
 
         if (npcSystemEnabled) {
-            menu.addButton(de.fallenstar.core.ui.UIButton.of(
-                "npc",
-                "NPC-Verwaltung",
-                "/plot npc list"
-            ));
+            player.sendMessage("§e/plot npc list §7- NPC-Verwaltung");
         }
 
-        try {
-            uiProvider.showMenu(player, menu);
-        } catch (Exception e) {
-            player.sendMessage("§cFehler beim Öffnen der UI: " + e.getMessage());
-        }
+        player.sendMessage("§e§m-------------------------");
+        player.sendMessage("");
+        player.sendMessage("§7[Info] Für diesen Plot-Typ gibt es noch kein GUI.");
+        player.sendMessage("§7Nutze die Commands oben für die Verwaltung.");
     }
 
     /**

@@ -75,6 +75,21 @@ public class PlotSlotCommand {
             return true;
         }
 
+        // Prüfe ob Plot ein Market-Plot ist
+        try {
+            String plotType = plotProvider.getPlotType(plot);
+            if (plotType == null || !plotType.equalsIgnoreCase("market")) {
+                player.sendMessage(plugin.getConfig().getString("messages.market.not-market-plot",
+                        "§cDieses Grundstück ist kein Market-Grundstück!"));
+                player.sendMessage("§7Händler-Slots sind nur auf Market-Plots verfügbar.");
+                player.sendMessage("§7Nutze §e/plot set type market§7 um den Plot-Typ zu ändern.");
+                return true;
+            }
+        } catch (ProviderFunctionalityNotFoundException e) {
+            player.sendMessage("§cFehler beim Abrufen des Plot-Typs!");
+            return true;
+        }
+
         // Prüfe Owner-Rechte
         if (!isPlotOwner(player, plot)) {
             player.sendMessage(plugin.getConfig().getString("messages.no-permissions",
@@ -88,8 +103,7 @@ public class PlotSlotCommand {
             return true;
         }
 
-        // Prüfe ob Plot ein Market-Plot ist (hat Market-Type in Towny)
-        // Für jetzt: Erstelle MarketPlot on-demand
+        // Erstelle/Hole MarketPlot
         MarketPlot marketPlot = slotManager.getOrCreateMarketPlot(plot);
 
         // Verarbeite Subcommand
