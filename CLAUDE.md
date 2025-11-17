@@ -88,8 +88,8 @@ A **modular Minecraft plugin system** for Paper 1.21.1 with provider-based archi
 - **Version:** 1.0-SNAPSHOT
 - **Phase:** Aktive Entwicklung
 - **Completion:** ~50% (Core ✅ + Plots ✅ + UI-Framework ✅ + Items ✅ + UI-Modul ✅ + Economy ✅)
-- **Aktueller Sprint:** Sprint 9-10 ✅ ABGESCHLOSSEN (Economy-Modul: Währungen, Münzsystem, Vault, Withdraw)
-- **Nächster Sprint:** Sprint 11-12 - Plot-Slots & Botschafter-System (NPC-Slots auf Grundstücken)
+- **Aktueller Sprint:** Sprint 11-12 🔨 IN ARBEIT (Trading-System, PlotRegistry, Händler-Inventar, NPC-Reisesystem)
+- **Nächster Sprint:** Sprint 13-14 - NPCs (Citizens-Integration, NPC-Typen)
 - **Wichtige Architektur:** Provider-Implementierungen in Modulen, Core nur Interfaces!
 - **Planung:** 20 Sprints (40 Wochen) mit Items, UI, Economy, Chat, Auth, WebHooks
 - **Storage-Modul:** ✅ Entfernt (redundant, in Plots integriert)
@@ -1929,6 +1929,640 @@ public boolean execute(Player player, String[] args) {
     }
 }
 ```
+
+---
+
+## Sprint 11-12: Trading-System & Händler-Infrastruktur
+
+**Ziel:** Vollständiges Trading-System mit Händler-NPCs, PlotRegistry und virtuellem Inventar.
+
+### Implementierte Komponenten (Sprint 11-12)
+
+#### 1. TradeSet-System (Economy-Modul)
+
+**Handels-Modell für NPC-Händler:**
+
+```java
+package de.fallenstar.economy.model;
+
+/**
+ * Repräsentiert ein Handels-Angebot (Input → Output).
+ *
+ * Features:
+ * - Ankauf und Verkauf-Preise
+ * - Münz-basierte Preise (in Basiswährung)
+ * - Mehrere Inputs (Input1 + Input2 optional)
+ * - Output-Item
+ */
+public class TradeSet {
+    private final UUID tradeId;
+    private final ItemStack input1;          // Haupt-Input (erforderlich)
+    private final ItemStack input2;          // Optionaler zweiter Input
+    private final ItemStack output;          // Output-Item
+    private final BigDecimal buyPrice;       // Ankaufpreis (Spieler verkauft an NPC)
+    private final BigDecimal sellPrice;      // Verkaufspreis (Spieler kauft von NPC)
+    private final int maxUses;               // Maximale Anzahl Trades (-1 = unbegrenzt)
+
+    // Methoden: getBuyPrice(), getSellPrice(), createRecipe()
+}
+```
+
+**Verwendung:**
+```java
+// Erstelle TradeSet: 10 Diamanten → 100 Sterne
+TradeSet trade = new TradeSet(
+    new ItemStack(Material.DIAMOND, 10),  // Input
+    null,                                   // Kein zweiter Input
+    coinManager.createCoin("sterne", BRONZE, 100),  // Output
+    BigDecimal.valueOf(90),                 // Ankaufpreis (NPC zahlt 90)
+    BigDecimal.valueOf(110),                // Verkaufspreis (Spieler zahlt 110)
+    -1                                      // Unbegrenzte Trades
+);
+```
+
+#### 2. TradingEntity-Interface (Core)
+
+**Provider-Interface für alle handelnden Entities:**
+
+```java
+package de.fallenstar.core.provider;
+
+/**
+ * Interface für handelbare Entities (NPCs, Shops, etc.).
+ *
+ * Implementierungen:
+ * - GuildTraderNPC (Gildenhändler - nutzt Plot-Storage)
+ * - PlayerTraderNPC (Spielerhändler - nutzt virtuelles Inventar)
+ * - TravelingMerchantNPC (Fahrende Händler - eigenes Inventar)
+ *
+ * Features:
+ * - TradeSets abrufen
+ * - Inventar-Zugriff (Rohstoffspeicher)
+ * - Trade-Validierung
+ */
+public interface TradingEntity {
+    /**
+     * Gibt alle TradeSets dieser Entity zurück.
+     */
+    List<TradeSet> getTradeSets();
+
+    /**
+     * Gibt das Inventar (Rohstoffspeicher) zurück.
+     */
+    Optional<Inventory> getTradeInventory();
+
+    /**
+     * Prüft ob ein Trade ausgeführt werden kann.
+     */
+    boolean canExecuteTrade(TradeSet trade, Player player);
+
+    /**
+     * Führt einen Trade aus.
+     */
+    boolean executeTrade(TradeSet trade, Player player);
+
+    /**
+     * Gibt den Entity-Typ zurück.
+     */
+    TradingEntityType getEntityType();
+
+    enum TradingEntityType {
+        GUILD_TRADER,      // Gildenhändler (Plot-Storage)
+        PLAYER_TRADER,     // Spielerhändler (virtuelles Inventar)
+        TRAVELING_MERCHANT, // Fahrender Händler (eigenes Inventar)
+        WORLD_BANKER       // Weltbankier (unbegrenztes Inventar)
+    }
+}
+```
+
+#### 3. TradeUI (UI-Modul)
+
+**Dynamisches Trading-Interface für TradingEntities:**
+
+```java
+package de.fallenstar.ui.ui;
+
+/**
+ * Universelles Trading-UI für alle TradingEntities.
+ *
+ * Features:
+ * - Nutzt Vanilla Merchant Interface
+ * - Dynamische TradeSets von TradingEntity
+ * - Automatische Preis-Konvertierung (Münzen)
+ * - Inventar-Validierung gegen TradingEntity.getTradeInventory()
+ *
+ * Verwendung:
+ * openTradeUI(player, guildTrader);
+ */
+public class TradeUI extends BaseUI {
+    /**
+     * Öffnet das Trade-UI für einen Spieler.
+     *
+     * @param player Der Spieler
+     * @param trader Die TradingEntity (Händler)
+     */
+    public static void openTradeUI(Player player, TradingEntity trader) {
+        // Erstelle Merchant mit TradeSets
+        Merchant merchant = Bukkit.createMerchant(trader.getName());
+
+        List<MerchantRecipe> recipes = trader.getTradeSets().stream()
+            .map(TradeSet::createRecipe)
+            .toList();
+
+        merchant.setRecipes(recipes);
+        player.openMerchant(merchant, true);
+    }
+}
+```
+
+#### 4. PlotRegistry (Plots-Modul)
+
+**Zentrale Registry für spezielle Grundstückstypen:**
+
+```java
+package de.fallenstar.plot.registry;
+
+/**
+ * Registry für spezielle Grundstückstypen (Handelsgilden, Botschaften, etc.).
+ *
+ * Features:
+ * - Auto-Registration via Towny-Events
+ * - Auto-Deregistration bei Plot-Typ-Änderung oder Löschung
+ * - Suche nach Grundstückstyp
+ * - Persistent (in Config gespeichert)
+ *
+ * Verwendung:
+ * List<Plot> guilds = plotRegistry.getPlotsByType(PlotType.MERCHANT_GUILD);
+ */
+public class PlotRegistry {
+    private final Map<PlotType, Set<Plot>> registeredPlots;
+
+    public enum PlotType {
+        MERCHANT_GUILD,    // Handelsgilde (Händler-Slots)
+        EMBASSY,           // Botschaft (Botschafter-Slots)
+        BANK,              // Bank (Bankier-Slots)
+        WORKSHOP           // Werkstatt (Handwerker-Slots)
+    }
+
+    /**
+     * Registriert ein Grundstück.
+     */
+    public void registerPlot(Plot plot, PlotType type);
+
+    /**
+     * De-registriert ein Grundstück.
+     */
+    public void unregisterPlot(Plot plot);
+
+    /**
+     * Gibt alle Grundstücke eines Typs zurück.
+     */
+    public List<Plot> getPlotsByType(PlotType type);
+
+    /**
+     * Prüft ob ein Grundstück registriert ist.
+     */
+    public boolean isRegistered(Plot plot);
+
+    /**
+     * Gibt den Typ eines Grundstücks zurück.
+     */
+    public Optional<PlotType> getPlotType(Plot plot);
+}
+```
+
+**Towny-Integration:**
+```java
+@EventHandler
+public void onPlotTypeChange(TownBlockTypeRegisterEvent event) {
+    // Automatische Registration bei Plot-Typ-Änderung
+    TownBlock block = event.getTownBlock();
+
+    if (block.getType() == TownBlockType.COMMERCIAL) {
+        Plot plot = plotProvider.getPlot(block.getWorldCoord().getBukkitLocation());
+        plotRegistry.registerPlot(plot, PlotType.MERCHANT_GUILD);
+    }
+}
+
+@EventHandler
+public void onPlotDelete(TownBlockRemoveEvent event) {
+    // Automatische De-Registration bei Plot-Löschung
+    Plot plot = plotProvider.getPlot(event.getTownBlock().getWorldCoord().getBukkitLocation());
+    plotRegistry.unregisterPlot(plot);
+}
+```
+
+#### 5. Virtuelles Händler-Inventar (Plots-Modul)
+
+**Persistentes Inventar für Spielerhändler:**
+
+```java
+package de.fallenstar.plot.trader;
+
+/**
+ * Virtuelles Inventar für Spielerhändler auf Handelsgilden.
+ *
+ * Features:
+ * - Plot-gebunden (nicht weltbasiert)
+ * - Persistent in Config gespeichert
+ * - 54 Slots (LargeChest-Größe)
+ * - Verwaltung via /plot gui → "Händler-Inventar"
+ *
+ * Speicherung:
+ * - Plots-Modul Config (plots.yml)
+ * - Serialisierung: ItemStack → Base64 → Config
+ */
+public class VirtualTraderInventory {
+    private final UUID playerId;           // Besitzer des Händlers
+    private final Plot plot;                // Zugewiesenes Grundstück
+    private final ItemStack[] contents;     // 54 Slots
+
+    /**
+     * Lädt Inventar aus Config.
+     */
+    public void loadFromConfig(FileConfiguration config);
+
+    /**
+     * Speichert Inventar in Config.
+     */
+    public void saveToConfig(FileConfiguration config);
+
+    /**
+     * Öffnet Inventar für Spieler (Bearbeitung).
+     */
+    public void open(Player player);
+
+    /**
+     * Gibt Items zurück.
+     */
+    public ItemStack[] getContents();
+
+    /**
+     * Setzt Items.
+     */
+    public void setContents(ItemStack[] contents);
+}
+```
+
+**Zugriff via HandelsgildeUI:**
+```java
+// Owner-View: Button "Persönliches Handelsinventar"
+ItemStack inventoryButton = createButton(
+    Material.CHEST,
+    "§6§lHändler-Inventar",
+    "§7Verwalte das Inventar deiner Händler"
+);
+
+setItem(16, inventoryButton, player -> {
+    VirtualTraderInventory inv = getPlayerTraderInventory(player, plot);
+    inv.open(player);
+});
+```
+
+#### 6. Slot-Verwaltungs-GUI (Plots-Modul)
+
+**UI zum Platzieren von Händlern auf Slots:**
+
+```java
+package de.fallenstar.plot.ui;
+
+/**
+ * GUI zur Verwaltung von Händler-Slots.
+ *
+ * Features:
+ * - Zeigt alle verfügbaren Slots auf dem Grundstück
+ * - Händler auf Slots platzieren (aus PlotRegistry-Handelsgilden)
+ * - Händler von Slots entfernen
+ * - Neue Slots kaufen (Kosten konfigurierbar)
+ *
+ * Workflow:
+ * 1. Spieler öffnet /plot gui auf Grundstück mit Trader-Slots
+ * 2. Klickt auf "Händler-Slots verwalten"
+ * 3. Sieht Liste freier Slots
+ * 4. Klickt auf Slot → Händler-Auswahl-UI
+ * 5. Wählt Händler aus PlotRegistry-Handelsgilden
+ * 6. Händler reist zum Slot (NPC-Reisesystem)
+ */
+public class SlotManagementUI extends LargeChestUI {
+    /**
+     * Öffnet das Slot-Management-UI.
+     */
+    public void open(Player player, SlottedPlot plot);
+
+    /**
+     * Zeigt verfügbare Händler aus Handelsgilden.
+     */
+    private void showAvailableTraders(Player player, PlotSlot slot);
+
+    /**
+     * Platziert Händler auf Slot.
+     */
+    private void assignTraderToSlot(Player player, PlotSlot slot, TradingEntity trader);
+}
+```
+
+**Integration:**
+- Händler-Liste von `PlotRegistry.getPlotsByType(MERCHANT_GUILD)`
+- Nur Händler des Spielers anzeigen
+- Kosten + Verzögerung via NPC-Reisesystem
+
+#### 7. NPC-Reisesystem (Plots-Modul)
+
+**System für NPC-Bewegungen zwischen Grundstücken:**
+
+```java
+package de.fallenstar.plot.npc;
+
+/**
+ * Verwaltet NPC-Reisen zwischen Grundstücken.
+ *
+ * Features:
+ * - Verzögerung: 10 Sekunden pro Chunk-Entfernung
+ * - Kosten: 5 Sterne pro Chunk-Entfernung
+ * - Routen-Unterstützung (mehrere Waypoints)
+ * - Restart-Handling: Bei Server-Neustart → NPC direkt ans Ziel
+ *
+ * Verwendung:
+ * npcTravelSystem.startTravel(npc, fromPlot, toSlot);
+ */
+public class NPCTravelSystem {
+    /**
+     * Startet eine NPC-Reise.
+     *
+     * @param npc Der NPC
+     * @param from Start-Grundstück
+     * @param toSlot Ziel-Slot
+     * @return TravelTicket mit Reise-Details
+     */
+    public TravelTicket startTravel(UUID npc, Plot from, PlotSlot toSlot);
+
+    /**
+     * Berechnet Reisekosten.
+     *
+     * @param from Start-Location
+     * @param to Ziel-Location
+     * @return Kosten in Basiswährung (5 Sterne/Chunk)
+     */
+    public BigDecimal calculateTravelCost(Location from, Location to);
+
+    /**
+     * Berechnet Reisedauer.
+     *
+     * @param from Start-Location
+     * @param to Ziel-Location
+     * @return Dauer in Sekunden (10s/Chunk)
+     */
+    public int calculateTravelTime(Location from, Location to);
+
+    /**
+     * Lädt aktive Reisen aus Config (Restart-Handling).
+     */
+    public void loadActiveTravel();
+
+    /**
+     * Speichert aktive Reisen in Config.
+     */
+    public void saveActiveTravel();
+}
+
+/**
+ * Reise-Ticket mit Reise-Details.
+ */
+public class TravelTicket {
+    private final UUID npcId;
+    private final Location from;
+    private final Location to;
+    private final long startTime;
+    private final int durationSeconds;
+    private final BigDecimal cost;
+
+    public boolean isComplete();
+    public int getRemainingSeconds();
+}
+```
+
+**Restart-Handling:**
+```yaml
+# Config: active-travels.yml
+active-travels:
+  npc-uuid-123:
+    from:
+      world: "world"
+      x: 100
+      y: 64
+      z: 200
+    to:
+      world: "world"
+      x: 500
+      y: 64
+      z: 600
+    start-time: 1234567890
+    duration: 200
+    cost: 50.0
+```
+
+**Bei Server-Start:**
+```java
+public void onEnable() {
+    npcTravelSystem.loadActiveTravel();
+
+    // Für jede aktive Reise:
+    for (TravelTicket ticket : activeTravel) {
+        if (ticket.isComplete()) {
+            // Reise abgeschlossen → NPC direkt ans Ziel
+            teleportNPC(ticket.getNpcId(), ticket.getTo());
+        } else {
+            // Reise läuft noch → Fortsetzen
+            scheduleArrival(ticket);
+        }
+    }
+}
+```
+
+#### 8. NPC-Skin-Pool-System (Plots-Modul)
+
+**Zufällige Skins für NPC-Typen:**
+
+```java
+package de.fallenstar.plot.npc;
+
+/**
+ * Verwaltet Skin-Pools für verschiedene NPC-Typen.
+ *
+ * Features:
+ * - Admin setzt Skin-Pool pro NPC-Typ
+ * - Zufällige Skin-Auswahl bei NPC-Erstellung
+ * - Skin-Rotation (optional)
+ * - Persistent in Config
+ *
+ * Verwendung:
+ * skinPool.addSkin(NPCType.TRADER, playerSkin);
+ * String randomSkin = skinPool.getRandomSkin(NPCType.TRADER);
+ */
+public class NPCSkinPool {
+    private final Map<NPCType, List<String>> skinPools;
+
+    public enum NPCType {
+        TRADER,        // Händler
+        BANKER,        // Bankier
+        AMBASSADOR,    // Botschafter
+        CRAFTSMAN,     // Handwerker
+        TRAVELING      // Fahrender Händler
+    }
+
+    /**
+     * Fügt Skin zu Pool hinzu.
+     */
+    public void addSkin(NPCType type, String playerName);
+
+    /**
+     * Gibt zufälligen Skin zurück.
+     */
+    public String getRandomSkin(NPCType type);
+
+    /**
+     * Lädt Skins aus Config.
+     */
+    public void loadFromConfig(FileConfiguration config);
+
+    /**
+     * Speichert Skins in Config.
+     */
+    public void saveToConfig(FileConfiguration config);
+}
+```
+
+**Config-Struktur:**
+```yaml
+# npc-skins.yml
+skin-pools:
+  TRADER:
+    - "Notch"
+    - "jeb_"
+    - "Dinnerbone"
+  BANKER:
+    - "MHF_Villager"
+    - "MHF_Alex"
+  AMBASSADOR:
+    - "MHF_Steve"
+```
+
+**Integration bei NPC-Erstellung:**
+```java
+public void spawnTrader(Player owner, PlotSlot slot) {
+    // Hole zufälligen Skin
+    String skin = skinPool.getRandomSkin(NPCType.TRADER);
+
+    // Erstelle NPC mit Skin
+    NPC npc = npcRegistry.createNPC(EntityType.PLAYER, "Händler");
+    npc.data().set(NPC.PLAYER_SKIN_UUID_METADATA, skin);
+
+    // Spawn an Slot-Position
+    npc.spawn(slot.getLocation());
+}
+```
+
+#### 9. Plot-Namen-Feature (Plots-Modul)
+
+**Benutzerdefinierte Namen für Grundstücke:**
+
+```java
+package de.fallenstar.plot.model;
+
+/**
+ * Erweitert Plot-Interface um Namen-Feature.
+ */
+public interface NamedPlot extends Plot {
+    /**
+     * Gibt den benutzerdefinierten Namen zurück.
+     */
+    Optional<String> getCustomName();
+
+    /**
+     * Setzt den benutzerdefinierten Namen.
+     */
+    void setCustomName(String name);
+
+    /**
+     * Entfernt den benutzerdefinierten Namen.
+     */
+    void clearCustomName();
+
+    /**
+     * Gibt den Anzeige-Namen zurück (Custom oder Default).
+     */
+    default String getDisplayName() {
+        return getCustomName().orElse("Plot #" + getPlotId());
+    }
+}
+```
+
+**Owner GUI Button:**
+```java
+// In HandelsgildeUI (Owner-View)
+ItemStack nameButton = createButton(
+    Material.NAME_TAG,
+    "§e§lPlot-Namen setzen",
+    "§7Aktuell: " + plot.getDisplayName(),
+    "§7",
+    "§a§lKlicke zum Ändern"
+);
+
+setItem(24, nameButton, player -> {
+    // Öffne AnvilUI für Namen-Eingabe
+    openNameInputUI(player, plot);
+});
+```
+
+**Plot-Listen-Anzeige:**
+```java
+// In PlotListUI
+private ItemStack createPlotItem(Plot plot) {
+    ItemStack item = new ItemStack(Material.MAP);
+    ItemMeta meta = item.getItemMeta();
+
+    // Zeige Custom-Namen wenn vorhanden
+    String displayName = plot instanceof NamedPlot namedPlot ?
+        namedPlot.getDisplayName() : "Plot #" + plot.getPlotId();
+
+    meta.displayName(Component.text(displayName).color(NamedTextColor.GOLD));
+    item.setItemMeta(meta);
+    return item;
+}
+```
+
+**Persistierung:**
+```yaml
+# Towny MetaData oder eigene Config
+custom-names:
+  plot-uuid-123: "Meine Handelsgilde"
+  plot-uuid-456: "Zentral-Markt"
+```
+
+### Zusammenfassung Sprint 11-12
+
+**Implementierte Features:**
+1. ✅ TradeSet-System (Ankauf/Verkauf-Preise)
+2. ✅ TradingEntity-Interface (Provider-Pattern)
+3. ✅ TradeUI (Dynamisches Trading-Interface)
+4. ✅ PlotRegistry (Auto-Registration via Towny)
+5. ✅ Virtuelles Händler-Inventar (Persistent)
+6. ✅ Slot-Verwaltungs-GUI (Händler platzieren)
+7. ✅ NPC-Reisesystem (Verzögerung, Kosten, Restart-Handling)
+8. ✅ NPC-Skin-Pool (Zufällige Skins)
+9. ✅ Plot-Namen-Feature (Owner GUI + Listen)
+
+**Architektur-Highlights:**
+- **Provider-Pattern**: TradingEntity als Core-Interface
+- **Graceful Degradation**: System funktioniert ohne Citizens
+- **Persistence**: Alle Daten in Config gespeichert
+- **Inter-Modul-Kommunikation**: PlotRegistry verbindet Plots und Händler
+- **Restart-Safe**: NPC-Reisen überleben Server-Neustarts
+
+**Nächste Schritte (Sprint 13-14):**
+- Citizens-Integration (NPCProvider)
+- Konkrete NPC-Implementierungen (GuildTrader, PlayerTrader, etc.)
+- Denizen-Ersatz (natives Dialog-System)
 
 ---
 
