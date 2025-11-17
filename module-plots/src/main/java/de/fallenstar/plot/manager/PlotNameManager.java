@@ -125,34 +125,58 @@ public class PlotNameManager {
     }
 
     /**
-     * Setzt den Namen eines Towny-Plots.
+     * Setzt den Namen eines Towny-Plots in MetaData.
      *
-     * NOTE: Towny MetaData API wurde entfernt (API-Inkompatibilität).
-     * Namen werden nur noch in Config gespeichert.
+     * **Priorisiert Towny MetaData** (persistenter als Config).
+     * Falls Towny MetaData-API nicht verfügbar → Fallback auf Config.
      *
      * @param townBlock Der TownBlock
      * @param name Der Name
      * @return true wenn erfolgreich
      */
     private boolean setTownyPlotName(TownBlock townBlock, String name) {
-        // Towny MetaData API nicht mehr verwendet
-        // Namen werden über setCustomName() in Config gespeichert
-        return false;  // Immer false, da nicht unterstützt
+        try {
+            // Versuche Towny MetaData API (bevorzugt)
+            if (name == null || name.trim().isEmpty()) {
+                // Entferne MetaData
+                townBlock.removeMetaData(METADATA_KEY, true);
+            } else {
+                // Setze MetaData
+                StringDataField field = new StringDataField(METADATA_KEY, name.trim());
+                townBlock.addMetaData(field, true);
+            }
+            logger.fine("Plot-Name in Towny MetaData gespeichert");
+            return true;
+        } catch (NoSuchMethodError | Exception e) {
+            // Towny MetaData API nicht verfügbar oder fehlerhaft
+            logger.fine("Towny MetaData API nicht verfügbar, nutze Config-Fallback: " + e.getMessage());
+            return false;  // Fallback zur Config-Speicherung
+        }
     }
 
     /**
-     * Holt den Namen eines Towny-Plots aus interner Map.
+     * Holt den Namen eines Towny-Plots aus MetaData.
      *
-     * NOTE: Towny MetaData API wurde entfernt (API-Inkompatibilität).
-     * Namen werden nur noch in Config gespeichert.
+     * **Priorisiert Towny MetaData** (persistenter als Config).
+     * Falls Towny MetaData-API nicht verfügbar → null (Fallback zur Config).
      *
      * @param townBlock Der TownBlock
      * @return Der Name oder null
      */
     private String getTownyPlotName(TownBlock townBlock) {
-        // Towny MetaData API nicht mehr verwendet
-        // Namen werden nur über PlotIdentifier in customNames Map gespeichert
-        return null;  // Fallback zur UUID-based Map
+        try {
+            // Versuche Towny MetaData API (bevorzugt)
+            if (townBlock.hasMetaData(METADATA_KEY)) {
+                StringDataField field = (StringDataField) townBlock.getMetaData(METADATA_KEY);
+                String value = field.getValue();
+                logger.fine("Plot-Name aus Towny MetaData geladen: " + value);
+                return value;
+            }
+        } catch (NoSuchMethodError | Exception e) {
+            // Towny MetaData API nicht verfügbar oder fehlerhaft
+            logger.fine("Towny MetaData API nicht verfügbar, nutze Config-Fallback: " + e.getMessage());
+        }
+        return null;  // Fallback zur Config-Map
     }
 
     /**

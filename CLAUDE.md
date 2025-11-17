@@ -664,6 +664,172 @@ data-manager:
       field3: false
 ```
 
+### 7. Towny MetaData für Plot-Daten (EMPFOHLEN!)
+
+**Regel:** Plot-bezogene Daten sollten in Towny MetaData gespeichert werden!
+
+**Warum Towny MetaData?**
+- ✅ **Persistenter** als Plugin-Config (direkt in Towny-Datenbank)
+- ✅ **Plot-gebunden** (überlebt Towny-Reloads)
+- ✅ **Keine Sync-Probleme** (keine separaten Config-Dateien)
+- ✅ **Automatisches Cleanup** (wird mit Plot gelöscht)
+
+**Empfohlene Speicherorte:**
+
+| Datentyp | Speicherort | Begründung |
+|----------|-------------|------------|
+| Plot-Namen | **Towny MetaData** | Plot-spezifisch, muss persistent sein |
+| Plot-Preise | **Towny MetaData** | Plot-spezifisch, Handelsgilden |
+| Slot-Positionen | **Towny MetaData** | Plot-spezifisch, NPC-Slots |
+| Plot-Typ-Registry | Plugin-Config | Globale Registry, nicht Plot-spezifisch |
+| Storage-Materialien | Plugin-Config | Weltweite Material-Liste |
+
+#### Towny MetaData Pattern (mit Fallback):
+
+```java
+public class PlotNameManager {
+    private static final String METADATA_KEY = "fs_plot_name";
+    private final Logger logger;
+    private final Map<UUID, String> plotNames;  // Fallback für nicht-Towny Plots
+
+    /**
+     * Setzt den Namen eines Plots.
+     *
+     * **Priorisiert Towny MetaData** (persistenter als Config).
+     * Falls Towny MetaData-API nicht verfügbar → Fallback auf Config.
+     *
+     * @param plot Der Plot
+     * @param name Der neue Name (null zum Löschen)
+     * @return true wenn erfolgreich gesetzt
+     */
+    public boolean setPlotName(Plot plot, String name) {
+        // Prüfe ob Towny-Plot
+        try {
+            TownBlock townBlock = plot.getNativePlot();
+            if (townBlock != null) {
+                return setTownyPlotName(townBlock, name);
+            }
+        } catch (ClassCastException e) {
+            // Nicht Towny - verwende Fallback
+        }
+
+        // Fallback: In-Memory Map (wird in Config gespeichert)
+        if (name == null || name.trim().isEmpty()) {
+            plotNames.remove(plot.getUuid());
+        } else {
+            plotNames.put(plot.getUuid(), name.trim());
+        }
+
+        return true;
+    }
+
+    /**
+     * Setzt den Namen eines Towny-Plots in MetaData.
+     *
+     * @param townBlock Der TownBlock
+     * @param name Der Name
+     * @return true wenn erfolgreich
+     */
+    private boolean setTownyPlotName(TownBlock townBlock, String name) {
+        try {
+            // Versuche Towny MetaData API (bevorzugt)
+            if (name == null || name.trim().isEmpty()) {
+                // Entferne MetaData
+                townBlock.removeMetaData(METADATA_KEY, true);
+            } else {
+                // Setze MetaData
+                StringDataField field = new StringDataField(METADATA_KEY, name.trim());
+                townBlock.addMetaData(field, true);
+            }
+            logger.fine("Plot-Name in Towny MetaData gespeichert");
+            return true;
+        } catch (NoSuchMethodError | Exception e) {
+            // Towny MetaData API nicht verfügbar oder fehlerhaft
+            logger.fine("Towny MetaData API nicht verfügbar, nutze Config-Fallback: " + e.getMessage());
+            return false;  // Fallback zur Config-Speicherung
+        }
+    }
+
+    /**
+     * Holt den Namen eines Towny-Plots aus MetaData.
+     *
+     * @param townBlock Der TownBlock
+     * @return Der Name oder null
+     */
+    private String getTownyPlotName(TownBlock townBlock) {
+        try {
+            // Versuche Towny MetaData API (bevorzugt)
+            if (townBlock.hasMetaData(METADATA_KEY)) {
+                StringDataField field = (StringDataField) townBlock.getMetaData(METADATA_KEY);
+                String value = field.getValue();
+                logger.fine("Plot-Name aus Towny MetaData geladen: " + value);
+                return value;
+            }
+        } catch (NoSuchMethodError | Exception e) {
+            // Towny MetaData API nicht verfügbar oder fehlerhaft
+            logger.fine("Towny MetaData API nicht verfügbar, nutze Config-Fallback: " + e.getMessage());
+        }
+        return null;  // Fallback zur Config-Map
+    }
+
+    /**
+     * Lädt Plot-Namen aus der Config (Fallback für nicht-Towny Plots).
+     */
+    public void loadFromConfig(FileConfiguration config) {
+        // ... Config-Fallback wie gehabt ...
+    }
+
+    /**
+     * Speichert Plot-Namen in die Config (Fallback für nicht-Towny Plots).
+     */
+    public void saveToConfig(FileConfiguration config) {
+        // ... Config-Fallback wie gehabt ...
+    }
+}
+```
+
+#### Best Practices für Towny MetaData:
+
+1. ✅ **Immer mit try-catch:** MetaData API kann fehlen (Towny-Versionsunterschiede)
+2. ✅ **Config als Fallback:** Für nicht-Towny Plots oder API-Fehler
+3. ✅ **Unique Keys:** Namespace verwenden (z.B. `fs_plot_name`, nicht `name`)
+4. ✅ **removeMetaData bei null:** Leere Werte löschen statt speichern
+5. ✅ **2. Parameter = true:** `addMetaData(field, true)` für sofortiges Speichern
+
+#### Verfügbare MetaData-Typen:
+
+```java
+import com.palmergames.bukkit.towny.object.metadata.*;
+
+// String-Daten (Plot-Namen, Beschreibungen)
+StringDataField nameField = new StringDataField("fs_plot_name", "Mein Plot");
+townBlock.addMetaData(nameField, true);
+
+// Integer-Daten (Slot-Anzahlen, Preise)
+IntegerDataField slotField = new IntegerDataField("fs_plot_slots", 5);
+townBlock.addMetaData(slotField, true);
+
+// Boolean-Daten (Flags, Optionen)
+BooleanDataField flagField = new BooleanDataField("fs_plot_public", true);
+townBlock.addMetaData(flagField, true);
+
+// Location-Daten (Spawn-Punkte, Slot-Positionen)
+LocationDataField locField = new LocationDataField("fs_npc_spawn", location);
+townBlock.addMetaData(locField, true);
+```
+
+#### Beispiel-Implementierungen im Projekt:
+
+- **PlotNameManager** (Plots-Modul):
+  - `setTownyPlotName()` - Speichert Plot-Namen in Towny MetaData
+  - `getTownyPlotName()` - Lädt Plot-Namen aus Towny MetaData
+  - Fallback zu Config-Map bei API-Fehlern
+
+- **Geplant für Sprint 11-12:**
+  - Plot-Slot-Positionen in MetaData
+  - Handelsgilde-Preise in MetaData
+  - NPC-Spawn-Punkte in MetaData
+
 ---
 
 ## Development Workflow

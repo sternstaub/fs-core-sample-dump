@@ -100,10 +100,15 @@ public class NamedPlot extends Plot {
     /**
      * Validiert einen Namen.
      *
+     * Anforderungen:
+     * - Mindestens 1 Zeichen, maximal 32 Zeichen
+     * - Nur Buchstaben, Zahlen, Leerzeichen, -, _
+     * - Keine Sonderzeichen (außer -, _)
+     *
      * @param name Der zu validierende Name
      * @return true wenn gültig
      */
-    public boolean isValidName(String name) {
+    public static boolean isValidName(String name) {
         if (name == null || name.isEmpty()) {
             return false;
         }
