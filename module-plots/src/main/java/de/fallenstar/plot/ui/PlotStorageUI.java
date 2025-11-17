@@ -1,7 +1,6 @@
 package de.fallenstar.plot.ui;
 
 import de.fallenstar.core.provider.Plot;
-import de.fallenstar.core.registry.ProviderRegistry;
 import de.fallenstar.core.ui.LargeChestUI;
 import de.fallenstar.plot.storage.manager.StorageManager;
 import de.fallenstar.plot.storage.model.ChestData;
@@ -14,7 +13,6 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.plugin.Plugin;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -54,7 +52,6 @@ public class PlotStorageUI extends LargeChestUI {
     /**
      * Erstellt eine neue PlotStorageUI.
      *
-     * @param plugin Plugin-Instanz
      * @param plot Der Plot
      * @param plotStorage Das PlotStorage-Objekt
      * @param storageProvider PlotStorageProvider
@@ -62,14 +59,13 @@ public class PlotStorageUI extends LargeChestUI {
      * @param isOwner Ob Spieler Owner ist
      */
     public PlotStorageUI(
-            Plugin plugin,
             Plot plot,
             PlotStorage plotStorage,
             PlotStorageProvider storageProvider,
             StorageManager storageManager,
             boolean isOwner
     ) {
-        super(plugin, "§6§lPlot-Storage");
+        super("§6§lPlot-Storage");
         this.plot = plot;
         this.plotStorage = plotStorage;
         this.storageProvider = storageProvider;

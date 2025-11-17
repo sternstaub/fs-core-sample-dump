@@ -391,7 +391,6 @@ public class MarketPlotUI extends SmallChestUI {
 
         // Öffne PlotStorageUI
         PlotStorageUI storageUI = new PlotStorageUI(
-                plugin,
                 plot,
                 plotStorage,
                 storageProvider,
