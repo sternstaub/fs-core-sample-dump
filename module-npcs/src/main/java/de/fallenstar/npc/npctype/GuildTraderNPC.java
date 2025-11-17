@@ -277,24 +277,44 @@ public class GuildTraderNPC implements NPCType, TradingEntity {
             ItemStack input = (ItemStack) getInput1.invoke(trade);
             ItemStack output = (ItemStack) getOutput.invoke(trade);
 
+            // Hole NPC-ID aus Kontext - WORKAROUND für Single-NPC
+            UUID npcId = npcPlotMap.keySet().stream().findFirst().orElse(null);
+            if (npcId == null) {
+                logger.warning("No NPC found for trade execution");
+                player.sendMessage("§cFehler: NPC nicht gefunden!");
+                return false;
+            }
+
+            // Hole Plot
+            Plot plot = npcPlotMap.get(npcId);
+            if (plot == null) {
+                logger.warning("NPC " + npcId + " has no plot assigned");
+                player.sendMessage("§cFehler: Grundstück nicht gefunden!");
+                return false;
+            }
+
             // 1. Entferne Input aus Spieler-Inventar (Münzen)
             player.getInventory().removeItem(input);
 
             // 2. Füge Output zu Spieler-Inventar hinzu (gekauftes Item)
             player.getInventory().addItem(output);
 
-            // 3. TODO: Füge Input zu Plot-Storage hinzu (Münzen ins Storage)
-            //    Dies erfordert Zugriff auf PlotStorageProvider
+            // 3. Füge Input zu Plot-Storage hinzu (Münzen ins Input-Chest)
+            addItemToPlotInputChest(plot, input);
 
-            // 4. TODO: Entferne Output aus Plot-Storage (Item aus Storage)
-            //    Dies erfordert Zugriff auf PlotStorageProvider
+            // 4. Entferne Output aus Plot-Storage (Item aus Output-Chest)
+            removeItemFromPlotOutputChest(plot, output);
+
+            // Cache invalidieren (TradeSets haben sich geändert)
+            invalidateCache(npcId);
 
             // Erfolgs-Nachricht
-            player.sendMessage("§aHandel erfolgreich! Du hast " + output.getAmount() + "x " +
+            player.sendMessage("§a✓ Handel erfolgreich! Du hast " + output.getAmount() + "x " +
                              output.getType() + " für " + input.getAmount() + " Münzen gekauft.");
 
             logger.info("Player " + player.getName() + " traded " + input.getAmount() +
-                       " coins for " + output.getAmount() + "x " + output.getType());
+                       " coins for " + output.getAmount() + "x " + output.getType() +
+                       " at plot " + plot.getIdentifier());
 
             return true;
 
@@ -588,6 +608,110 @@ public class GuildTraderNPC implements NPCType, TradingEntity {
         } catch (Exception e) {
             logger.warning("Failed to create coins: " + e.getMessage());
             return null;
+        }
+    }
+
+    /**
+     * Fügt ein Item zur Input-Chest eines Plots hinzu (Münzen vom Kauf).
+     *
+     * @param plot Der Plot
+     * @param item Das Item
+     */
+    private void addItemToPlotInputChest(Plot plot, ItemStack item) {
+        try {
+            var plotsPlugin = Bukkit.getPluginManager().getPlugin("FallenStar-Plots");
+            if (plotsPlugin == null) {
+                logger.warning("Plots module not loaded - cannot add item to input chest");
+                return;
+            }
+
+            // Reflection: hole PlotStorageProvider
+            var getStorageProvider = plotsPlugin.getClass().getMethod("getPlotStorageProvider");
+            var storageProvider = getStorageProvider.invoke(plotsPlugin);
+
+            // Reflection: addToInputChests(Plot, ItemStack)
+            var addMethod = storageProvider.getClass().getMethod("addToInputChests", Plot.class, ItemStack.class);
+            boolean success = (boolean) addMethod.invoke(storageProvider, plot, item);
+
+            if (success) {
+                logger.fine("Added " + item.getAmount() + "x " + item.getType() + " to input chest");
+            } else {
+                logger.warning("Failed to add item to input chest - no chest configured?");
+            }
+
+        } catch (Exception e) {
+            logger.warning("Failed to add item to input chest: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Entfernt ein Item aus den Output-Chests eines Plots (verkauftes Item).
+     *
+     * @param plot Der Plot
+     * @param item Das Item (type + amount werden geprüft)
+     */
+    private void removeItemFromPlotOutputChest(Plot plot, ItemStack item) {
+        try {
+            var plotsPlugin = Bukkit.getPluginManager().getPlugin("FallenStar-Plots");
+            if (plotsPlugin == null) {
+                logger.warning("Plots module not loaded - cannot remove item from output chest");
+                return;
+            }
+
+            // Reflection: hole PlotStorageProvider
+            var getStorageProvider = plotsPlugin.getClass().getMethod("getPlotStorageProvider");
+            var storageProvider = getStorageProvider.invoke(plotsPlugin);
+
+            // Reflection: hole PlotStorage
+            var getStorage = storageProvider.getClass().getMethod("getPlotStorage", Plot.class);
+            var plotStorage = getStorage.invoke(storageProvider, plot);
+
+            if (plotStorage == null) {
+                logger.warning("No storage found for plot " + plot.getIdentifier());
+                return;
+            }
+
+            // Reflection: getOutputChests()
+            var getOutputChests = plotStorage.getClass().getMethod("getOutputChests");
+            @SuppressWarnings("unchecked")
+            var outputChests = (java.util.List<?>) getOutputChests.invoke(plotStorage);
+
+            // Durchsuche Output-Chests und entferne Item
+            int remainingAmount = item.getAmount();
+
+            for (Object chestDataObj : outputChests) {
+                if (remainingAmount <= 0) break;
+
+                // Hole Location der Chest
+                var getLocation = chestDataObj.getClass().getMethod("getLocation");
+                org.bukkit.Location chestLocation = (org.bukkit.Location) getLocation.invoke(chestDataObj);
+
+                // Prüfe ob Truhe vorhanden
+                if (chestLocation.getBlock().getState() instanceof org.bukkit.block.Chest) {
+                    org.bukkit.block.Chest chest = (org.bukkit.block.Chest) chestLocation.getBlock().getState();
+                    org.bukkit.inventory.Inventory inv = chest.getInventory();
+
+                    // Entferne Item aus dieser Chest
+                    ItemStack toRemove = item.clone();
+                    toRemove.setAmount(remainingAmount);
+
+                    var removed = inv.removeItem(toRemove);
+
+                    // Berechne wie viel entfernt wurde
+                    int removedAmount = remainingAmount - (removed.isEmpty() ? 0 : removed.values().iterator().next().getAmount());
+                    remainingAmount -= removedAmount;
+
+                    logger.fine("Removed " + removedAmount + "x " + item.getType() + " from output chest");
+                }
+            }
+
+            if (remainingAmount > 0) {
+                logger.warning("Could only remove " + (item.getAmount() - remainingAmount) + "/" + item.getAmount() + " items from output chests");
+            }
+
+        } catch (Exception e) {
+            logger.warning("Failed to remove item from output chest: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
