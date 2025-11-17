@@ -89,7 +89,7 @@ A **modular Minecraft plugin system** for Paper 1.21.1 with provider-based archi
 - **Phase:** Aktive Entwicklung
 - **Completion:** ~50% (Core ✅ + Plots ✅ + UI-Framework ✅ + Items ✅ + UI-Modul ✅ + Economy ✅)
 - **Aktueller Sprint:** Sprint 9-10 ✅ ABGESCHLOSSEN (Economy-Modul: Währungen, Münzsystem, Vault, Withdraw)
-- **Nächster Sprint:** Sprint 11-12 - WorldAnchors (Schnellreisen, POIs, Wegpunkte)
+- **Nächster Sprint:** Sprint 11-12 - Plot-Slots & Botschafter-System (NPC-Slots auf Grundstücken)
 - **Wichtige Architektur:** Provider-Implementierungen in Modulen, Core nur Interfaces!
 - **Planung:** 20 Sprints (40 Wochen) mit Items, UI, Economy, Chat, Auth, WebHooks
 - **Storage-Modul:** ✅ Entfernt (redundant, in Plots integriert)
@@ -692,7 +692,7 @@ Das Projekt folgt einem 20-Sprint-Fahrplan (40 Wochen):
 | **5-6** | **Items (MMOItems-Wrapper)** | 2 Wochen | ✅ | MMOItems 6.10+ Reflection-Integration + Test-UIs |
 | **7-8** | **UI-Modul** | 2 Wochen | ✅ | ConfirmationUI ✅, SimpleTradeUI ✅, UIButtonManager ✅ |
 | **9-10** | **Economy** | 2 Wochen | ✅ | CurrencyManager ✅, Basiswährung "Sterne" ✅, Vault-Integration ✅, Withdraw-Funktionalität ✅ |
-| **11-12** | **WorldAnchors** | 2 Wochen | 📋 | Schnellreisen, POIs, Wegpunkte |
+| **11-12** | **Plot-Slots & Botschafter** | 2 Wochen | 📋 | NPC-Slots auf Grundstücken, Botschafter-NPCs |
 | **13-14** | **NPCs** | 2 Wochen | 📋 | NPC-System mit UI, Denizen-Ersatz |
 | **15-16** | **Chat** | 2 Wochen | 📋 | Matrix-Bridge, globaler Chat |
 | **17-18** | **Auth** | 2 Wochen | 📋 | Keycloak-Integration, SSO |
@@ -2042,7 +2042,7 @@ Rechtsklick → Handelsgilde-Shop UI (Preisliste)
 
 ---
 
-## WorldAnchors-Modul: NPC-Slots (Sprint 11-12)
+## Plot-Slots System (Sprint 11-12)
 
 ### NPC-Slot-System
 
