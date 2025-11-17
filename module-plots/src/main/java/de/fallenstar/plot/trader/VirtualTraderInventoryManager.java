@@ -184,7 +184,7 @@ public class VirtualTraderInventoryManager implements Listener {
      * @return Cache-Key
      */
     private String getCacheKey(UUID playerId, Plot plot) {
-        return plot.getPlotId() + ":" + playerId.toString();
+        return plot.getIdentifier() + ":" + playerId.toString();
     }
 
     /**

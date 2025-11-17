@@ -105,7 +105,7 @@ public class PlotRegistry {
             return false;
         }
 
-        String plotId = plot.getPlotId();
+        String plotId = plot.getIdentifier();
         Set<String> plots = registeredPlots.get(type);
 
         if (plots.add(plotId)) {
@@ -131,7 +131,7 @@ public class PlotRegistry {
             return false;
         }
 
-        String plotId = plot.getPlotId();
+        String plotId = plot.getIdentifier();
         boolean removed = false;
 
         for (Map.Entry<PlotType, Set<String>> entry : registeredPlots.entrySet()) {
@@ -172,7 +172,7 @@ public class PlotRegistry {
             return false;
         }
 
-        String plotId = plot.getPlotId();
+        String plotId = plot.getIdentifier();
 
         for (Set<String> plots : registeredPlots.values()) {
             if (plots.contains(plotId)) {
@@ -194,7 +194,7 @@ public class PlotRegistry {
             return Optional.empty();
         }
 
-        String plotId = plot.getPlotId();
+        String plotId = plot.getIdentifier();
 
         for (Map.Entry<PlotType, Set<String>> entry : registeredPlots.entrySet()) {
             if (entry.getValue().contains(plotId)) {

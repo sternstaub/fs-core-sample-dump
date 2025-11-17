@@ -68,7 +68,7 @@ public class TraderSelectionUI extends LargeChestUI {
             PlotProvider plotProvider,
             VirtualTraderInventoryManager inventoryManager
     ) {
-        super(plugin, "§6§lHändler auswählen");
+        super("§6§lHändler auswählen");
         this.plotModule = (PlotModule) plugin;
         this.targetSlot = targetSlot;
         this.plotRegistry = plotRegistry;

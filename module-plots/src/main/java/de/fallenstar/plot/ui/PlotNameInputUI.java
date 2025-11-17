@@ -54,7 +54,7 @@ public class PlotNameInputUI {
         player.sendMessage(Component.text("═══════════════════════════════════", NamedTextColor.GOLD));
         player.sendMessage(Component.empty());
         player.sendMessage(Component.text("Aktueller Name: ", NamedTextColor.GRAY)
-                .append(Component.text(plot.getPlotId(), NamedTextColor.YELLOW)));
+                .append(Component.text(plot.getIdentifier(), NamedTextColor.YELLOW)));
         player.sendMessage(Component.empty());
         player.sendMessage(Component.text("Schreibe den neuen Namen in den Chat:", NamedTextColor.YELLOW));
         player.sendMessage(Component.text("  • Max. 32 Zeichen", NamedTextColor.GRAY));

@@ -75,7 +75,7 @@ public class NPCTravelSystem {
      */
     public TravelTicket startTravel(UUID npcId, Plot from, PlotSlot toSlot) {
         // Hole Locations
-        Location fromLocation = from.getSpawnLocation();
+        Location fromLocation = from.getLocation();
         Location toLocation = toSlot.getLocation();
 
         // Berechne Kosten und Dauer

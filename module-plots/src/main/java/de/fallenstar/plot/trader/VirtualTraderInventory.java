@@ -73,7 +73,7 @@ public class VirtualTraderInventory {
         String base64 = config.getString(key);
 
         if (base64 == null || base64.isEmpty()) {
-            logger.fine("Kein Händler-Inventar gefunden für " + playerId + " auf " + plot.getPlotId());
+            logger.fine("Kein Händler-Inventar gefunden für " + playerId + " auf " + plot.getIdentifier());
             return;
         }
 
@@ -220,14 +220,14 @@ public class VirtualTraderInventory {
      * @return Config-Key
      */
     private String getConfigKey() {
-        return "trader-inventories." + plot.getPlotId() + "." + playerId.toString();
+        return "trader-inventories." + plot.getIdentifier() + "." + playerId.toString();
     }
 
     @Override
     public String toString() {
         return "VirtualTraderInventory{" +
                 "player=" + playerId +
-                ", plot=" + plot.getPlotId() +
+                ", plot=" + plot.getIdentifier() +
                 ", slots=" + INVENTORY_SIZE +
                 '}';
     }

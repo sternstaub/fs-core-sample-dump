@@ -56,7 +56,7 @@ public class SlotManagementUI extends LargeChestUI {
      * @param plotRegistry PlotRegistry (für Händler-Suche)
      */
     public SlotManagementUI(Plugin plugin, SlottedPlot plot, PlotRegistry plotRegistry) {
-        super(plugin, "§6§lHändler-Slots verwalten");
+        super("§6§lHändler-Slots verwalten");
         this.plotModule = (PlotModule) plugin;
         this.plot = plot;
         this.plotRegistry = plotRegistry;

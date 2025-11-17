@@ -125,45 +125,34 @@ public class PlotNameManager {
     }
 
     /**
-     * Setzt den Namen eines Towny-Plots in MetaData.
+     * Setzt den Namen eines Towny-Plots.
+     *
+     * NOTE: Towny MetaData API wurde entfernt (API-Inkompatibilität).
+     * Namen werden nur noch in Config gespeichert.
      *
      * @param townBlock Der TownBlock
      * @param name Der Name
      * @return true wenn erfolgreich
      */
     private boolean setTownyPlotName(TownBlock townBlock, String name) {
-        try {
-            if (name == null || name.trim().isEmpty()) {
-                // Entferne MetaData
-                townBlock.removeMetaData(METADATA_KEY, true);
-            } else {
-                // Setze MetaData
-                StringDataField field = new StringDataField(METADATA_KEY, name.trim());
-                townBlock.addMetaData(field, true);
-            }
-            return true;
-        } catch (Exception e) {
-            logger.warning("Fehler beim Setzen von Plot-Namen in Towny MetaData: " + e.getMessage());
-            return false;
-        }
+        // Towny MetaData API nicht mehr verwendet
+        // Namen werden über setCustomName() in Config gespeichert
+        return false;  // Immer false, da nicht unterstützt
     }
 
     /**
-     * Holt den Namen eines Towny-Plots aus MetaData.
+     * Holt den Namen eines Towny-Plots aus interner Map.
+     *
+     * NOTE: Towny MetaData API wurde entfernt (API-Inkompatibilität).
+     * Namen werden nur noch in Config gespeichert.
      *
      * @param townBlock Der TownBlock
      * @return Der Name oder null
      */
     private String getTownyPlotName(TownBlock townBlock) {
-        try {
-            if (townBlock.hasMetaData(METADATA_KEY)) {
-                StringDataField field = (StringDataField) townBlock.getMetaData(METADATA_KEY);
-                return field.getValue();
-            }
-        } catch (Exception e) {
-            logger.fine("Fehler beim Abrufen von Plot-Namen aus Towny MetaData: " + e.getMessage());
-        }
-        return null;
+        // Towny MetaData API nicht mehr verwendet
+        // Namen werden nur über PlotIdentifier in customNames Map gespeichert
+        return null;  // Fallback zur UUID-based Map
     }
 
     /**
