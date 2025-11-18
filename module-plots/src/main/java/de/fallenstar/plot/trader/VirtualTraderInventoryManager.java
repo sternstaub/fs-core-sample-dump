@@ -30,7 +30,7 @@ import java.util.logging.Logger;
  * </pre>
  *
  * **Integration:**
- * - HandelsgildeUI: Button "Händler-Inventar"
+ * - HandelsgildeUi: Button "Händler-Inventar"
  * - SlotManagementUI: Händler-Auswahl
  *
  * @author FallenStar

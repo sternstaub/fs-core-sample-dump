@@ -86,7 +86,7 @@ public class SlotManagementUI extends LargeChestUI {
                 List.of("§7Zurück zum Hauptmenü")
         );
         setItem(0, backButton, player -> {
-            // TODO: Öffne HandelsgildeUI
+            // TODO: Öffne HandelsgildeUi
             player.closeInventory();
         });
 
