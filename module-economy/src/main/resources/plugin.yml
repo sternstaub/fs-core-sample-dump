@@ -6,7 +6,11 @@ authors: [FallenStar]
 description: Weltwirtschaft, Währungen, Münzsystem mit Vault-Integration
 
 # Abhängigkeiten (Hard Dependencies)
-depend: [FallenStar-Core, FallenStar-Items, Vault]
+depend: [FallenStar-Core, Vault]
+
+# Optionale Dependencies (Soft Dependencies)
+# Items-Modul für Münz-Features (graceful degradation via NoOpItemProvider)
+softdepend: [FallenStar-Items]
 
 # Commands
 commands:

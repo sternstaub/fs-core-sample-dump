@@ -37,7 +37,6 @@ public class EconomyModule extends JavaPlugin implements Listener {
     private ProviderRegistry providers;
     private CurrencyManager currencyManager;
     private ItemBasePriceProvider priceProvider;
-    private SpecialItemManager itemManager;
     private VaultEconomyProvider economyProvider;
 
     @Override
@@ -103,42 +102,48 @@ public class EconomyModule extends JavaPlugin implements Listener {
     /**
      * Prüft ob alle erforderlichen Dependencies verfügbar sind.
      *
-     * @return true wenn alle Dependencies vorhanden
+     * Items-Modul ist optional (graceful degradation via NoOpItemProvider).
+     * Nur Vault ist kritisch für Economy-Funktionen.
+     *
+     * @return true wenn alle kritischen Dependencies vorhanden
      */
     private boolean checkRequiredDependencies() {
-        // Prüfe Items-Modul
-        if (getServer().getPluginManager().getPlugin("FallenStar-Items") == null) {
-            getLogger().severe("✗ FallenStar-Items Plugin nicht gefunden!");
-            return false;
-        }
-
-        // Prüfe Vault
+        // Prüfe Vault (kritisch für Economy-Features)
         if (getServer().getPluginManager().getPlugin("Vault") == null) {
             getLogger().severe("✗ Vault Plugin nicht gefunden!");
             return false;
         }
 
-        getLogger().info("✓ Alle Dependencies verfügbar");
+        // Items-Modul ist optional (für Münz-Features)
+        if (getServer().getPluginManager().getPlugin("FallenStar-Items") == null) {
+            getLogger().warning("○ FallenStar-Items nicht gefunden - Münz-Features deaktiviert");
+            getLogger().info("  Economy läuft im reduzierten Modus (nur Preise, keine Münzen)");
+        } else {
+            getLogger().info("✓ FallenStar-Items gefunden - Münz-Features aktiviert");
+        }
+
+        getLogger().info("✓ Alle kritischen Dependencies verfügbar");
         return true;
     }
 
     /**
      * Initialisiert die Manager.
+     *
+     * Nutzt ItemProvider (Core-Interface) statt direktem Items-Modul Zugriff.
+     * Eliminiert Module-Dependency: Economy → Items.
      */
     private void initializeManagers() {
-        // Hole SpecialItemManager vom Items-Modul
-        de.fallenstar.items.ItemsModule itemsModule =
-                (de.fallenstar.items.ItemsModule) getServer().getPluginManager().getPlugin("FallenStar-Items");
+        // Hole ItemProvider aus ProviderRegistry (eliminiert Items-Modul Dependency!)
+        de.fallenstar.core.provider.ItemProvider itemProvider = providers.getItemProvider();
 
-        if (itemsModule == null) {
-            getLogger().severe("Items-Modul nicht verfügbar!");
-            return;
+        if (itemProvider == null || !itemProvider.isAvailable()) {
+            getLogger().warning("ItemProvider nicht verfügbar - Münz-Features deaktiviert!");
+            getLogger().warning("Economy-Modul läuft im reduzierten Modus (nur Preise, keine Münzen)");
+            // Graceful Degradation: CurrencyManager mit NoOpItemProvider
         }
 
-        this.itemManager = itemsModule.getSpecialItemManager();
-
-        // Initialisiere CurrencyManager
-        this.currencyManager = new CurrencyManager(getLogger(), itemManager);
+        // Initialisiere CurrencyManager (nutzt ItemProvider statt SpecialItemManager)
+        this.currencyManager = new CurrencyManager(getLogger(), itemProvider);
 
         // Initialisiere ItemBasePriceProvider
         this.priceProvider = new ItemBasePriceProvider(getLogger());
@@ -147,6 +152,7 @@ public class EconomyModule extends JavaPlugin implements Listener {
         getLogger().info("✓ Manager initialisiert");
         getLogger().info("  - Item-Basispreise: " + priceProvider.getVanillaPriceCount() +
                 " Vanilla, " + priceProvider.getCustomPriceCount() + " Custom");
+        getLogger().info("  - ItemProvider: " + (itemProvider.isAvailable() ? "verfügbar" : "nicht verfügbar"));
     }
 
     /**

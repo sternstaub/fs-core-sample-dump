@@ -1,8 +1,8 @@
 package de.fallenstar.economy.manager;
 
 import de.fallenstar.core.provider.EconomyProvider;
+import de.fallenstar.core.provider.ItemProvider;
 import de.fallenstar.economy.model.CurrencyItemSet;
-import de.fallenstar.items.manager.SpecialItemManager;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
@@ -20,15 +20,15 @@ import java.util.logging.Logger;
  * - Registrierung von Währungen (CurrencyItemSet)
  * - Auszahlung von Münzen an Spieler
  * - Wechselkurs-Berechnungen
- * - Integration mit SpecialItemManager (Items-Modul)
+ * - Integration mit ItemProvider (Core-Interface)
  *
  * @author FallenStar
- * @version 1.0
+ * @version 2.0 - Refactored: SpecialItemManager → ItemProvider (eliminiert Module-Dependency)
  */
 public class CurrencyManager {
 
     private final Logger logger;
-    private final SpecialItemManager itemManager;
+    private final ItemProvider itemProvider;
     private final Map<String, CurrencyItemSet> currencies;
     private CurrencyItemSet baseCurrency;
     private EconomyProvider economyProvider;
@@ -37,11 +37,11 @@ public class CurrencyManager {
      * Konstruktor für CurrencyManager.
      *
      * @param logger Logger
-     * @param itemManager SpecialItemManager (aus Items-Modul)
+     * @param itemProvider ItemProvider (Core-Interface, eliminiert Items-Modul Dependency)
      */
-    public CurrencyManager(Logger logger, SpecialItemManager itemManager) {
+    public CurrencyManager(Logger logger, ItemProvider itemProvider) {
         this.logger = logger;
-        this.itemManager = itemManager;
+        this.itemProvider = itemProvider;
         this.currencies = new HashMap<>();
 
         logger.info("CurrencyManager initialisiert");
@@ -97,8 +97,14 @@ public class CurrencyManager {
         CurrencyItemSet currency = currencyOpt.get();
         String itemId = currency.getItemId(tier);
 
-        // Erstelle Münzen via SpecialItemManager
-        Optional<ItemStack> coins = itemManager.createItem(itemId, amount);
+        // Erstelle Münzen via ItemProvider (eliminiert Items-Modul Dependency!)
+        Optional<ItemStack> coins;
+        try {
+            coins = itemProvider.getSpecialItem(itemId, amount);
+        } catch (Exception e) {
+            logger.warning("Fehler beim Erstellen von Münzen: " + e.getMessage());
+            return false;
+        }
 
         if (coins.isEmpty()) {
             logger.warning("Konnte Münzen nicht erstellen: " + itemId);
@@ -298,7 +304,14 @@ public class CurrencyManager {
         CurrencyItemSet.InventoryCoinResult coinResult = currency.findCoinsInInventory(
                 player.getInventory(),
                 tier,
-                (stack, itemId) -> itemManager.isSpecialItem(stack)
+                (stack, itemId) -> {
+                    try {
+                        return itemProvider.isCustomItem(stack);
+                    } catch (Exception e) {
+                        logger.fine("Fehler beim Prüfen von Custom-Item: " + e.getMessage());
+                        return false;
+                    }
+                }
         );
 
         if (!coinResult.hasCoins()) {
