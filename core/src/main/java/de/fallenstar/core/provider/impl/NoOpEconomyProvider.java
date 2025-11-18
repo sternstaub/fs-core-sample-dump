@@ -2,8 +2,13 @@ package de.fallenstar.core.provider.impl;
 
 import de.fallenstar.core.exception.ProviderFunctionalityNotFoundException;
 import de.fallenstar.core.provider.EconomyProvider;
+import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
+
+import java.math.BigDecimal;
+import java.util.Collection;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -153,6 +158,46 @@ public class NoOpEconomyProvider implements EconomyProvider {
         throw new ProviderFunctionalityNotFoundException(
             PROVIDER_NAME,
             "getCurrencyNamePlural",
+            REASON
+        );
+    }
+
+    @Override
+    public Optional<BigDecimal> getBuyPrice(Material material)
+            throws ProviderFunctionalityNotFoundException {
+        throw new ProviderFunctionalityNotFoundException(
+            PROVIDER_NAME,
+            "getBuyPrice",
+            REASON
+        );
+    }
+
+    @Override
+    public Optional<BigDecimal> getSellPrice(Material material)
+            throws ProviderFunctionalityNotFoundException {
+        throw new ProviderFunctionalityNotFoundException(
+            PROVIDER_NAME,
+            "getSellPrice",
+            REASON
+        );
+    }
+
+    @Override
+    public boolean setItemPrice(Material material, BigDecimal buyPrice, BigDecimal sellPrice)
+            throws ProviderFunctionalityNotFoundException {
+        throw new ProviderFunctionalityNotFoundException(
+            PROVIDER_NAME,
+            "setItemPrice",
+            REASON
+        );
+    }
+
+    @Override
+    public Collection<Material> getAllPricedMaterials()
+            throws ProviderFunctionalityNotFoundException {
+        throw new ProviderFunctionalityNotFoundException(
+            PROVIDER_NAME,
+            "getAllPricedMaterials",
             REASON
         );
     }

@@ -156,6 +156,10 @@ public class EconomyModule extends JavaPlugin implements Listener {
         // Erstelle VaultEconomyProvider
         this.economyProvider = new VaultEconomyProvider(getLogger());
 
+        // Setter-Injection: Gebe economyProvider Zugriff auf ItemBasePriceProvider
+        economyProvider.setPriceProvider(priceProvider);
+        getLogger().fine("✓ ItemBasePriceProvider in VaultEconomyProvider injiziert");
+
         // Registriere in ProviderRegistry
         providers.setEconomyProvider(economyProvider);
 

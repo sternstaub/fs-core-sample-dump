@@ -84,6 +84,12 @@ public class ItemsModule extends JavaPlugin implements Listener {
         specialItemManager = new SpecialItemManager(this, getLogger(), itemProvider);
         getLogger().info("✓ SpecialItemManager v3.0 initialized (Generisches SpecialItem-System)");
 
+        // Setter-Injection: Gebe itemProvider Zugriff auf SpecialItemManager
+        if (itemProvider != null) {
+            itemProvider.setSpecialItemManager(specialItemManager);
+            getLogger().fine("✓ SpecialItemManager in MMOItemsItemProvider injiziert");
+        }
+
         // Registriere Basiswährung "Sterne"
         registerBaseCurrency();
 
