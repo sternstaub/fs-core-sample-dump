@@ -187,4 +187,14 @@ public class NoOpItemProvider implements ItemProvider {
             REASON
         );
     }
+
+    @Override
+    public Optional<ItemStack> getSpecialItem(String itemId, int amount)
+            throws ProviderFunctionalityNotFoundException {
+        throw new ProviderFunctionalityNotFoundException(
+            PROVIDER_NAME,
+            "getSpecialItem",
+            REASON
+        );
+    }
 }

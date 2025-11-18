@@ -37,6 +37,7 @@ public class MMOItemsItemProvider implements ItemProvider {
     private Object mmoItemsInstance; // MMOItems plugin instance (via reflection)
     private Object typeManager;      // TypeManager instance
     private Object templateManager;  // TemplateManager instance
+    private de.fallenstar.items.manager.SpecialItemManager specialItemManager; // Setter-injected
 
     // Cache für Kategorien (wird bei Bedarf aktualisiert)
     private Set<String> cachedCategories;
@@ -50,6 +51,16 @@ public class MMOItemsItemProvider implements ItemProvider {
         this.categoryItemsCache = new HashMap<>();
         this.lastCacheUpdate = 0;
         initializeReflection();
+    }
+
+    /**
+     * Setzt den SpecialItemManager (Setter-Injection nach Konstruktion).
+     *
+     * @param specialItemManager SpecialItemManager-Instanz
+     */
+    public void setSpecialItemManager(de.fallenstar.items.manager.SpecialItemManager specialItemManager) {
+        this.specialItemManager = specialItemManager;
+        logger.fine("SpecialItemManager injected into MMOItemsItemProvider");
     }
 
     /**
@@ -402,5 +413,17 @@ public class MMOItemsItemProvider implements ItemProvider {
     @Override
     public boolean itemExists(String type, String itemId) throws ProviderFunctionalityNotFoundException {
         return createItem(type, itemId, 1).isPresent();
+    }
+
+    @Override
+    public Optional<ItemStack> getSpecialItem(String itemId, int amount)
+            throws ProviderFunctionalityNotFoundException {
+        if (specialItemManager == null) {
+            logger.warning("SpecialItemManager nicht verfügbar - kann Special-Item nicht erstellen!");
+            return Optional.empty();
+        }
+
+        // Delegiere an SpecialItemManager
+        return specialItemManager.createItem(itemId, amount);
     }
 }

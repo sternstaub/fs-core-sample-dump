@@ -1,5 +1,6 @@
 package de.fallenstar.plot.command;
 
+import de.fallenstar.core.provider.EconomyProvider;
 import de.fallenstar.core.provider.Plot;
 import de.fallenstar.core.provider.PlotProvider;
 import de.fallenstar.core.registry.ProviderRegistry;
@@ -11,8 +12,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -216,57 +219,43 @@ public class PlotPriceCommand {
         player.sendMessage("§7Besitzer: §e" + owner);
         player.sendMessage("");
 
-        // Hole alle Preise vom ItemBasePriceProvider
+        // Hole alle Preise vom EconomyProvider (eliminiert Reflection!)
         try {
-            var plugin = Bukkit.getPluginManager().getPlugin("FallenStar-Economy");
-            if (plugin == null) {
-                player.sendMessage("§cEconomy-Modul nicht geladen!");
+            EconomyProvider economyProvider = providers.getEconomyProvider();
+            if (economyProvider == null || !economyProvider.isAvailable()) {
+                player.sendMessage("§cEconomy-Provider nicht verfügbar!");
                 return;
             }
 
-            var getPriceProvider = plugin.getClass().getMethod("getPriceProvider");
-            var priceProvider = getPriceProvider.invoke(plugin);
+            // Hole alle Materialien mit definierten Preisen
+            Collection<Material> pricedMaterials = economyProvider.getAllPricedMaterials();
 
-            // Hole alle Vanilla-Preise
-            var getAllVanillaPricesMethod = priceProvider.getClass().getMethod("getAllVanillaPrices");
-            var vanillaPrices = (java.util.Collection<?>) getAllVanillaPricesMethod.invoke(priceProvider);
-
-            if (vanillaPrices.isEmpty()) {
+            if (pricedMaterials.isEmpty()) {
                 player.sendMessage("§7Keine Preise definiert.");
                 player.sendMessage("§7Nutze §e/plot price set§7, um Preise festzulegen.");
             } else {
-                player.sendMessage("§7Registrierte Preise (§e" + vanillaPrices.size() + "§7):");
+                player.sendMessage("§7Registrierte Preise (§e" + pricedMaterials.size() + "§7):");
                 player.sendMessage("");
 
-                // Sortiere Preise nach Material-Name
-                var sortedPrices = new java.util.ArrayList<>(vanillaPrices);
-                sortedPrices.sort((a, b) -> {
-                    try {
-                        // VanillaItemPrice ist ein Record - Accessor heißt material(), nicht getMaterial()!
-                        var getMaterial = a.getClass().getMethod("material");
-                        Material matA = (Material) getMaterial.invoke(a);
-                        Material matB = (Material) getMaterial.invoke(b);
-                        return matA.name().compareTo(matB.name());
-                    } catch (Exception e) {
-                        return 0;
-                    }
-                });
+                // Sortiere Materialien nach Name
+                var sortedMaterials = new java.util.ArrayList<>(pricedMaterials);
+                sortedMaterials.sort((a, b) -> a.name().compareTo(b.name()));
 
                 // Zeige Preise an
-                for (Object priceObj : sortedPrices) {
+                for (Material material : sortedMaterials) {
                     try {
-                        // VanillaItemPrice ist ein Record - Accessor heißt material(), nicht getMaterial()!
-                        var getMaterial = priceObj.getClass().getMethod("material");
-                        var getPrice = priceObj.getClass().getMethod("getPrice");
+                        // Hole Sell-Preis (Spieler kauft von Gilde)
+                        Optional<BigDecimal> sellPriceOpt = economyProvider.getSellPrice(material);
 
-                        Material material = (Material) getMaterial.invoke(priceObj);
-                        BigDecimal price = (BigDecimal) getPrice.invoke(priceObj);
+                        if (sellPriceOpt.isPresent()) {
+                            BigDecimal sellPrice = sellPriceOpt.get();
 
-                        // Formatiere Material-Name schöner
-                        String materialName = material.name().replace("_", " ").toLowerCase();
-                        materialName = capitalizeWords(materialName);
+                            // Formatiere Material-Name schöner
+                            String materialName = material.name().replace("_", " ").toLowerCase();
+                            materialName = capitalizeWords(materialName);
 
-                        player.sendMessage("§e  " + materialName + " §7- §6" + price + " Sterne");
+                            player.sendMessage("§e  " + materialName + " §7- §6" + sellPrice + " Sterne");
+                        }
                     } catch (Exception e) {
                         player.sendMessage("§c  Fehler beim Lesen eines Preises: " + e.getMessage());
                         logger.warning("Fehler beim Lesen eines Preises: " + e.getMessage());
@@ -546,71 +535,99 @@ public class PlotPriceCommand {
     }
 
     /**
-     * Holt den aktuellen Preis eines Items aus dem ItemBasePriceProvider.
+     * Holt den aktuellen Preis eines Items aus dem EconomyProvider (eliminiert Reflection!).
      *
      * @param item Das Item
      * @return Preis (oder 0 wenn nicht verfügbar)
+     * @deprecated Verwende {@link #loadBuyPriceFromProvider(ItemStack)} oder {@link #loadSellPriceFromProvider(ItemStack)}
      */
+    @Deprecated
     public BigDecimal loadPriceFromProvider(ItemStack item) {
+        // Fallback auf Sell-Preis
+        return loadSellPriceFromProvider(item);
+    }
+
+    /**
+     * Holt den Ankaufspreis eines Items aus dem EconomyProvider (eliminiert Reflection!).
+     *
+     * @param item Das Item
+     * @return Ankaufspreis (oder 0 wenn nicht verfügbar)
+     */
+    public BigDecimal loadBuyPriceFromProvider(ItemStack item) {
         try {
-            // Hole Economy-Modul
-            var plugin = Bukkit.getPluginManager().getPlugin("FallenStar-Economy");
-            if (plugin == null) {
+            EconomyProvider economyProvider = providers.getEconomyProvider();
+            if (economyProvider == null || !economyProvider.isAvailable()) {
                 return BigDecimal.ZERO;
             }
 
-            // Reflection: hole ItemBasePriceProvider
-            var getPriceProvider = plugin.getClass().getMethod("getPriceProvider");
-            var priceProvider = getPriceProvider.invoke(plugin);
-
-            // Prüfe ob Vanilla-Item
             Material material = item.getType();
-            var getPriceMethod = priceProvider.getClass().getMethod("getVanillaPriceOrDefault", Material.class);
-            BigDecimal price = (BigDecimal) getPriceMethod.invoke(priceProvider, material);
-
-            return price;
+            return economyProvider.getBuyPrice(material).orElse(BigDecimal.ZERO);
 
         } catch (Exception e) {
-            // Economy-Modul nicht verfügbar oder Fehler
+            // Economy-Provider nicht verfügbar oder Fehler
+            logger.warning("Fehler beim Laden des Ankaufspreises: " + e.getMessage());
             return BigDecimal.ZERO;
         }
     }
 
     /**
-     * Speichert einen Preis im ItemBasePriceProvider.
+     * Holt den Verkaufspreis eines Items aus dem EconomyProvider (eliminiert Reflection!).
      *
-     * @param context PriceEditorContext
+     * @param item Das Item
+     * @return Verkaufspreis (oder 0 wenn nicht verfügbar)
+     */
+    public BigDecimal loadSellPriceFromProvider(ItemStack item) {
+        try {
+            EconomyProvider economyProvider = providers.getEconomyProvider();
+            if (economyProvider == null || !economyProvider.isAvailable()) {
+                return BigDecimal.ZERO;
+            }
+
+            Material material = item.getType();
+            return economyProvider.getSellPrice(material).orElse(BigDecimal.ZERO);
+
+        } catch (Exception e) {
+            // Economy-Provider nicht verfügbar oder Fehler
+            logger.warning("Fehler beim Laden des Verkaufspreises: " + e.getMessage());
+            return BigDecimal.ZERO;
+        }
+    }
+
+    /**
+     * Speichert Buy/Sell-Preise im EconomyProvider (eliminiert teilweise Reflection!).
+     *
+     * @param context PriceEditorContext mit Buy/Sell-Preisen
      * @return true wenn erfolgreich
      */
-    private boolean savePriceToProvider(PriceEditorContext context) {
+    public boolean savePriceToProvider(PriceEditorContext context) {
         try {
-            // Hole Economy-Modul
-            var plugin = Bukkit.getPluginManager().getPlugin("FallenStar-Economy");
-            if (plugin == null) {
+            EconomyProvider economyProvider = providers.getEconomyProvider();
+            if (economyProvider == null || !economyProvider.isAvailable()) {
+                logger.warning("Economy-Provider nicht verfügbar");
                 return false;
             }
 
-            // Reflection: hole ItemBasePriceProvider
-            var getPriceProvider = plugin.getClass().getMethod("getPriceProvider");
-            var priceProvider = getPriceProvider.invoke(plugin);
-
-            // Registriere Vanilla-Preis
+            // Setze Preis via Provider
             Material material = context.getItem().getType();
-            var registerMethod = priceProvider.getClass().getMethod(
-                "registerVanillaPrice",
-                Material.class,
-                BigDecimal.class
+            boolean success = economyProvider.setItemPrice(
+                material,
+                context.getBuyPrice(),
+                context.getSellPrice()
             );
-            registerMethod.invoke(priceProvider, material, context.getCurrentPrice());
 
-            // WICHTIG: Speichere Config auf Festplatte!
-            var saveConfigMethod = plugin.getClass().getMethod("saveConfiguration");
-            saveConfigMethod.invoke(plugin);
+            if (!success) {
+                logger.warning("Preis konnte nicht gesetzt werden");
+                return false;
+            }
+
+            // Config-Speicherung erfolgt automatisch in economyProvider.setItemPrice()!
+            // Kein Reflection mehr nötig - VaultEconomyProvider hat Plugin-Injection
 
             return true;
 
         } catch (Exception e) {
-            // Economy-Modul nicht verfügbar oder Fehler
+            // Economy-Provider nicht verfügbar oder Fehler
+            logger.warning("Fehler beim Speichern der Preise: " + e.getMessage());
             e.printStackTrace();
             return false;
         }

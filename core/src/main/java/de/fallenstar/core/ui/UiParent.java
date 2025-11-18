@@ -10,7 +10,7 @@ import org.bukkit.entity.Player;
  * - Titel-Verwaltung
  *
  * Implementierungen:
- * - BaseUI (bestehendes System)
+ * - BaseUi (bestehendes System)
  * - GenericUiSmallChest (neues type-safe System)
  * - PageableBasicUi (pageable UIs)
  *

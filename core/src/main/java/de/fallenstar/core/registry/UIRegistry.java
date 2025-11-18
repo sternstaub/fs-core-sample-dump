@@ -41,7 +41,7 @@ public class UIRegistry {
      * @param description Beschreibung des UI
      * @param supplier Supplier für Test-Instanzen (parameterfreier Konstruktor)
      */
-    public void registerUI(String id, String displayName, String description, Supplier<? extends BaseUI> supplier) {
+    public void registerUI(String id, String displayName, String description, Supplier<? extends BaseUi> supplier) {
         if (registeredUIs.containsKey(id)) {
             logger.warning("UI with ID '" + id + "' already registered, overwriting...");
         }
@@ -67,7 +67,7 @@ public class UIRegistry {
      * @param id ID des UI
      * @return Test-UI-Instanz oder null wenn nicht gefunden
      */
-    public BaseUI createTestUI(String id) {
+    public BaseUi createTestUI(String id) {
         UIRegistration registration = registeredUIs.get(id);
         if (registration == null) {
             return null;
@@ -126,7 +126,7 @@ public class UIRegistry {
             String id,
             String displayName,
             String description,
-            Supplier<? extends BaseUI> supplier
+            Supplier<? extends BaseUi> supplier
     ) {
     }
 }

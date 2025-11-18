@@ -27,7 +27,7 @@ import java.util.function.Consumer;
  * @author FallenStar
  * @version 1.0
  */
-public class ConfirmationUI extends SmallChestUI {
+public class ConfirmationUi extends SmallChestUi {
 
     private final UIButtonManager buttonManager;
     private final String message;
@@ -35,7 +35,7 @@ public class ConfirmationUI extends SmallChestUI {
     private final Consumer<Player> onCancel;
 
     /**
-     * Konstruktor für ConfirmationUI.
+     * Konstruktor für ConfirmationUi.
      *
      * @param plugin Plugin-Instanz
      * @param buttonManager UIButtonManager-Instanz
@@ -44,7 +44,7 @@ public class ConfirmationUI extends SmallChestUI {
      * @param onConfirm Callback bei Bestätigung
      * @param onCancel Callback bei Abbruch
      */
-    public ConfirmationUI(Plugin plugin, UIButtonManager buttonManager, String title, String message,
+    public ConfirmationUi(Plugin plugin, UIButtonManager buttonManager, String title, String message,
                           Consumer<Player> onConfirm, Consumer<Player> onCancel) {
         super(title);
         this.buttonManager = buttonManager;
@@ -105,11 +105,11 @@ public class ConfirmationUI extends SmallChestUI {
      * @param buttonManager UIButtonManager
      * @param message Bestätigungs-Message
      * @param onConfirm Callback bei Ja
-     * @return ConfirmationUI
+     * @return ConfirmationUi
      */
-    public static ConfirmationUI createSimple(Plugin plugin, UIButtonManager buttonManager, String message,
+    public static ConfirmationUi createSimple(Plugin plugin, UIButtonManager buttonManager, String message,
                                                Consumer<Player> onConfirm) {
-        return new ConfirmationUI(
+        return new ConfirmationUi(
                 plugin,
                 buttonManager,
                 "§eBestätigung",
@@ -127,11 +127,11 @@ public class ConfirmationUI extends SmallChestUI {
      * @param message Bestätigungs-Message
      * @param onConfirm Callback bei Ja
      * @param onCancel Callback bei Nein
-     * @return ConfirmationUI
+     * @return ConfirmationUi
      */
-    public static ConfirmationUI createWithCallbacks(Plugin plugin, UIButtonManager buttonManager, String message,
+    public static ConfirmationUi createWithCallbacks(Plugin plugin, UIButtonManager buttonManager, String message,
                                                       Consumer<Player> onConfirm, Consumer<Player> onCancel) {
-        return new ConfirmationUI(
+        return new ConfirmationUi(
                 plugin,
                 buttonManager,
                 "§eBestätigung",

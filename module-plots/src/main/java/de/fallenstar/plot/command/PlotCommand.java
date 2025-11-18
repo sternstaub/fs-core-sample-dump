@@ -320,6 +320,7 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
                     plot,
                     plugin.getStorageProvider(),
                     plugin.getStorageManager(),
+                    providers,  // ProviderRegistry für NPC-Verwaltung
                     isOwner
             );
 
@@ -358,6 +359,7 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
                     slotManager,
                     plugin.getStorageProvider(),
                     plugin.getStorageManager(),
+                    providers,  // ProviderRegistry für NPC-Verwaltung
                     isOwner
             );
 
@@ -383,7 +385,7 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
     }
 
     /**
-     * Öffnet die Default-Plot-UI (PlotInfoUI).
+     * Öffnet die Default-Plot-UI (PlotInfoUi).
      *
      * @param player Der Spieler
      * @param plot Der Plot
@@ -393,8 +395,8 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
     private void openDefaultPlotUI(Player player, de.fallenstar.core.provider.Plot plot,
                                      String plotType, boolean isOwner) {
         try {
-            // Öffne PlotInfoUI für Standard-Plots
-            de.fallenstar.plot.ui.PlotInfoUI ui = new de.fallenstar.plot.ui.PlotInfoUI(
+            // Öffne PlotInfoUi für Standard-Plots
+            de.fallenstar.plot.ui.PlotInfoUi ui = new de.fallenstar.plot.ui.PlotInfoUi(
                     plot,
                     providers.getPlotProvider(),
                     player

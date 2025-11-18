@@ -1,7 +1,11 @@
 package de.fallenstar.plot.action;
 
 import de.fallenstar.core.provider.Plot;
+import de.fallenstar.core.provider.PlotProvider;
+import de.fallenstar.core.registry.ProviderRegistry;
 import de.fallenstar.core.ui.element.UiAction;
+import de.fallenstar.plot.ui.NpcManagementUi;
+import de.fallenstar.plot.ui.PlayerNpcManagementUi;
 import org.bukkit.entity.Player;
 
 import java.util.Objects;
@@ -9,59 +13,100 @@ import java.util.Objects;
 /**
  * Action zum Verwalten von NPCs auf einem Grundstück.
  *
- * **Status:** Noch nicht implementiert (Sprint 13-14)
+ * **Status:** Basis-Implementierung (Sprint 11-12)
  *
- * Wird zukünftig folgende Funktionen bieten:
- * - Gildenhändler spawnen
- * - Spielerhändler verwalten
- * - NPC-Positionen setzen
- * - NPC-Skins ändern
- * - Händler-Inventare verwalten
+ * **Aktuelle Funktionalität:**
+ * - Öffnet Owner-View (NpcManagementUi) für Plot-Besitzer
+ * - Öffnet Spieler-View (PlayerNpcManagementUi) für andere Spieler
+ * - Automatische Ansichts-Auswahl basierend auf Owner-Status
  *
- * **Aktuell:** Zeigt Placeholder-Nachricht an.
+ * **Zwei Ansichten:**
+ * 1. **Owner-View (NpcManagementUi):**
+ *    - Zeigt alle NPCs auf dem Plot
+ *    - Erlaubt Spawnen neuer NPCs
+ *    - Vollständige Plot-NPC-Verwaltung
+ *
+ * 2. **Spieler-View (PlayerNpcManagementUi):**
+ *    - Zeigt nur eigene NPCs
+ *    - NPC-Slot kaufen
+ *    - Eigene Händler-Inventare verwalten
+ *
+ * **Geplante Features (Sprint 13-14):**
+ * - Citizens-Integration (echte NPC-Entities)
+ * - NPC-Konfiguration (Inventar, Preise, Skins)
+ * - Slot-System-Integration
+ * - NPC-Reisesystem
+ *
+ * **Type-Safety:**
+ * - Compiler erzwingt Plot-Referenz
+ * - Provider-basierte Owner-Checks
  *
  * **Verwendung:**
  * ```java
  * addFunctionButton(
  *     Material.VILLAGER_SPAWN_EGG,
  *     "§6§lNPCs verwalten",
- *     List.of("§c§lNoch nicht implementiert"),
- *     new ManageNpcsAction(plot)  // Type-Safe!
+ *     List.of("§7Verwalte NPCs auf diesem Plot"),
+ *     new ManageNpcsAction(plot, providers)  // Type-Safe!
  * );
  * ```
  *
  * @author FallenStar
- * @version 2.0
+ * @version 3.0
  */
 public final class ManageNpcsAction implements UiAction {
 
     private final Plot plot;
+    private final ProviderRegistry providers;
 
     /**
      * Konstruktor für ManageNpcsAction.
      *
      * @param plot Der Plot dessen NPCs verwaltet werden sollen
+     * @param providers Die ProviderRegistry für Owner-Checks
      */
-    public ManageNpcsAction(Plot plot) {
+    public ManageNpcsAction(Plot plot, ProviderRegistry providers) {
         this.plot = Objects.requireNonNull(plot, "Plot darf nicht null sein");
+        this.providers = Objects.requireNonNull(providers, "ProviderRegistry darf nicht null sein");
     }
 
     @Override
     public void execute(Player player) {
-        // Placeholder für Sprint 13-14
-        player.sendMessage("§c§lNPC-Verwaltung noch nicht implementiert!");
-        player.sendMessage("§7Wird in Sprint 13-14 verfügbar sein");
-        player.sendMessage("§7");
-        player.sendMessage("§7Geplante Features:");
-        player.sendMessage("§7  • Gildenhändler spawnen");
-        player.sendMessage("§7  • Spielerhändler verwalten");
-        player.sendMessage("§7  • NPC-Positionen setzen");
-        player.sendMessage("§7  • Händler-Inventare verwalten");
+        player.closeInventory();
+
+        // Prüfe ob Spieler Owner ist
+        boolean isOwner = isPlotOwner(player);
+
+        if (isOwner) {
+            // Owner-Ansicht: Alle NPCs auf dem Plot
+            NpcManagementUi ownerUi = new NpcManagementUi(plot);
+            ownerUi.open(player);
+        } else {
+            // Spieler-Ansicht: Nur eigene NPCs
+            PlayerNpcManagementUi playerUi = new PlayerNpcManagementUi(plot, player);
+            playerUi.open(player);
+        }
     }
 
     @Override
     public String getActionName() {
-        return "ManageNpcs[" + plot.getIdentifier() + "][PLACEHOLDER]";
+        return "ManageNpcs[" + plot.getIdentifier() + "]";
+    }
+
+    /**
+     * Prüft ob ein Spieler der Besitzer des Plots ist.
+     *
+     * @param player Der Spieler
+     * @return true wenn Besitzer, sonst false
+     */
+    private boolean isPlotOwner(Player player) {
+        PlotProvider plotProvider = providers.getPlotProvider();
+        try {
+            return plotProvider.isOwner(plot, player);
+        } catch (Exception e) {
+            // Bei Fehler: kein Owner
+            return false;
+        }
     }
 
     /**
@@ -71,5 +116,14 @@ public final class ManageNpcsAction implements UiAction {
      */
     public Plot getPlot() {
         return plot;
+    }
+
+    /**
+     * Gibt die ProviderRegistry zurück.
+     *
+     * @return Die ProviderRegistry
+     */
+    public ProviderRegistry getProviders() {
+        return providers;
     }
 }

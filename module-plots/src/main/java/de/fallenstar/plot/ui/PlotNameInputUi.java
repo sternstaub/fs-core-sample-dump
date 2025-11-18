@@ -1,7 +1,7 @@
 package de.fallenstar.plot.ui;
 
 import de.fallenstar.core.provider.Plot;
-import de.fallenstar.plot.model.PlotNameManager;
+import de.fallenstar.plot.manager.PlotNameManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.entity.Player;
@@ -18,7 +18,7 @@ import java.util.function.Consumer;
  *
  * **Verwendung:**
  * <pre>
- * PlotNameInputUI.openNameInput(player, plot, plotNameManager, name -> {
+ * PlotNameInputUi.openNameInput(player, plot, plotNameManager, name -> {
  *     player.sendMessage("Name gesetzt: " + name);
  * });
  * </pre>
@@ -26,12 +26,12 @@ import java.util.function.Consumer;
  * **Hinweis:**
  * Dies ist eine vereinfachte Implementierung via Chat.
  * Für eine vollständige Implementierung sollte ein
- * AnvilUI oder SignUI verwendet werden (UI-Framework).
+ * AnvilUi oder SignUi verwendet werden (UI-Framework).
  *
  * @author FallenStar
  * @version 1.0
  */
-public class PlotNameInputUI {
+public class PlotNameInputUi {
 
     /**
      * Öffnet die Namen-Eingabe für einen Spieler.

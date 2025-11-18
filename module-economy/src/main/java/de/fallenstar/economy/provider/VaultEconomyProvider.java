@@ -2,14 +2,20 @@ package de.fallenstar.economy.provider;
 
 import de.fallenstar.core.exception.ProviderFunctionalityNotFoundException;
 import de.fallenstar.core.provider.EconomyProvider;
+import de.fallenstar.economy.pricing.ItemBasePriceProvider;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
 
+import java.math.BigDecimal;
+import java.util.Collection;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * Vault-basierter Economy Provider.
@@ -32,6 +38,8 @@ public class VaultEconomyProvider implements EconomyProvider {
     private final Logger logger;
     private Economy vaultEconomy;
     private boolean available;
+    private ItemBasePriceProvider priceProvider; // Setter-injected
+    private de.fallenstar.economy.EconomyModule plugin; // Setter-injected (für Config-Speicherung)
 
     /**
      * Konstruktor für VaultEconomyProvider.
@@ -41,6 +49,26 @@ public class VaultEconomyProvider implements EconomyProvider {
     public VaultEconomyProvider(Logger logger) {
         this.logger = logger;
         this.available = setupEconomy();
+    }
+
+    /**
+     * Setzt den ItemBasePriceProvider (Setter-Injection).
+     *
+     * @param priceProvider ItemBasePriceProvider-Instanz
+     */
+    public void setPriceProvider(ItemBasePriceProvider priceProvider) {
+        this.priceProvider = priceProvider;
+        logger.fine("ItemBasePriceProvider injected into VaultEconomyProvider");
+    }
+
+    /**
+     * Setzt das Plugin (Setter-Injection für Config-Speicherung).
+     *
+     * @param plugin EconomyModule-Instanz
+     */
+    public void setPlugin(de.fallenstar.economy.EconomyModule plugin) {
+        this.plugin = plugin;
+        logger.fine("EconomyModule injected into VaultEconomyProvider");
     }
 
     /**
@@ -263,5 +291,69 @@ public class VaultEconomyProvider implements EconomyProvider {
         }
 
         return vaultEconomy.currencyNamePlural();
+    }
+
+    // ================== Item-Preis-Verwaltung (delegiert an ItemBasePriceProvider) ==================
+
+    @Override
+    public Optional<BigDecimal> getBuyPrice(Material material)
+            throws ProviderFunctionalityNotFoundException {
+        if (priceProvider == null) {
+            logger.warning("ItemBasePriceProvider nicht verfügbar - kann Buy-Preis nicht abrufen!");
+            return Optional.empty();
+        }
+
+        // Hole VanillaItemPrice und extrahiere buyPrice
+        return priceProvider.getVanillaPrice(material)
+                .map(price -> price.buyPrice());
+    }
+
+    @Override
+    public Optional<BigDecimal> getSellPrice(Material material)
+            throws ProviderFunctionalityNotFoundException {
+        if (priceProvider == null) {
+            logger.warning("ItemBasePriceProvider nicht verfügbar - kann Sell-Preis nicht abrufen!");
+            return Optional.empty();
+        }
+
+        // Hole VanillaItemPrice und extrahiere sellPrice
+        return priceProvider.getVanillaPrice(material)
+                .map(price -> price.sellPrice());
+    }
+
+    @Override
+    public boolean setItemPrice(Material material, BigDecimal buyPrice, BigDecimal sellPrice)
+            throws ProviderFunctionalityNotFoundException {
+        if (priceProvider == null) {
+            logger.warning("ItemBasePriceProvider nicht verfügbar - kann Preis nicht setzen!");
+            return false;
+        }
+
+        // Delegiere an ItemBasePriceProvider
+        priceProvider.registerVanillaPrice(material, buyPrice, sellPrice);
+
+        // Speichere Config automatisch (eliminiert Reflection in PlotPriceCommand!)
+        if (plugin != null) {
+            plugin.saveConfiguration();
+            logger.fine("Config automatisch nach setItemPrice() gespeichert");
+        } else {
+            logger.warning("Plugin nicht verfügbar - Config nicht gespeichert!");
+        }
+
+        return true;
+    }
+
+    @Override
+    public Collection<Material> getAllPricedMaterials()
+            throws ProviderFunctionalityNotFoundException {
+        if (priceProvider == null) {
+            logger.warning("ItemBasePriceProvider nicht verfügbar - kann Material-Liste nicht abrufen!");
+            return java.util.Collections.emptyList();
+        }
+
+        // Hole alle VanillaItemPrice Objekte und extrahiere Material
+        return priceProvider.getAllVanillaPrices().stream()
+                .map(price -> price.material())
+                .collect(Collectors.toList());
     }
 }

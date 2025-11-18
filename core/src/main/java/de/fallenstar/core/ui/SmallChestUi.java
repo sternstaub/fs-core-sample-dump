@@ -29,32 +29,52 @@ import java.util.UUID;
  * @author FallenStar
  * @version 1.0
  */
-public abstract class SmallChestUI extends BaseUI implements Listener {
+public abstract class SmallChestUi extends BaseUi implements Listener {
 
     public static final int SIZE = 27; // 3 Zeilen
-    protected static final Map<UUID, SmallChestUI> activeUIs = new HashMap<>();
+    protected static final Map<UUID, SmallChestUi> activeUIs = new HashMap<>();
 
     /**
-     * Konstruktor für SmallChestUI.
+     * Das aktuell geöffnete Inventory dieser UI-Instanz.
+     * Wird verwendet um zu prüfen ob Clicks zum richtigen Inventory gehören.
+     */
+    private Inventory currentInventory;
+
+    /**
+     * Konstruktor für SmallChestUi.
      *
      * @param title Titel des Chest-UI
      */
-    public SmallChestUI(String title) {
+    public SmallChestUi(String title) {
         super(title);
     }
 
     @Override
     public void open(Player player) {
-        // Deregistriere alte Listener BEVOR wir einen neuen registrieren
-        // (verhindert mehrfache Listener bei rebuild())
-        org.bukkit.event.HandlerList.unregisterAll(this);
+        // Prüfe ob Spieler bereits ein Inventory offen hat (Rebuild-Fall)
+        Inventory currentInventory = player.getOpenInventory().getTopInventory();
+        boolean isRebuild = activeUIs.get(player.getUniqueId()) == this;
 
-        // Event-Listener registrieren (benötigt BaseUI.setPlugin() beim Server-Start!)
-        if (getPlugin() != null) {
+        // Deregistriere alte Listener NUR wenn es KEIN Rebuild ist
+        // (beim Rebuild sind die Listener bereits registriert!)
+        if (!isRebuild) {
+            org.bukkit.event.HandlerList.unregisterAll(this);
+        }
+
+        // Event-Listener registrieren (benötigt BaseUi.setPlugin() beim Server-Start!)
+        if (!isRebuild && getPlugin() != null) {
             Bukkit.getPluginManager().registerEvents(this, getPlugin());
         }
 
-        Inventory inventory = Bukkit.createInventory(null, SIZE, title);
+        Inventory inventory;
+        if (isRebuild && currentInventory.getSize() == SIZE) {
+            // Rebuild: Update existierendes Inventory statt neues zu erstellen
+            inventory = currentInventory;
+            inventory.clear(); // Lösche alte Items
+        } else {
+            // Erstes Öffnen: Erstelle neues Inventory
+            inventory = Bukkit.createInventory(null, SIZE, title);
+        }
 
         // Items in Inventory laden
         for (Map.Entry<Integer, ItemStack> entry : items.entrySet()) {
@@ -63,11 +83,17 @@ public abstract class SmallChestUI extends BaseUI implements Listener {
             }
         }
 
+        // Speichere das Inventory für diese UI-Instanz
+        this.currentInventory = inventory;
+
         // UI für Spieler speichern
         activeUIs.put(player.getUniqueId(), this);
 
-        // Inventory öffnen
-        player.openInventory(inventory);
+        // Inventory öffnen (nur wenn nicht bereits offen)
+        if (!isRebuild) {
+            player.openInventory(inventory);
+        }
+        // Sonst ist das Inventory bereits offen und wurde nur updated
     }
 
     /**
@@ -111,21 +137,20 @@ public abstract class SmallChestUI extends BaseUI implements Listener {
             return;
         }
 
-        SmallChestUI ui = activeUIs.get(player.getUniqueId());
-        if (ui == null) {
-            return;  // Kein aktives UI für diesen Spieler
+        // WICHTIG: Prüfe ob der Click zum Inventory DIESER UI-Instanz gehört!
+        // Problem: Mehrere UI-Instanzen haben Event-Handler registriert.
+        // Lösung: Nur reagieren wenn event.getInventory() == this.currentInventory
+        if (event.getInventory() != this.currentInventory) {
+            return;  // Nicht mein Inventory - ignorieren!
         }
 
-        // IMMER canceln - verhindert Item-Bewegung in ALLEN Fällen
-        // Auch wenn ui != this, canceln wir trotzdem (verhindert Race Conditions)
+        // IMMER canceln - verhindert Item-Bewegung
         event.setCancelled(true);
 
-        // Nur Click-Handler für DIESES UI ausführen (wenn es das aktive ist)
-        if (ui == this) {
-            int slot = event.getRawSlot();
-            if (slot >= 0 && slot < SIZE) {
-                handleClick(player, slot);
-            }
+        // Click-Handler ausführen
+        int slot = event.getRawSlot();
+        if (slot >= 0 && slot < SIZE) {
+            handleClick(player, slot);
         }
         // Clicks außerhalb des UI-Inventars (z.B. Spieler-Inventar) werden auch gecancelt!
     }
@@ -135,14 +160,19 @@ public abstract class SmallChestUI extends BaseUI implements Listener {
      */
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
-        if (event.getPlayer() instanceof Player player) {
-            SmallChestUI ui = activeUIs.get(player.getUniqueId());
-            if (ui == this) {
-                activeUIs.remove(player.getUniqueId());
+        // Nur reagieren wenn es MEIN Inventory ist
+        if (event.getInventory() != this.currentInventory) {
+            return;
+        }
 
-                // Event-Listener unregistrieren, um Memory-Leaks zu vermeiden
-                org.bukkit.event.HandlerList.unregisterAll(this);
-            }
+        if (event.getPlayer() instanceof Player player) {
+            activeUIs.remove(player.getUniqueId());
+
+            // Inventory-Referenz löschen (Memory-Leak vermeiden)
+            this.currentInventory = null;
+
+            // Event-Listener unregistrieren, um Memory-Leaks zu vermeiden
+            org.bukkit.event.HandlerList.unregisterAll(this);
         }
     }
 
@@ -150,9 +180,9 @@ public abstract class SmallChestUI extends BaseUI implements Listener {
      * Gibt die aktive UI für einen Spieler zurück.
      *
      * @param player Spieler
-     * @return Aktive SmallChestUI oder null
+     * @return Aktive SmallChestUi oder null
      */
-    public static SmallChestUI getActiveUI(Player player) {
+    public static SmallChestUi getActiveUI(Player player) {
         return activeUIs.get(player.getUniqueId());
     }
 }

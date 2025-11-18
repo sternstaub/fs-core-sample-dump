@@ -1,6 +1,6 @@
 package de.fallenstar.items.ui;
 
-import de.fallenstar.core.ui.SmallChestUI;
+import de.fallenstar.core.ui.SmallChestUi;
 import de.fallenstar.items.manager.SpecialItemManager;
 import de.fallenstar.items.provider.MMOItemsItemProvider;
 import net.kyori.adventure.text.Component;
@@ -24,12 +24,12 @@ import java.util.List;
  * @author FallenStar
  * @version 1.0
  */
-public class TestTradeUI extends SmallChestUI {
+public class TestTradeUi extends SmallChestUi {
 
     private final MMOItemsItemProvider itemProvider;
     private final SpecialItemManager specialItemManager;
 
-    public TestTradeUI(Plugin plugin, MMOItemsItemProvider itemProvider, SpecialItemManager specialItemManager) {
+    public TestTradeUi(Plugin plugin, MMOItemsItemProvider itemProvider, SpecialItemManager specialItemManager) {
         super("§6Test Händler - Prototype");
         this.itemProvider = itemProvider;
         this.specialItemManager = specialItemManager;

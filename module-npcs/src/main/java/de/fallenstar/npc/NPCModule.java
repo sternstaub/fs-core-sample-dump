@@ -99,6 +99,9 @@ public class NPCModule extends JavaPlugin implements Listener {
 
         getLogger().info("Providers ready - initializing NPC Module...");
 
+        // Registriere CitizensNPCProvider (Modul-eigene Implementierung)
+        registerCitizensNPCProvider();
+
         // KRITISCHE Features prüfen (required)
         if (!checkRequiredFeatures()) {
             getLogger().severe("Required providers not available!");
@@ -111,6 +114,40 @@ public class NPCModule extends JavaPlugin implements Listener {
 
         // Module vollständig initialisieren
         initializeModule();
+    }
+
+    /**
+     * Registriert CitizensNPCProvider in der ProviderRegistry.
+     *
+     * Diese Methode ersetzt die Core-eigene Citizens-Integration.
+     * Das NPCs-Modul stellt nun seine eigene CitizensNPCProvider-Implementierung bereit.
+     *
+     * WICHTIG: Der Provider wird auch als EventListener registriert für Click-Events!
+     */
+    private void registerCitizensNPCProvider() {
+        // Prüfe ob Citizens verfügbar ist
+        if (getServer().getPluginManager().getPlugin("Citizens") == null) {
+            getLogger().info("○ Citizens nicht gefunden - verwende NoOp NPCProvider");
+            return;
+        }
+
+        try {
+            // Erstelle CitizensNPCProvider (Modul-eigene Implementierung)
+            de.fallenstar.npc.provider.CitizensNPCProvider citizensProvider =
+                new de.fallenstar.npc.provider.CitizensNPCProvider();
+
+            // Registriere in ProviderRegistry
+            providers.setNpcProvider(citizensProvider);
+
+            // WICHTIG: Registriere als Event-Listener für NPC-Click-Events
+            getServer().getPluginManager().registerEvents(citizensProvider, this);
+
+            getLogger().info("✓ CitizensNPCProvider (NPCs-Modul) registriert + Listener aktiviert");
+
+        } catch (Exception e) {
+            getLogger().warning("✗ Fehler beim Registrieren von CitizensNPCProvider: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     /**

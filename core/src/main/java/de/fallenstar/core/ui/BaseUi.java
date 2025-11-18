@@ -19,16 +19,16 @@ import java.util.function.Consumer;
  * - Event-Registrierung (für Listener-Subklassen)
  *
  * Implementierungen:
- * - SmallChestUI (27 Slots, 3 Zeilen)
- * - LargeChestUI (54 Slots, 6 Zeilen)
- * - SignUI (4 Zeilen Text-Input)
- * - AnvilUI (Text-Input mit Rename)
- * - BookUI (Multi-Page Output)
+ * - SmallChestUi (27 Slots, 3 Zeilen)
+ * - LargeChestUi (54 Slots, 6 Zeilen)
+ * - SignUi (4 Zeilen Text-Input)
+ * - AnvilUi (Text-Input mit Rename)
+ * - BookUi (Multi-Page Output)
  *
  * @author FallenStar
  * @version 1.0
  */
-public abstract class BaseUI {
+public abstract class BaseUi {
 
     protected String title;
     protected final Map<Integer, ItemStack> items;
@@ -41,11 +41,11 @@ public abstract class BaseUI {
     private static Plugin pluginInstance;
 
     /**
-     * Konstruktor für BaseUI.
+     * Konstruktor für BaseUi.
      *
      * @param title Titel des UI
      */
-    protected BaseUI(String title) {
+    protected BaseUi(String title) {
         this.title = title;
         this.items = new HashMap<>();
         this.clickHandlers = new HashMap<>();

@@ -201,4 +201,21 @@ public interface ItemProvider {
      */
     boolean itemExists(String type, String itemId)
             throws ProviderFunctionalityNotFoundException;
+
+    /**
+     * Gibt ein Special-Item zurück (Währungs-Items, UI-Buttons, etc.).
+     *
+     * Special-Items sind vordefinierte Items wie:
+     * - Währungs-Items: "bronze_stern", "silber_stern", "gold_stern"
+     * - UI-Buttons: "ui_confirm", "ui_cancel", "ui_close", etc.
+     *
+     * Diese Methode eliminiert Reflection-Zugriffe auf SpecialItemManager.
+     *
+     * @param itemId Special-Item-ID (z.B. "bronze_stern", "ui_confirm")
+     * @param amount Anzahl (Stack-Size)
+     * @return Optional<ItemStack> - leer wenn Item nicht existiert
+     * @throws ProviderFunctionalityNotFoundException wenn nicht verfügbar
+     */
+    Optional<ItemStack> getSpecialItem(String itemId, int amount)
+            throws ProviderFunctionalityNotFoundException;
 }

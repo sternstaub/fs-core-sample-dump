@@ -12,7 +12,7 @@ import de.fallenstar.core.ui.element.navigation.NavigateRightButton;
  * - Close-Button (Schließen)
  * - Filter/Sort-Buttons
  *
- * Standard-Layout für SmallChestUI (Row 2, Slots 18-26):
+ * Standard-Layout für SmallChestUi (Row 2, Slots 18-26):
  * - Slot 0 (18): Navigate Left / First Page
  * - Slot 4 (22): Close Button
  * - Slot 8 (26): Navigate Right / Last Page

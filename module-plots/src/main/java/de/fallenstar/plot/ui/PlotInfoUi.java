@@ -2,7 +2,7 @@ package de.fallenstar.plot.ui;
 
 import de.fallenstar.core.provider.Plot;
 import de.fallenstar.core.provider.PlotProvider;
-import de.fallenstar.core.ui.SmallChestUI;
+import de.fallenstar.core.ui.SmallChestUi;
 import de.fallenstar.plot.model.NamedPlot;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -25,10 +25,10 @@ import java.util.List;
  *
  * **Verwendung:**
  * - Spieler klickt auf Default-Plot
- * - `/plot gui` öffnet PlotInfoUI
+ * - `/plot gui` öffnet PlotInfoUi
  * - Owner kann Plot-Namen setzen
  *
- * **Layout: SmallChestUI (27 Slots)**
+ * **Layout: SmallChestUi (27 Slots)**
  * - Zeile 0 (0-8): Header + Close
  * - Zeile 1 (9-17): Plot-Info-Buttons
  * - Zeile 2 (18-26): Owner-Optionen (falls Owner)
@@ -36,20 +36,20 @@ import java.util.List;
  * @author FallenStar
  * @version 1.0
  */
-public class PlotInfoUI extends SmallChestUI {
+public class PlotInfoUi extends SmallChestUi {
 
     private final Plot plot;
     private final PlotProvider plotProvider;
     private final boolean isOwner;
 
     /**
-     * Erstellt ein PlotInfoUI.
+     * Erstellt ein PlotInfoUi.
      *
      * @param plot Der Plot
      * @param plotProvider PlotProvider (für Owner-Check)
      * @param player Der Spieler
      */
-    public PlotInfoUI(Plot plot, PlotProvider plotProvider, Player player) {
+    public PlotInfoUi(Plot plot, PlotProvider plotProvider, Player player) {
         super("§6Plot-Informationen");
         this.plot = plot;
         this.plotProvider = plotProvider;
@@ -184,7 +184,7 @@ public class PlotInfoUI extends SmallChestUI {
 
         setItem(20, nameItem, player -> {
             player.sendMessage("§c✗ Plot-Namen-Feature noch nicht implementiert!");
-            player.sendMessage("§7Hinweis: PlotNameInputUI benötigt AnvilUI-Implementierung");
+            player.sendMessage("§7Hinweis: PlotNameInputUi benötigt AnvilUi-Implementierung");
             close(player);
         });
 

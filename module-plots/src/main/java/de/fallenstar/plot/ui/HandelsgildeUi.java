@@ -1,6 +1,7 @@
 package de.fallenstar.plot.ui;
 
 import de.fallenstar.core.provider.Plot;
+import de.fallenstar.core.registry.ProviderRegistry;
 import de.fallenstar.core.ui.container.BasicGsUi;
 import de.fallenstar.plot.action.*;
 import de.fallenstar.plot.storage.manager.StorageManager;
@@ -40,6 +41,7 @@ public class HandelsgildeUi extends BasicGsUi {
     private final Plot plot;
     private final PlotStorageProvider storageProvider;
     private final StorageManager storageManager;
+    private final ProviderRegistry providers;
     private final boolean isOwner;
 
     /**
@@ -48,18 +50,21 @@ public class HandelsgildeUi extends BasicGsUi {
      * @param plot Der Plot
      * @param storageProvider PlotStorageProvider für Storage-Zugriff
      * @param storageManager StorageManager für Storage-Verwaltung
+     * @param providers ProviderRegistry für Owner-Checks und NPC-Verwaltung
      * @param isOwner Ob der öffnende Spieler der Besitzer ist
      */
     public HandelsgildeUi(
             Plot plot,
             PlotStorageProvider storageProvider,
             StorageManager storageManager,
+            ProviderRegistry providers,
             boolean isOwner
     ) {
         super(isOwner ? "§6§lHandelsgilde - Verwaltung" : "§e§lHandelsgilde - Shop");
         this.plot = plot;
         this.storageProvider = storageProvider;
         this.storageManager = storageManager;
+        this.providers = providers;
         this.isOwner = isOwner;
 
         buildUi();
@@ -158,7 +163,7 @@ public class HandelsgildeUi extends BasicGsUi {
                 new OpenStorageUiAction(plot, storageProvider, storageManager, isOwner)  // Type-Safe!
         );
 
-        // NPCs verwalten (Placeholder)
+        // NPCs verwalten
         addFunctionButton(
                 Material.VILLAGER_SPAWN_EGG,
                 "§6§lNPCs verwalten",
@@ -166,9 +171,9 @@ public class HandelsgildeUi extends BasicGsUi {
                         "§7Verwalte Gildenhändler und",
                         "§7Spielerhändler auf diesem Plot",
                         "§7",
-                        "§c§lNoch nicht implementiert"
+                        "§a§lKlicke zum Öffnen"
                 ),
-                new ManageNpcsAction(plot)  // Type-Safe Placeholder!
+                new ManageNpcsAction(plot, providers)  // Type-Safe Action!
         );
 
         // Händler-Slots (Placeholder)

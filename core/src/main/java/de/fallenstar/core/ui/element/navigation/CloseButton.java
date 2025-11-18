@@ -15,7 +15,7 @@ import java.util.List;
  * - Extends ClickableUiElement&lt;CloseUiAction&gt;
  * - Compiler erzwingt: Action MUSS vom Typ CloseUiAction sein
  *
- * Standard-Slot-Position: 22 (Mitte unten, SmallChestUI)
+ * Standard-Slot-Position: 22 (Mitte unten, SmallChestUi)
  *
  * Verwendung:
  * ```java

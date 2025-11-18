@@ -21,16 +21,16 @@ import java.util.function.Consumer;
  * @author FallenStar
  * @version 1.0
  */
-public abstract class SignUI extends BaseUI {
+public abstract class SignUi extends BaseUi {
 
     protected Consumer<String[]> inputHandler;
 
     /**
-     * Konstruktor für SignUI.
+     * Konstruktor für SignUi.
      *
      * @param title Titel/Prompt für das Sign
      */
-    public SignUI(String title) {
+    public SignUi(String title) {
         super(title);
     }
 

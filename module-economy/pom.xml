@@ -27,14 +27,6 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- Items Module (für SpecialItemManager) -->
-        <dependency>
-            <groupId>de.fallenstar</groupId>
-            <artifactId>module-items</artifactId>
-            <version>${project.version}</version>
-            <scope>provided</scope>
-        </dependency>
-
         <!-- Paper API -->
         <dependency>
             <groupId>io.papermc.paper</groupId>

@@ -22,11 +22,27 @@ import java.math.BigDecimal;
 public sealed interface ItemBasePrice {
 
     /**
-     * Gibt den Basispreis zurück.
+     * Gibt den Basispreis zurück (Legacy - nutze buyPrice/sellPrice stattdessen).
      *
      * @return Preis in Basiswährung (Sterne)
+     * @deprecated Verwende buyPrice() oder sellPrice()
      */
+    @Deprecated
     BigDecimal getPrice();
+
+    /**
+     * Gibt den Ankaufspreis zurück (Spieler verkauft → NPC zahlt).
+     *
+     * @return Ankaufspreis in Sternen
+     */
+    BigDecimal getBuyPrice();
+
+    /**
+     * Gibt den Verkaufspreis zurück (Spieler kauft → Spieler zahlt).
+     *
+     * @return Verkaufspreis in Sternen
+     */
+    BigDecimal getSellPrice();
 
     /**
      * Gibt eine String-Repräsentation des Items zurück.
@@ -39,29 +55,59 @@ public sealed interface ItemBasePrice {
      * Basispreis für ein Vanilla-Item.
      *
      * @param material Minecraft Material
-     * @param price Basispreis in Sternen
+     * @param buyPrice Ankaufspreis in Sternen (Spieler verkauft → NPC zahlt)
+     * @param sellPrice Verkaufspreis in Sternen (Spieler kauft → Spieler zahlt)
      */
     record VanillaItemPrice(
             Material material,
-            BigDecimal price
+            BigDecimal buyPrice,
+            BigDecimal sellPrice
     ) implements ItemBasePrice {
 
         /**
          * Erstellt einen VanillaItemPrice.
          *
          * @param material Material
-         * @param price Preis
-         * @throws IllegalArgumentException wenn price negativ
+         * @param buyPrice Ankaufspreis
+         * @param sellPrice Verkaufspreis
+         * @throws IllegalArgumentException wenn Preise negativ
          */
         public VanillaItemPrice {
-            if (price.compareTo(BigDecimal.ZERO) < 0) {
-                throw new IllegalArgumentException("Preis darf nicht negativ sein!");
+            if (buyPrice.compareTo(BigDecimal.ZERO) < 0) {
+                throw new IllegalArgumentException("Ankaufspreis darf nicht negativ sein!");
+            }
+            if (sellPrice.compareTo(BigDecimal.ZERO) < 0) {
+                throw new IllegalArgumentException("Verkaufspreis darf nicht negativ sein!");
             }
         }
 
+        /**
+         * Legacy-Konstruktor für Kompatibilität.
+         *
+         * @param material Material
+         * @param price Einheitspreis (wird für Buy und Sell verwendet)
+         * @deprecated Verwende VanillaItemPrice(Material, BigDecimal, BigDecimal)
+         */
+        @Deprecated
+        public VanillaItemPrice(Material material, BigDecimal price) {
+            this(material, price, price);
+        }
+
         @Override
+        @Deprecated
         public BigDecimal getPrice() {
-            return price;
+            // Fallback auf Verkaufspreis
+            return sellPrice;
+        }
+
+        @Override
+        public BigDecimal getBuyPrice() {
+            return buyPrice;
+        }
+
+        @Override
+        public BigDecimal getSellPrice() {
+            return sellPrice;
         }
 
         @Override
@@ -75,12 +121,14 @@ public sealed interface ItemBasePrice {
      *
      * @param itemType Item-Type (z.B. "SWORD", "TOOL")
      * @param itemId Item-ID (z.B. "EXCALIBUR", "LEGENDARY_PICKAXE")
-     * @param price Basispreis in Sternen
+     * @param buyPrice Ankaufspreis in Sternen
+     * @param sellPrice Verkaufspreis in Sternen
      */
     record CustomItemPrice(
             String itemType,
             String itemId,
-            BigDecimal price
+            BigDecimal buyPrice,
+            BigDecimal sellPrice
     ) implements ItemBasePrice {
 
         /**
@@ -88,18 +136,46 @@ public sealed interface ItemBasePrice {
          *
          * @param itemType Type
          * @param itemId ID
-         * @param price Preis
-         * @throws IllegalArgumentException wenn price negativ
+         * @param buyPrice Ankaufspreis
+         * @param sellPrice Verkaufspreis
+         * @throws IllegalArgumentException wenn Preise negativ
          */
         public CustomItemPrice {
-            if (price.compareTo(BigDecimal.ZERO) < 0) {
-                throw new IllegalArgumentException("Preis darf nicht negativ sein!");
+            if (buyPrice.compareTo(BigDecimal.ZERO) < 0) {
+                throw new IllegalArgumentException("Ankaufspreis darf nicht negativ sein!");
+            }
+            if (sellPrice.compareTo(BigDecimal.ZERO) < 0) {
+                throw new IllegalArgumentException("Verkaufspreis darf nicht negativ sein!");
             }
         }
 
+        /**
+         * Legacy-Konstruktor für Kompatibilität.
+         *
+         * @param itemType Type
+         * @param itemId ID
+         * @param price Einheitspreis
+         * @deprecated Verwende CustomItemPrice(String, String, BigDecimal, BigDecimal)
+         */
+        @Deprecated
+        public CustomItemPrice(String itemType, String itemId, BigDecimal price) {
+            this(itemType, itemId, price, price);
+        }
+
         @Override
+        @Deprecated
         public BigDecimal getPrice() {
-            return price;
+            return sellPrice;
+        }
+
+        @Override
+        public BigDecimal getBuyPrice() {
+            return buyPrice;
+        }
+
+        @Override
+        public BigDecimal getSellPrice() {
+            return sellPrice;
         }
 
         @Override

@@ -1,4 +1,4 @@
-package de.fallenstar.core.provider.impl;
+package de.fallenstar.npc.provider;
 
 import de.fallenstar.core.exception.ProviderFunctionalityNotFoundException;
 import de.fallenstar.core.provider.NPCProvider;

@@ -1,8 +1,8 @@
 package de.fallenstar.economy.manager;
 
+import de.fallenstar.core.provider.ItemProvider;
 import de.fallenstar.economy.model.BankAccount;
 import de.fallenstar.economy.model.CurrencyItemSet;
-import de.fallenstar.items.manager.SpecialItemManager;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
@@ -29,12 +29,12 @@ import java.util.logging.Logger;
  * - Event-Währungen
  *
  * @author FallenStar
- * @version 1.0
+ * @version 2.0 - Refactored: SpecialItemManager → ItemProvider (eliminiert Items-Modul Dependency)
  */
 public class BankAccountHandler {
 
     private final Logger logger;
-    private final SpecialItemManager itemManager;
+    private final ItemProvider itemProvider;
     private final CurrencyItemSet currency;
     private final Map<UUID, BankAccount> accounts;
     private BigDecimal totalBankBalance;
@@ -43,14 +43,14 @@ public class BankAccountHandler {
      * Konstruktor für BankAccountHandler.
      *
      * @param logger Logger
-     * @param itemManager SpecialItemManager (für Münz-Erstellung)
+     * @param itemProvider ItemProvider (Core-Interface, eliminiert Items-Modul Dependency)
      * @param currency Währung die diese Bank verwaltet
      * @param initialBankBalance Initialer Münz-Vorrat der Bank
      */
-    public BankAccountHandler(Logger logger, SpecialItemManager itemManager,
+    public BankAccountHandler(Logger logger, ItemProvider itemProvider,
                                CurrencyItemSet currency, BigDecimal initialBankBalance) {
         this.logger = logger;
-        this.itemManager = itemManager;
+        this.itemProvider = itemProvider;
         this.currency = currency;
         this.accounts = new HashMap<>();
         this.totalBankBalance = initialBankBalance;
@@ -129,7 +129,14 @@ public class BankAccountHandler {
         CurrencyItemSet.InventoryCoinResult coinResult = currency.findCoinsInInventory(
                 player.getInventory(),
                 tier,
-                (stack, itemId) -> itemManager.isSpecialItem(stack)
+                (stack, itemId) -> {
+                    try {
+                        return itemProvider.isCustomItem(stack);
+                    } catch (Exception e) {
+                        logger.fine("Fehler beim Prüfen von Custom-Item: " + e.getMessage());
+                        return false;
+                    }
+                }
         );
 
         if (!coinResult.hasCoins()) {
@@ -241,9 +248,15 @@ public class BankAccountHandler {
             }
         }
 
-        // Erstelle Münzen
+        // Erstelle Münzen via ItemProvider (eliminiert Items-Modul Dependency!)
         String itemId = currency.getItemId(tier);
-        Optional<ItemStack> coins = itemManager.createItem(itemId, actualAmount);
+        Optional<ItemStack> coins;
+        try {
+            coins = itemProvider.getSpecialItem(itemId, actualAmount);
+        } catch (Exception e) {
+            logger.warning("Fehler beim Erstellen von Münzen: " + e.getMessage());
+            return 0;
+        }
 
         if (coins.isEmpty()) {
             logger.warning("Konnte Münzen nicht erstellen: " + itemId);

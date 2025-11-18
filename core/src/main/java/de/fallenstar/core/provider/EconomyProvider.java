@@ -1,8 +1,14 @@
 package de.fallenstar.core.provider;
 
 import de.fallenstar.core.exception.ProviderFunctionalityNotFoundException;
+import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+
+import java.math.BigDecimal;
+import java.util.Collection;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -164,5 +170,56 @@ public interface EconomyProvider {
      * @throws ProviderFunctionalityNotFoundException wenn nicht verfügbar
      */
     String getCurrencyNamePlural()
+            throws ProviderFunctionalityNotFoundException;
+
+    // ================== Item-Preis-Verwaltung ==================
+
+    /**
+     * Gibt den Ankaufspreis eines Materials zurück (Spieler verkauft an NPC/System).
+     *
+     * Eliminiert Reflection-Zugriff auf ItemBasePriceProvider.
+     *
+     * @param material Das Material
+     * @return Optional mit Ankaufspreis, leer wenn kein Preis definiert
+     * @throws ProviderFunctionalityNotFoundException wenn nicht verfügbar
+     */
+    Optional<BigDecimal> getBuyPrice(Material material)
+            throws ProviderFunctionalityNotFoundException;
+
+    /**
+     * Gibt den Verkaufspreis eines Materials zurück (Spieler kauft von NPC/System).
+     *
+     * Eliminiert Reflection-Zugriff auf ItemBasePriceProvider.
+     *
+     * @param material Das Material
+     * @return Optional mit Verkaufspreis, leer wenn kein Preis definiert
+     * @throws ProviderFunctionalityNotFoundException wenn nicht verfügbar
+     */
+    Optional<BigDecimal> getSellPrice(Material material)
+            throws ProviderFunctionalityNotFoundException;
+
+    /**
+     * Setzt Ankaufs- und Verkaufspreis für ein Material.
+     *
+     * Eliminiert Reflection-Zugriff auf ItemBasePriceProvider.
+     *
+     * @param material Das Material
+     * @param buyPrice Ankaufspreis (Spieler verkauft an NPC)
+     * @param sellPrice Verkaufspreis (Spieler kauft von NPC)
+     * @return true wenn erfolgreich
+     * @throws ProviderFunctionalityNotFoundException wenn nicht verfügbar
+     */
+    boolean setItemPrice(Material material, BigDecimal buyPrice, BigDecimal sellPrice)
+            throws ProviderFunctionalityNotFoundException;
+
+    /**
+     * Gibt alle Materialien zurück, für die Preise definiert sind.
+     *
+     * Eliminiert Reflection-Zugriff auf ItemBasePriceProvider.
+     *
+     * @return Collection von Materialien mit definierten Preisen
+     * @throws ProviderFunctionalityNotFoundException wenn nicht verfügbar
+     */
+    Collection<Material> getAllPricedMaterials()
             throws ProviderFunctionalityNotFoundException;
 }
