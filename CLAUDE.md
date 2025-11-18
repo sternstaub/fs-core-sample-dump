@@ -1126,6 +1126,163 @@ EOF
 
 ---
 
+### ✅ Type-Safety Prinzipien
+
+**WICHTIG:** Code muss **compile-time type-safe** sein!
+
+#### Grundprinzipien:
+
+1. **Keine Objekte ohne erforderliche Dependencies**
+   - Compiler soll fehlende Abhängigkeiten erkennen
+   - Nutze Generics und final Fields
+
+2. **Bidirektionales Binding**
+   - Keine Action ohne UI-Element
+   - Kein UI-Element ohne Action
+
+3. **Builder-Pattern für komplexe Konstruktionen**
+   - Erzwinge erforderliche Parameter via Compiler
+   - Optionale Parameter via Fluent API
+
+#### UI-System Type-Safety Pattern:
+
+**Problem:** UI-Elemente ohne Actions oder Actions ohne UI-Elemente.
+
+**Lösung:** Generics + Sealed Classes
+
+```java
+// ✅ RICHTIG: UI-Element MUSS eine Action haben
+public sealed class ClickableUiElement<T extends UiAction>
+    permits NavigateLeftButton, NavigateRightButton, CloseButton {
+
+    private final T action;  // Compiler erzwingt: Action ist erforderlich!
+
+    // Konstruktor erzwingt Action-Parameter
+    protected ClickableUiElement(T action) {
+        this.action = Objects.requireNonNull(action, "Action darf nicht null sein");
+    }
+
+    public T getAction() {
+        return action;
+    }
+}
+
+// Konkrete Implementierung
+public final class NavigateLeftButton extends ClickableUiElement<PageNavigationAction> {
+    public NavigateLeftButton(PageNavigationAction action) {
+        super(action);
+    }
+}
+```
+
+**Bidirektionales Binding via Registry:**
+
+```java
+// Action-Registry erzwingt: Jede Action MUSS ein UI-Element registrieren
+public class UiActionRegistry {
+    private final Map<Class<? extends UiAction>, ClickableUiElement<?>> bindings = new HashMap<>();
+
+    /**
+     * Registriert Action + UI-Element.
+     *
+     * Compiler-Sicherheit: T muss mit UiElement-Typ übereinstimmen!
+     */
+    public <T extends UiAction> void register(
+            Class<T> actionClass,
+            ClickableUiElement<T> uiElement) {
+
+        bindings.put(actionClass, uiElement);
+    }
+
+    /**
+     * Gibt UI-Element für Action zurück.
+     */
+    @SuppressWarnings("unchecked")
+    public <T extends UiAction> Optional<ClickableUiElement<T>> getUiElement(Class<T> actionClass) {
+        return Optional.ofNullable((ClickableUiElement<T>) bindings.get(actionClass));
+    }
+}
+```
+
+**Verwendung:**
+
+```java
+// Neue Funktion implementieren
+public class TeleportToPlotAction implements UiAction {
+    private final Plot targetPlot;
+
+    public TeleportToPlotAction(Plot targetPlot) {
+        this.targetPlot = targetPlot;
+    }
+
+    @Override
+    public void execute(Player player) {
+        player.teleport(targetPlot.getSpawnLocation());
+    }
+}
+
+// UI-Element wird automatisch erstellt via Factory
+public class TeleportButton extends ClickableUiElement<TeleportToPlotAction> {
+    public TeleportButton(Plot plot) {
+        super(new TeleportToPlotAction(plot));  // Action MUSS übergeben werden!
+    }
+}
+
+// Registrierung erzwingt Bidirektionalität
+registry.register(TeleportToPlotAction.class, new TeleportButton(myPlot));
+```
+
+#### Best Practices:
+
+1. ✅ **Nutze `final` für alle Fields** - Immutability
+2. ✅ **Nutze `sealed` für Hierarchien** - Compiler kennt alle Subtypen
+3. ✅ **Nutze Generics** - Type-Safety zur Compile-Time
+4. ✅ **`Objects.requireNonNull()` in Konstruktoren** - Frühe Null-Checks
+5. ✅ **Builder-Pattern** - Komplexe Objekte type-safe konstruieren
+6. ✅ **Registry-Pattern** - Bidirektionale Bindings erzwingen
+
+#### Anti-Patterns vermeiden:
+
+❌ **Null-Parameter erlauben:**
+```java
+// FALSCH: Action kann null sein
+public ClickableUiElement(UiAction action) {
+    this.action = action;  // NPE-Risiko!
+}
+```
+
+❌ **Setter für finale Abhängigkeiten:**
+```java
+// FALSCH: Action kann nachträglich geändert werden
+private UiAction action;
+
+public void setAction(UiAction action) {
+    this.action = action;
+}
+```
+
+❌ **Raw Types verwenden:**
+```java
+// FALSCH: Keine Type-Safety
+public ClickableUiElement {  // Raw Type!
+    private UiAction action;  // Welcher Typ?
+}
+```
+
+✅ **Richtig:**
+```java
+// UI-Element mit Type-Safe Action
+public sealed class ClickableUiElement<T extends UiAction> {
+    private final T action;
+
+    protected ClickableUiElement(T action) {
+        this.action = Objects.requireNonNull(action);
+    }
+}
+```
+
+---
+
 ### Java Style
 
 **Package Structure:**
@@ -1143,6 +1300,10 @@ de.fallenstar.<module>/
 - Methods: `camelCase`
 - Constants: `UPPER_SNAKE_CASE`
 - Packages: `lowercase`
+- **Akronyme/Abkürzungen in CAPS:** Im Code als `camelCase` schreiben
+  - Beispiele: `GS` (Grundstück) → `Gs` in `BasicGsUi`
+  - `UI` → `Ui` in `BasicUi`, `PageableUi`
+  - `NPC` → `Npc` in `SpawnNpcAction`
 
 **Example Class Structure:**
 
@@ -2147,6 +2308,261 @@ public boolean execute(Player player, String[] args) {
     }
 }
 ```
+
+---
+
+## Type-Safe UI-System (Core v2.0)
+
+**Neu seit Sprint 11:** Row-basiertes, type-safe UI-Framework im Core.
+
+### Architektur-Überblick
+
+Das neue UI-System basiert auf **Type-Safety Prinzipien** und **Row-basierten Layouts**:
+
+```
+UiParent (interface)
+  ↑
+BaseUI (existing, kompatibel)
+  ↑
+GenericUiSmallChest (abstract, 3 Rows)
+  ↑
+BasicUi (2 Content-Rows + 1 Control-Row)
+  ↑
+PageableBasicUi (implements PageNavigable)
+BasicGsUi (Grundstücks-UI Template)
+```
+
+### Type-Safety Pattern
+
+**Problem:** UI-Elemente ohne Actions oder Actions ohne UI-Elemente.
+
+**Lösung:** Generics + Sealed Classes
+
+```java
+// ✅ RICHTIG: UI-Element MUSS eine Action haben
+public sealed class ClickableUiElement<T extends UiAction> {
+    private final T action;  // Compiler erzwingt: Action ist erforderlich!
+
+    protected ClickableUiElement(ItemStack itemStack, T action) {
+        this.itemStack = Objects.requireNonNull(itemStack);
+        this.action = Objects.requireNonNull(action);
+    }
+}
+
+// Konkrete Implementierung
+public final class NavigateRightButton extends ClickableUiElement<PageNavigationAction> {
+    public NavigateRightButton(PageNavigationAction action) {
+        super(createArrowItem(), action);
+    }
+}
+```
+
+### Komponenten
+
+#### 1. UiAction (Interface)
+
+```java
+public interface UiAction {
+    void execute(Player player);
+    default String getActionName() { return getClass().getSimpleName(); }
+}
+```
+
+**Implementierungen:**
+- `PageNavigationAction` - Navigation (NEXT, PREVIOUS, FIRST, LAST, GOTO)
+- `CloseUiAction` - UI schließen
+- `CustomAction` - Beliebige Lambda-Funktionen
+- **Module definieren eigene Actions** (z.B. `TeleportToPlotAction`, `SetPriceAction`)
+
+#### 2. UiElement (Interface)
+
+```java
+public interface UiElement {
+    ItemStack getItemStack();
+    boolean isClickable();
+    default boolean isLocked() { return false; }
+}
+```
+
+**Implementierungen:**
+- `ClickableUiElement<T extends UiAction>` (sealed abstract)
+- `StaticUiElement` (final, nicht klickbar)
+
+#### 3. UiElementContainer (Interface)
+
+```java
+public interface UiElementContainer {
+    int getSize();
+    void setElement(int position, UiElement element);
+    Optional<UiElement> getElement(int position);
+    void removeElement(int position);
+    void clear();
+}
+```
+
+**Implementierungen:**
+- `BasicUiRow` (abstract, 9 Slots)
+- `BasicUiRowForContent` (final, append/fill Support)
+- `BasicUiRowForControl` (final, Navigation-Buttons)
+
+#### 4. Navigation-Buttons (Type-Safe)
+
+```java
+// Navigate Left (PREVIOUS oder FIRST)
+public final class NavigateLeftButton extends ClickableUiElement<PageNavigationAction> {
+    public static NavigateLeftButton previous(PageNavigable navigable) { ... }
+    public static NavigateLeftButton first(PageNavigable navigable) { ... }
+}
+
+// Navigate Right (NEXT oder LAST)
+public final class NavigateRightButton extends ClickableUiElement<PageNavigationAction> {
+    public static NavigateRightButton next(PageNavigable navigable) { ... }
+    public static NavigateRightButton last(PageNavigable navigable) { ... }
+}
+
+// Close Button
+public final class CloseButton extends ClickableUiElement<CloseUiAction> {
+    public static CloseButton create(UiParent ui) { ... }
+}
+```
+
+### Verwendung
+
+#### Beispiel 1: Einfaches UI (BasicUi)
+
+```java
+public class MySimpleUi extends BasicUi {
+    public MySimpleUi() {
+        super("Mein UI");
+
+        // Info-Element (statisch)
+        var infoItem = new ItemStack(Material.DIAMOND);
+        getContentRow1().append(new StaticUiElement(infoItem));
+
+        // Funktion-Button (klickbar, type-safe!)
+        var action = new CustomAction(player -> {
+            player.sendMessage("Button geklickt!");
+        });
+        var button = new ClickableUiElement.CustomButton<>(
+            new ItemStack(Material.EMERALD),
+            action  // Action MUSS übergeben werden!
+        );
+        getContentRow2().append(button);
+
+        // Close Button
+        getControlRow().setCloseButton(CloseButton.create(this));
+    }
+}
+```
+
+#### Beispiel 2: Pageable UI
+
+```java
+public class MyShopUi extends PageableBasicUi {
+    public MyShopUi() {
+        super("Shop");
+
+        // Füge viele Items hinzu (InfiniteAppend)
+        for (ItemStack item : shopItems) {
+            var buyAction = new BuyItemAction(item);
+            var button = new ClickableUiElement.CustomButton<>(item, buyAction);
+            append(button);  // Automatische Pagination!
+        }
+    }
+}
+
+// Verwendung
+var ui = new MyShopUi();
+ui.open(player);  // Öffnet Seite 1, Navigation automatisch
+```
+
+#### Beispiel 3: Grundstücks-UI (BasicGsUi)
+
+```java
+public class HandelsgildeUi extends BasicGsUi {
+    public HandelsgildeUi(Plot plot) {
+        super("Handelsgilde: " + plot.getName());
+
+        // Info-Element
+        addInfoElement(
+            Material.GOLD_INGOT,
+            "§6§lHandelsgilde",
+            List.of("§7Besitzer: " + plot.getOwner())
+        );
+
+        // Funktion (Type-Safe!)
+        addFunctionButton(
+            Material.EMERALD,
+            "§a§lPreise festlegen",
+            List.of("§7Klicke um Preise zu setzen"),
+            new SetPriceAction(plot)  // Action MUSS übergeben werden!
+        );
+    }
+}
+```
+
+### Best Practices
+
+1. ✅ **Nutze Factory-Methoden:** `NavigateRightButton.next(navigable)`
+2. ✅ **Nutze Generics:** `ClickableUiElement<MyAction>`
+3. ✅ **final fields:** Immutability für Action und ItemStack
+4. ✅ **Objects.requireNonNull():** Frühe Null-Checks
+5. ✅ **sealed classes:** Compiler kennt alle Subtypen
+6. ✅ **PageableBasicUi für Listen:** Automatische Pagination
+
+### Migration vom alten System
+
+**Alt (BaseUI):**
+```java
+setItem(0, item, player -> {
+    // Inline Lambda - keine Type-Safety
+    player.sendMessage("Click!");
+});
+```
+
+**Neu (Type-Safe):**
+```java
+var action = new MyCustomAction();  // Type-Safe Action
+var button = new ClickableUiElement.CustomButton<>(item, action);
+getContentRow1().append(button);
+```
+
+### Module-Integration
+
+**Plots-Modul definiert eigene Actions:**
+```java
+public class TeleportToPlotAction implements UiAction {
+    private final Plot plot;
+
+    public TeleportToPlotAction(Plot plot) {
+        this.plot = Objects.requireNonNull(plot);
+    }
+
+    @Override
+    public void execute(Player player) {
+        player.teleport(plot.getSpawnLocation());
+        player.sendMessage("§aTeleportiert zu " + plot.getName());
+    }
+}
+```
+
+**Verwendung im UI:**
+```java
+addFunctionButton(
+    Material.ENDER_PEARL,
+    "§6Teleportieren",
+    List.of("§7Zum Grundstück teleportieren"),
+    new TeleportToPlotAction(plot)  // Type-Safe!
+);
+```
+
+### Vorteile
+
+- ✅ **Compile-Time Safety:** Keine Actions ohne UI-Elemente möglich
+- ✅ **IDE-Unterstützung:** Autocomplete, Refactoring, "Find Usages"
+- ✅ **Weniger Boilerplate:** Factory-Methoden, Generics
+- ✅ **Klare Verantwortlichkeiten:** Actions in Modulen, UIs nutzen Actions
+- ✅ **Einfache Erweiterung:** Neue Actions → automatisch type-safe
 
 ---
 
