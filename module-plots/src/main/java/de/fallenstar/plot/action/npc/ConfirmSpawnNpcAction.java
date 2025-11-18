@@ -91,15 +91,34 @@ public final class ConfirmSpawnNpcAction implements UiAction {
             player.sendMessage("§7UUID: §e" + npc.getNpcId());
             player.sendMessage("");
 
-            // Citizens-Status
+            // Citizens-Integration
             if (plotModule.getProviders().getNpcProvider().isAvailable()) {
                 player.sendMessage("§a§lNPC wird gespawnt...");
-                player.sendMessage("§7Der NPC sollte in wenigen Sekunden erscheinen");
 
-                // TODO: Spawn actual Citizens NPC
-                // For now: just save data
-                player.sendMessage("§7");
-                player.sendMessage("§c§lCitizens-Integration folgt in Sprint 13-14");
+                try {
+                    // Spawn Citizens-NPC
+                    UUID citizensNpcId = spawnCitizensNPC(npc, player);
+
+                    if (citizensNpcId != null) {
+                        // Registriere in PlotBoundNPCRegistry
+                        var npcRegistry = plotModule.getNPCRegistry();
+                        if (npcRegistry != null) {
+                            npcRegistry.registerNPC(plot, citizensNpcId, npcType.name().toLowerCase(), player.getLocation());
+                            plotModule.saveConfiguration();
+                        }
+
+                        player.sendMessage("§a§l✓ NPC erfolgreich gespawnt!");
+                        player.sendMessage("§7Der NPC ist jetzt sichtbar und interaktiv");
+                    } else {
+                        player.sendMessage("§e§lNPC-Daten gespeichert!");
+                        player.sendMessage("§7Citizens-NPC konnte nicht gespawnt werden");
+                        player.sendMessage("§7Prüfe die Server-Logs für Details");
+                    }
+                } catch (Exception e) {
+                    player.sendMessage("§c§lFehler beim Spawnen!");
+                    player.sendMessage("§7" + e.getMessage());
+                    e.printStackTrace();
+                }
             } else {
                 player.sendMessage("§e§lNPC-Daten gespeichert!");
                 player.sendMessage("§7Der NPC erscheint sobald Citizens geladen ist");
@@ -129,6 +148,134 @@ public final class ConfirmSpawnNpcAction implements UiAction {
             case WORLD_BANKER -> "Weltbankier";
             case AMBASSADOR -> "Botschafter";
             case CRAFTSMAN -> "Handwerker";
+        };
+    }
+
+    /**
+     * Spawnt einen Citizens-NPC.
+     *
+     * @param npc Die NPC-Daten
+     * @param player Der Spieler (für Position)
+     * @return UUID des gespawnten NPCs oder null bei Fehler
+     */
+    private UUID spawnCitizensNPC(PlotNPC npc, Player player) {
+        try {
+            var npcProvider = plotModule.getProviders().getNpcProvider();
+            if (npcProvider == null || !npcProvider.isAvailable()) {
+                return null;
+            }
+
+            // Bestimme NPC-Namen und Skin
+            String npcName = getNpcTypeName(npcType);
+            String skin = getNpcSkin(npcType);
+
+            // Spawn NPC via NPCProvider
+            UUID citizensId = npcProvider.createNPC(
+                    player.getLocation(),
+                    npcName,
+                    skin
+            );
+
+            if (citizensId == null) {
+                plotModule.getLogger().warning("NPCProvider.spawnNPC returned null!");
+                return null;
+            }
+
+            plotModule.getLogger().info("Spawned Citizens-NPC: " + citizensId +
+                    " (Type: " + npcType + ", Plot: " + plot.getUuid() + ")");
+
+            // Registriere NPC im NPCs-Modul (falls geladen)
+            registerInNPCsModule(citizensId, npc);
+
+            return citizensId;
+
+        } catch (Exception e) {
+            plotModule.getLogger().severe("Failed to spawn Citizens-NPC: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * Gibt den Skin für einen NPC-Typ zurück.
+     */
+    private String getNpcSkin(PlotNPCType type) {
+        return switch (type) {
+            case GUILD_TRADER -> "MHF_Villager";
+            case PLAYER_TRADER -> "MHF_Alex";
+            case LOCAL_BANKER, WORLD_BANKER -> "Notch";
+            case AMBASSADOR -> "jeb_";
+            case CRAFTSMAN -> "MHF_Steve";
+        };
+    }
+
+    /**
+     * Registriert den NPC im NPCs-Modul (falls geladen).
+     *
+     * Verbindet den gespawnten Citizens-NPC mit dem GuildTraderNPC-System
+     * und registriert den Click-Handler.
+     */
+    private void registerInNPCsModule(UUID citizensId, PlotNPC npc) {
+        try {
+            var npcsPlugin = plotModule.getServer().getPluginManager().getPlugin("FallenStar-NPCs");
+            if (npcsPlugin == null) {
+                plotModule.getLogger().fine("NPCs module not loaded - skipping registration");
+                return;
+            }
+
+            // Reflection: Hole NPCManager aus NPCs-Modul
+            var getNPCManager = npcsPlugin.getClass().getMethod("getNPCManager");
+            var npcManager = getNPCManager.invoke(npcsPlugin);
+
+            if (npcManager == null) {
+                plotModule.getLogger().warning("NPCManager not available in NPCs module");
+                return;
+            }
+
+            // 1. Registriere NPC im NPCManager (setzt Click-Handler!)
+            String npcTypeName = mapPlotNPCTypeToNPCsModule(npcType);
+            var registerNPCMethod = npcManager.getClass().getMethod("registerNPC", UUID.class, String.class);
+            registerNPCMethod.invoke(npcManager, citizensId, npcTypeName);
+
+            plotModule.getLogger().info("Registered NPC " + citizensId + " with type " + npcTypeName + " in NPCManager");
+
+            // 2. Für GuildTrader: Registriere im GuildTraderNPC
+            if (npcType == PlotNPCType.GUILD_TRADER) {
+                // Reflection: Hole GuildTraderNPC-Typ
+                var getNPCTypeMethod = npcManager.getClass().getMethod("getNPCType", String.class);
+                var guildTraderType = getNPCTypeMethod.invoke(npcManager, "guildtrader");
+
+                if (guildTraderType != null) {
+                    // Reflection: registerNPCForPlot(UUID npcId, Plot plot)
+                    var registerMethod = guildTraderType.getClass().getMethod(
+                            "registerNPCForPlot",
+                            UUID.class,
+                            de.fallenstar.core.provider.Plot.class
+                    );
+                    registerMethod.invoke(guildTraderType, citizensId, plot);
+
+                    plotModule.getLogger().info("Registered GuildTrader " + citizensId + " for plot " + plot.getUuid());
+                }
+            }
+
+        } catch (Exception e) {
+            plotModule.getLogger().warning("Failed to register NPC in NPCs module: " + e.getMessage());
+            e.printStackTrace();
+            // Nicht kritisch - NPC ist bereits gespawnt
+        }
+    }
+
+    /**
+     * Mappt PlotNPCType zu NPCs-Modul Typ-Namen.
+     */
+    private String mapPlotNPCTypeToNPCsModule(PlotNPCType type) {
+        return switch (type) {
+            case GUILD_TRADER -> "guildtrader";
+            case PLAYER_TRADER -> "playertrader";
+            case LOCAL_BANKER -> "localbanker";
+            case WORLD_BANKER -> "worldbanker";
+            case AMBASSADOR -> "ambassador";
+            case CRAFTSMAN -> "craftsman";
         };
     }
 }

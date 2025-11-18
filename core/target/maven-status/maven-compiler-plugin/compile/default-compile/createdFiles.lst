@@ -29,6 +29,7 @@ de/fallenstar/core/database/impl/MySQLDataStore.class
 de/fallenstar/core/provider/impl/NoOpNetworkProvider.class
 de/fallenstar/core/provider/impl/NoOpChatProvider.class
 de/fallenstar/core/provider/TownProvider.class
+de/fallenstar/core/provider/ItemBasePriceProvider.class
 de/fallenstar/core/provider/ChatProvider.class
 de/fallenstar/core/ui/element/navigation/NavigateRightButton.class
 de/fallenstar/core/ui/SimpleTradeUi.class

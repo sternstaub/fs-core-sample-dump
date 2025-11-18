@@ -23,6 +23,8 @@
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/action/ScanStorageAction.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/storage/manager/StorageManager.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/ui/NpcManagementUi.java
+/home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/model/PlotPriceData.java
+/home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/manager/PlotPriceManager.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/storage/model/StoredMaterial.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/ui/SlotManagementUi.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/storage/listener/ChestInteractListener.java
@@ -68,3 +70,4 @@
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/model/NamedPlot.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/command/PlotCommand.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/storage/model/ChestData.java
+/home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/manager/PlotBoundNPCRegistry.java

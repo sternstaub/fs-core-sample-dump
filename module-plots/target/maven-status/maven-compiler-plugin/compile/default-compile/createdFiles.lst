@@ -1,6 +1,7 @@
 de/fallenstar/plot/action/OpenShopAction.class
 de/fallenstar/plot/command/PlotCommand$1.class
 de/fallenstar/plot/npc/model/PlotNPCType.class
+de/fallenstar/plot/manager/PlotBoundNPCRegistry$NPCInfo.class
 de/fallenstar/plot/registry/PlotRegistry$PlotType.class
 de/fallenstar/plot/ui/StoragePriceUi$PriceType.class
 de/fallenstar/plot/storage/manager/StorageManager.class
@@ -32,10 +33,12 @@ de/fallenstar/plot/action/ScanStorageAction.class
 de/fallenstar/plot/ui/HandelsgildeUi.class
 de/fallenstar/plot/model/NamedPlot.class
 de/fallenstar/plot/command/PlotsAdminHandler.class
+de/fallenstar/plot/manager/PlotBoundNPCRegistry.class
 de/fallenstar/plot/action/ManageSlotsAction.class
 de/fallenstar/plot/action/npc/ConfirmSpawnNpcAction$1.class
 de/fallenstar/plot/ui/PlayerNpcManagementUi$PlayerNpcInfo.class
 de/fallenstar/plot/PlotModule$1.class
+de/fallenstar/plot/model/PlotPriceData.class
 de/fallenstar/plot/storage/manager/ChestScanService.class
 de/fallenstar/plot/registry/PlotRegistryListener.class
 de/fallenstar/plot/slot/SlottedPlot.class
@@ -48,9 +51,11 @@ de/fallenstar/plot/storage/model/PlotStorage.class
 de/fallenstar/plot/action/ViewMarketStatsAction.class
 de/fallenstar/plot/ui/NpcSpawnMenuUi.class
 de/fallenstar/plot/ui/MarketPlotUi.class
+de/fallenstar/plot/model/PlotPriceData$PricePair.class
 de/fallenstar/plot/storage/model/StoredMaterial.class
 de/fallenstar/plot/npc/model/PlotNPC.class
 de/fallenstar/plot/action/SetPriceAction.class
+de/fallenstar/plot/manager/PlotPriceManager.class
 de/fallenstar/plot/action/BuySlotAction.class
 de/fallenstar/plot/command/PlotInfoCommand.class
 de/fallenstar/plot/storage/listener/ChestInteractListener.class
