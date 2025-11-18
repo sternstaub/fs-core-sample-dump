@@ -201,7 +201,11 @@ public class EconomyModule extends JavaPlugin implements Listener {
         providers.setCoinProvider(coinProvider);
 
         if (coinProvider.isAvailable()) {
-            getLogger().info("✓ CoinProvider registriert: " + coinProvider.getBaseCurrencyName());
+            try {
+                getLogger().info("✓ CoinProvider registriert: " + coinProvider.getBaseCurrencyName());
+            } catch (Exception e) {
+                getLogger().info("✓ CoinProvider registriert (Name nicht abrufbar)");
+            }
         } else {
             getLogger().warning("✗ CoinProvider nicht verfügbar (Basiswährung fehlt?)");
         }

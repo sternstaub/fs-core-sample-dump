@@ -1,5 +1,6 @@
 package de.fallenstar.core.provider;
 
+import de.fallenstar.core.exception.ProviderFunctionalityNotFoundException;
 import org.bukkit.inventory.ItemStack;
 
 import java.math.BigDecimal;
@@ -62,8 +63,10 @@ public interface CoinProvider {
      * @param price Preis in Basiswährung (Sterne)
      * @param maxStackSize Maximale Stack-Größe (typischerweise 64)
      * @return Optional mit Münz-ItemStack, oder empty wenn fehlgeschlagen
+     * @throws ProviderFunctionalityNotFoundException wenn Provider nicht verfügbar
      */
-    Optional<ItemStack> createCoinsForPrice(BigDecimal price, int maxStackSize);
+    Optional<ItemStack> createCoinsForPrice(BigDecimal price, int maxStackSize)
+            throws ProviderFunctionalityNotFoundException;
 
     /**
      * Erstellt Münzen mit spezifischem Tier und Menge.
@@ -76,20 +79,24 @@ public interface CoinProvider {
      * @param tier Münz-Tier ("BRONZE", "SILVER", "GOLD")
      * @param amount Anzahl Münzen
      * @return Optional mit Münz-ItemStack, oder empty wenn fehlgeschlagen
+     * @throws ProviderFunctionalityNotFoundException wenn Provider nicht verfügbar
      */
-    Optional<ItemStack> createCoins(String tier, int amount);
+    Optional<ItemStack> createCoins(String tier, int amount)
+            throws ProviderFunctionalityNotFoundException;
 
     /**
      * Gibt den Namen der Basiswährung zurück.
      *
      * @return Währungs-Name (z.B. "Sterne", "Stars")
+     * @throws ProviderFunctionalityNotFoundException wenn Provider nicht verfügbar
      */
-    String getBaseCurrencyName();
+    String getBaseCurrencyName() throws ProviderFunctionalityNotFoundException;
 
     /**
      * Gibt die Basiswährungs-ID zurück.
      *
      * @return Währungs-ID (z.B. "sterne")
+     * @throws ProviderFunctionalityNotFoundException wenn Provider nicht verfügbar
      */
-    String getBaseCurrencyId();
+    String getBaseCurrencyId() throws ProviderFunctionalityNotFoundException;
 }

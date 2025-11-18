@@ -1,5 +1,6 @@
 package de.fallenstar.economy.provider;
 
+import de.fallenstar.core.exception.ProviderFunctionalityNotFoundException;
 import de.fallenstar.core.provider.CoinProvider;
 import de.fallenstar.economy.manager.CurrencyManager;
 import de.fallenstar.economy.model.CurrencyItemSet;
@@ -46,10 +47,14 @@ public class CoinProviderImpl implements CoinProvider {
     }
 
     @Override
-    public Optional<ItemStack> createCoinsForPrice(BigDecimal price, int maxStackSize) {
+    public Optional<ItemStack> createCoinsForPrice(BigDecimal price, int maxStackSize)
+            throws ProviderFunctionalityNotFoundException {
         if (!isAvailable()) {
-            logger.warning("CoinProvider nicht verfügbar - Basiswährung fehlt");
-            return Optional.empty();
+            throw new ProviderFunctionalityNotFoundException(
+                "CoinProvider",
+                "createCoinsForPrice",
+                "Basiswährung nicht verfügbar"
+            );
         }
 
         CurrencyItemSet baseCurrency = currencyManager.getBaseCurrency();
@@ -90,10 +95,14 @@ public class CoinProviderImpl implements CoinProvider {
     }
 
     @Override
-    public Optional<ItemStack> createCoins(String tier, int amount) {
+    public Optional<ItemStack> createCoins(String tier, int amount)
+            throws ProviderFunctionalityNotFoundException {
         if (!isAvailable()) {
-            logger.warning("CoinProvider nicht verfügbar - Basiswährung fehlt");
-            return Optional.empty();
+            throw new ProviderFunctionalityNotFoundException(
+                "CoinProvider",
+                "createCoins",
+                "Basiswährung nicht verfügbar"
+            );
         }
 
         CurrencyItemSet baseCurrency = currencyManager.getBaseCurrency();
@@ -113,9 +122,13 @@ public class CoinProviderImpl implements CoinProvider {
     }
 
     @Override
-    public String getBaseCurrencyName() {
+    public String getBaseCurrencyName() throws ProviderFunctionalityNotFoundException {
         if (!isAvailable()) {
-            return "Unknown";
+            throw new ProviderFunctionalityNotFoundException(
+                "CoinProvider",
+                "getBaseCurrencyName",
+                "Basiswährung nicht verfügbar"
+            );
         }
 
         CurrencyItemSet baseCurrency = currencyManager.getBaseCurrency();
@@ -123,9 +136,13 @@ public class CoinProviderImpl implements CoinProvider {
     }
 
     @Override
-    public String getBaseCurrencyId() {
+    public String getBaseCurrencyId() throws ProviderFunctionalityNotFoundException {
         if (!isAvailable()) {
-            return "unknown";
+            throw new ProviderFunctionalityNotFoundException(
+                "CoinProvider",
+                "getBaseCurrencyId",
+                "Basiswährung nicht verfügbar"
+            );
         }
 
         CurrencyItemSet baseCurrency = currencyManager.getBaseCurrency();
