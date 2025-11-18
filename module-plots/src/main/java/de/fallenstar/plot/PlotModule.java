@@ -140,6 +140,9 @@ public class PlotModule extends JavaPlugin implements Listener {
         // Registriere TownyPlotProvider (Modul-eigene Implementierung)
         registerTownyPlotProvider();
 
+        // Registriere TownyTownProvider (Modul-eigene Implementierung)
+        registerTownyTownProvider();
+
         // KRITISCHE Features prüfen (required)
         if (!checkRequiredFeatures()) {
             getLogger().severe("Required providers not available!");
@@ -192,6 +195,36 @@ public class PlotModule extends JavaPlugin implements Listener {
 
         } catch (Exception e) {
             getLogger().warning("✗ Fehler beim Registrieren von TownyPlotProvider: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Registriert TownyTownProvider in der ProviderRegistry.
+     *
+     * Diese Methode ersetzt die Core-eigene Towny-Town-Integration.
+     * Das Plots-Modul stellt nun seine eigene TownyTownProvider-Implementierung bereit.
+     */
+    private void registerTownyTownProvider() {
+        // Prüfe ob Towny verfügbar ist
+        if (getServer().getPluginManager().getPlugin("Towny") == null &&
+            getServer().getPluginManager().getPlugin("TownyAdvanced") == null) {
+            getLogger().info("○ Towny nicht gefunden - verwende NoOp TownProvider");
+            return;
+        }
+
+        try {
+            // Erstelle TownyTownProvider (Modul-eigene Implementierung)
+            de.fallenstar.plot.provider.TownyTownProvider townyProvider =
+                new de.fallenstar.plot.provider.TownyTownProvider();
+
+            // Registriere in ProviderRegistry
+            providers.setTownProvider(townyProvider);
+
+            getLogger().info("✓ TownyTownProvider (Plots-Modul) registriert");
+
+        } catch (Exception e) {
+            getLogger().warning("✗ Fehler beim Registrieren von TownyTownProvider: " + e.getMessage());
             e.printStackTrace();
         }
     }

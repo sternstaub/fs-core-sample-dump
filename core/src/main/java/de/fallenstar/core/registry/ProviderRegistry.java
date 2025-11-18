@@ -72,17 +72,11 @@ public class ProviderRegistry {
         plotStorageProvider = new NoOpPlotStorageProvider();
         logger.info("○ PlotStorageProvider: NoOp (Plots-Modul wird Implementierung registrieren)");
 
-        // Town Provider - Towny support
+        // Town Provider - Default NoOp (Plots-Modul registriert TownyTownProvider)
+        townProvider = new NoOpTownProvider();
         if (isPluginEnabled("Towny") || isPluginEnabled("TownyAdvanced")) {
-            try {
-                townProvider = new TownyTownProvider();
-                logger.info("✓ Towny detected - TownyTownProvider registered");
-            } catch (Exception e) {
-                logger.warning("✗ Towny found but failed to initialize TownProvider: " + e.getMessage());
-                townProvider = new NoOpTownProvider();
-            }
+            logger.info("○ Towny detected - Plots-Modul wird TownyTownProvider registrieren");
         } else {
-            townProvider = new NoOpTownProvider();
             logger.info("○ No town plugin found - town features disabled");
         }
 
