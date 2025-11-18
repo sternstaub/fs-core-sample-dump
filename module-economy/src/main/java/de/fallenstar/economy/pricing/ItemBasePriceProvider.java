@@ -101,8 +101,19 @@ public class ItemBasePriceProvider {
             for (String materialName : vanillaSection.getKeys(false)) {
                 try {
                     Material material = Material.valueOf(materialName.toUpperCase());
-                    BigDecimal price = BigDecimal.valueOf(vanillaSection.getDouble(materialName));
-                    registerVanillaPrice(material, price);
+
+                    // Prüfe ob Buy/Sell-Preise oder Legacy-Preis
+                    if (vanillaSection.isConfigurationSection(materialName)) {
+                        // Neue Format: { buy: X, sell: Y }
+                        ConfigurationSection priceSection = vanillaSection.getConfigurationSection(materialName);
+                        BigDecimal buyPrice = BigDecimal.valueOf(priceSection.getDouble("buy", 1.0));
+                        BigDecimal sellPrice = BigDecimal.valueOf(priceSection.getDouble("sell", 1.0));
+                        registerVanillaPrice(material, buyPrice, sellPrice);
+                    } else {
+                        // Legacy-Format: Nur ein Preis-Wert
+                        BigDecimal price = BigDecimal.valueOf(vanillaSection.getDouble(materialName));
+                        registerVanillaPrice(material, price, price);
+                    }
                 } catch (IllegalArgumentException e) {
                     logger.warning("Ungültiges Material in config: " + materialName);
                 }
@@ -118,8 +129,19 @@ public class ItemBasePriceProvider {
                 if (parts.length == 2) {
                     String type = parts[0];
                     String id = parts[1];
-                    BigDecimal price = BigDecimal.valueOf(customSection.getDouble(itemIdentifier));
-                    registerCustomPrice(type, id, price);
+
+                    // Prüfe ob Buy/Sell-Preise oder Legacy-Preis
+                    if (customSection.isConfigurationSection(itemIdentifier)) {
+                        // Neue Format: { buy: X, sell: Y }
+                        ConfigurationSection priceSection = customSection.getConfigurationSection(itemIdentifier);
+                        BigDecimal buyPrice = BigDecimal.valueOf(priceSection.getDouble("buy", 10.0));
+                        BigDecimal sellPrice = BigDecimal.valueOf(priceSection.getDouble("sell", 10.0));
+                        registerCustomPrice(type, id, buyPrice, sellPrice);
+                    } else {
+                        // Legacy-Format: Nur ein Preis-Wert
+                        BigDecimal price = BigDecimal.valueOf(customSection.getDouble(itemIdentifier));
+                        registerCustomPrice(type, id, price, price);
+                    }
                 } else {
                     logger.warning("Ungültiger Custom-Item-Identifier in config: " + itemIdentifier);
                 }
@@ -159,40 +181,86 @@ public class ItemBasePriceProvider {
     }
 
     /**
-     * Registriert einen Basispreis für ein Vanilla-Item.
+     * Registriert einen Basispreis für ein Vanilla-Item (Legacy).
      *
      * @param material Material
-     * @param price Preis in Sternen
+     * @param price Preis in Sternen (wird für Buy und Sell verwendet)
+     * @deprecated Verwende {@link #registerVanillaPrice(Material, BigDecimal, BigDecimal)}
      */
+    @Deprecated
     public void registerVanillaPrice(Material material, BigDecimal price) {
-        ItemBasePrice.VanillaItemPrice itemPrice = new ItemBasePrice.VanillaItemPrice(material, price);
-        vanillaPrices.put(material, itemPrice);
-        logger.fine("Vanilla-Preis registriert: " + material + " = " + price);
+        registerVanillaPrice(material, price, price);
     }
 
     /**
-     * Registriert einen Basispreis für ein Custom-Item.
+     * Registriert Buy/Sell-Preise für ein Vanilla-Item.
+     *
+     * @param material Material
+     * @param buyPrice Ankaufspreis in Sternen
+     * @param sellPrice Verkaufspreis in Sternen
+     */
+    public void registerVanillaPrice(Material material, BigDecimal buyPrice, BigDecimal sellPrice) {
+        ItemBasePrice.VanillaItemPrice itemPrice = new ItemBasePrice.VanillaItemPrice(material, buyPrice, sellPrice);
+        vanillaPrices.put(material, itemPrice);
+        logger.fine("Vanilla-Preis registriert: " + material + " (Buy: " + buyPrice + ", Sell: " + sellPrice + ")");
+    }
+
+    /**
+     * Registriert einen Basispreis für ein Custom-Item (Legacy).
      *
      * @param itemType Item-Type (z.B. "SWORD")
      * @param itemId Item-ID (z.B. "EXCALIBUR")
-     * @param price Preis in Sternen
+     * @param price Preis in Sternen (wird für Buy und Sell verwendet)
+     * @deprecated Verwende {@link #registerCustomPrice(String, String, BigDecimal, BigDecimal)}
      */
+    @Deprecated
     public void registerCustomPrice(String itemType, String itemId, BigDecimal price) {
-        String key = (itemType + ":" + itemId).toUpperCase();
-        ItemBasePrice.CustomItemPrice itemPrice = new ItemBasePrice.CustomItemPrice(itemType, itemId, price);
-        customPrices.put(key, itemPrice);
-        logger.fine("Custom-Preis registriert: " + key + " = " + price);
+        registerCustomPrice(itemType, itemId, price, price);
     }
 
     /**
-     * Gibt den Basispreis für ein Vanilla-Item zurück.
+     * Registriert Buy/Sell-Preise für ein Custom-Item.
+     *
+     * @param itemType Item-Type (z.B. "SWORD")
+     * @param itemId Item-ID (z.B. "EXCALIBUR")
+     * @param buyPrice Ankaufspreis in Sternen
+     * @param sellPrice Verkaufspreis in Sternen
+     */
+    public void registerCustomPrice(String itemType, String itemId, BigDecimal buyPrice, BigDecimal sellPrice) {
+        String key = (itemType + ":" + itemId).toUpperCase();
+        ItemBasePrice.CustomItemPrice itemPrice = new ItemBasePrice.CustomItemPrice(itemType, itemId, buyPrice, sellPrice);
+        customPrices.put(key, itemPrice);
+        logger.fine("Custom-Preis registriert: " + key + " (Buy: " + buyPrice + ", Sell: " + sellPrice + ")");
+    }
+
+    /**
+     * Gibt das Preis-Objekt für ein Vanilla-Item zurück.
      *
      * @param material Material
-     * @return Optional mit Preis, oder empty wenn nicht definiert
+     * @return Optional mit VanillaItemPrice, oder empty wenn nicht definiert
      */
-    public Optional<BigDecimal> getVanillaPrice(Material material) {
-        ItemBasePrice.VanillaItemPrice price = vanillaPrices.get(material);
-        return Optional.ofNullable(price).map(ItemBasePrice.VanillaItemPrice::getPrice);
+    public Optional<ItemBasePrice.VanillaItemPrice> getVanillaPrice(Material material) {
+        return Optional.ofNullable(vanillaPrices.get(material));
+    }
+
+    /**
+     * Gibt den Ankaufspreis für ein Vanilla-Item zurück.
+     *
+     * @param material Material
+     * @return Optional mit Ankaufspreis, oder empty wenn nicht definiert
+     */
+    public Optional<BigDecimal> getVanillaBuyPrice(Material material) {
+        return getVanillaPrice(material).map(ItemBasePrice.VanillaItemPrice::buyPrice);
+    }
+
+    /**
+     * Gibt den Verkaufspreis für ein Vanilla-Item zurück.
+     *
+     * @param material Material
+     * @return Optional mit Verkaufspreis, oder empty wenn nicht definiert
+     */
+    public Optional<BigDecimal> getVanillaSellPrice(Material material) {
+        return getVanillaPrice(material).map(ItemBasePrice.VanillaItemPrice::sellPrice);
     }
 
     /**
@@ -352,18 +420,24 @@ public class ItemBasePriceProvider {
         config.set("item-base-prices.defaults.vanilla", defaultVanillaPrice.doubleValue());
         config.set("item-base-prices.defaults.custom", defaultCustomPrice.doubleValue());
 
-        // Speichere Vanilla-Preise
+        // Speichere Vanilla-Preise (Buy/Sell-Format)
         for (Map.Entry<Material, ItemBasePrice.VanillaItemPrice> entry : vanillaPrices.entrySet()) {
             Material material = entry.getKey();
-            BigDecimal price = entry.getValue().getPrice();
-            config.set("item-base-prices.vanilla." + material.name(), price.doubleValue());
+            ItemBasePrice.VanillaItemPrice price = entry.getValue();
+            String path = "item-base-prices.vanilla." + material.name();
+
+            config.set(path + ".buy", price.buyPrice().doubleValue());
+            config.set(path + ".sell", price.sellPrice().doubleValue());
         }
 
-        // Speichere Custom-Preise
+        // Speichere Custom-Preise (Buy/Sell-Format)
         for (Map.Entry<String, ItemBasePrice.CustomItemPrice> entry : customPrices.entrySet()) {
             String key = entry.getKey();
-            BigDecimal price = entry.getValue().getPrice();
-            config.set("item-base-prices.custom." + key, price.doubleValue());
+            ItemBasePrice.CustomItemPrice price = entry.getValue();
+            String path = "item-base-prices.custom." + key;
+
+            config.set(path + ".buy", price.buyPrice().doubleValue());
+            config.set(path + ".sell", price.sellPrice().doubleValue());
         }
 
         logger.info("Preise in Config gespeichert: " +

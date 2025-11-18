@@ -546,12 +546,25 @@ public class PlotPriceCommand {
     }
 
     /**
-     * Holt den aktuellen Preis eines Items aus dem ItemBasePriceProvider.
+     * Holt den aktuellen Preis eines Items aus dem ItemBasePriceProvider (Legacy).
      *
      * @param item Das Item
      * @return Preis (oder 0 wenn nicht verfügbar)
+     * @deprecated Verwende {@link #loadBuyPriceFromProvider(ItemStack)} oder {@link #loadSellPriceFromProvider(ItemStack)}
      */
+    @Deprecated
     public BigDecimal loadPriceFromProvider(ItemStack item) {
+        // Fallback auf Sell-Preis
+        return loadSellPriceFromProvider(item);
+    }
+
+    /**
+     * Holt den Ankaufspreis eines Items aus dem ItemBasePriceProvider.
+     *
+     * @param item Das Item
+     * @return Ankaufspreis (oder 0 wenn nicht verfügbar)
+     */
+    public BigDecimal loadBuyPriceFromProvider(ItemStack item) {
         try {
             // Hole Economy-Modul
             var plugin = Bukkit.getPluginManager().getPlugin("FallenStar-Economy");
@@ -563,26 +576,87 @@ public class PlotPriceCommand {
             var getPriceProvider = plugin.getClass().getMethod("getPriceProvider");
             var priceProvider = getPriceProvider.invoke(plugin);
 
-            // Prüfe ob Vanilla-Item
+            // Hole Vanilla-Preis-Objekt
             Material material = item.getType();
-            var getPriceMethod = priceProvider.getClass().getMethod("getVanillaPriceOrDefault", Material.class);
-            BigDecimal price = (BigDecimal) getPriceMethod.invoke(priceProvider, material);
+            var getPriceMethod = priceProvider.getClass().getMethod("getVanillaPrice", Material.class);
+            var optionalPrice = getPriceMethod.invoke(priceProvider, material);
 
-            return price;
+            // Prüfe Optional.isPresent()
+            var isPresentMethod = optionalPrice.getClass().getMethod("isPresent");
+            boolean isPresent = (boolean) isPresentMethod.invoke(optionalPrice);
+
+            if (isPresent) {
+                // Hole VanillaItemPrice
+                var getMethod = optionalPrice.getClass().getMethod("get");
+                var vanillaItemPrice = getMethod.invoke(optionalPrice);
+
+                // Hole buyPrice()
+                var buyPriceMethod = vanillaItemPrice.getClass().getMethod("buyPrice");
+                return (BigDecimal) buyPriceMethod.invoke(vanillaItemPrice);
+            }
+
+            return BigDecimal.ZERO;
 
         } catch (Exception e) {
             // Economy-Modul nicht verfügbar oder Fehler
+            logger.warning("Fehler beim Laden des Ankaufspreises: " + e.getMessage());
             return BigDecimal.ZERO;
         }
     }
 
     /**
-     * Speichert einen Preis im ItemBasePriceProvider.
+     * Holt den Verkaufspreis eines Items aus dem ItemBasePriceProvider.
      *
-     * @param context PriceEditorContext
+     * @param item Das Item
+     * @return Verkaufspreis (oder 0 wenn nicht verfügbar)
+     */
+    public BigDecimal loadSellPriceFromProvider(ItemStack item) {
+        try {
+            // Hole Economy-Modul
+            var plugin = Bukkit.getPluginManager().getPlugin("FallenStar-Economy");
+            if (plugin == null) {
+                return BigDecimal.ZERO;
+            }
+
+            // Reflection: hole ItemBasePriceProvider
+            var getPriceProvider = plugin.getClass().getMethod("getPriceProvider");
+            var priceProvider = getPriceProvider.invoke(plugin);
+
+            // Hole Vanilla-Preis-Objekt
+            Material material = item.getType();
+            var getPriceMethod = priceProvider.getClass().getMethod("getVanillaPrice", Material.class);
+            var optionalPrice = getPriceMethod.invoke(priceProvider, material);
+
+            // Prüfe Optional.isPresent()
+            var isPresentMethod = optionalPrice.getClass().getMethod("isPresent");
+            boolean isPresent = (boolean) isPresentMethod.invoke(optionalPrice);
+
+            if (isPresent) {
+                // Hole VanillaItemPrice
+                var getMethod = optionalPrice.getClass().getMethod("get");
+                var vanillaItemPrice = getMethod.invoke(optionalPrice);
+
+                // Hole sellPrice()
+                var sellPriceMethod = vanillaItemPrice.getClass().getMethod("sellPrice");
+                return (BigDecimal) sellPriceMethod.invoke(vanillaItemPrice);
+            }
+
+            return BigDecimal.ZERO;
+
+        } catch (Exception e) {
+            // Economy-Modul nicht verfügbar oder Fehler
+            logger.warning("Fehler beim Laden des Verkaufspreises: " + e.getMessage());
+            return BigDecimal.ZERO;
+        }
+    }
+
+    /**
+     * Speichert Buy/Sell-Preise im ItemBasePriceProvider.
+     *
+     * @param context PriceEditorContext mit Buy/Sell-Preisen
      * @return true wenn erfolgreich
      */
-    private boolean savePriceToProvider(PriceEditorContext context) {
+    public boolean savePriceToProvider(PriceEditorContext context) {
         try {
             // Hole Economy-Modul
             var plugin = Bukkit.getPluginManager().getPlugin("FallenStar-Economy");
@@ -594,14 +668,15 @@ public class PlotPriceCommand {
             var getPriceProvider = plugin.getClass().getMethod("getPriceProvider");
             var priceProvider = getPriceProvider.invoke(plugin);
 
-            // Registriere Vanilla-Preis
+            // Registriere Vanilla-Preis mit Buy/Sell
             Material material = context.getItem().getType();
             var registerMethod = priceProvider.getClass().getMethod(
                 "registerVanillaPrice",
                 Material.class,
+                BigDecimal.class,
                 BigDecimal.class
             );
-            registerMethod.invoke(priceProvider, material, context.getCurrentPrice());
+            registerMethod.invoke(priceProvider, material, context.getBuyPrice(), context.getSellPrice());
 
             // WICHTIG: Speichere Config auf Festplatte!
             var saveConfigMethod = plugin.getClass().getMethod("saveConfiguration");
@@ -611,6 +686,7 @@ public class PlotPriceCommand {
 
         } catch (Exception e) {
             // Economy-Modul nicht verfügbar oder Fehler
+            logger.warning("Fehler beim Speichern der Preise: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
