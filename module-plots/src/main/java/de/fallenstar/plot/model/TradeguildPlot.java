@@ -1,5 +1,6 @@
 package de.fallenstar.plot.model;
 
+import de.fallenstar.core.distributor.*;
 import de.fallenstar.core.interaction.Interactable;
 import de.fallenstar.core.interaction.InteractionContext;
 import de.fallenstar.core.interaction.InteractionType;
@@ -20,6 +21,8 @@ import org.bukkit.inventory.ItemStack;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 
 /**
  * Handelsgilde-Plot mit vollständiger Trait-Implementierung.
@@ -30,12 +33,16 @@ import java.util.concurrent.ConcurrentHashMap;
  * - NpcContainerPlot - NPC-Verwaltung
  * - SlottablePlot - Trader-Slots
  * - UiTarget - Automatisches UI-Opening beim Klick
+ * - NpcDistributor - Automatische NPC-Verteilung auf Slots
+ * - QuestDistributor - Automatische Quest-Verteilung an NPCs
  *
  * **Features:**
  * - Click-to-UI: Spieler klickt auf Plot → UI öffnet sich
  * - Owner/Guest-Unterscheidung
  * - Admin-UI bei Shift + Admin-Permission
  * - Self-Constructing UIs aus verfügbaren Aktionen
+ * - Automatische NPC-Slot-Zuweisung
+ * - Automatische Quest-NPC-Zuweisung
  *
  * @author FallenStar
  * @version 1.0
@@ -45,7 +52,9 @@ public class TradeguildPlot extends BasePlot implements
         StorageContainerPlot,
         NpcContainerPlot,
         SlottablePlot,
-        UiTarget {
+        UiTarget,
+        NpcDistributor,
+        QuestDistributor {
 
     // NamedPlot-Daten
     private String customName;
@@ -62,6 +71,12 @@ public class TradeguildPlot extends BasePlot implements
     // SlottablePlot-Daten
     private final Map<Integer, UUID> slots = new ConcurrentHashMap<>();
     private int maxSlots = 5; // Default: 5 Trader-Slots
+
+    // NpcDistributor-Daten
+    private final Map<UUID, DistributableNpc> npcCache = new ConcurrentHashMap<>();
+
+    // QuestDistributor-Daten
+    private final List<DistributableQuest> quests = Collections.synchronizedList(new ArrayList<>());
 
     /**
      * Erstellt einen TradeguildPlot.
@@ -396,6 +411,211 @@ public class TradeguildPlot extends BasePlot implements
         return InteractionType.PLOT;
     }
 
+    // ========== NpcDistributor Implementation ==========
+
+    @Override
+    public boolean distribute(DistributableNpc npc) {
+        if (!hasCapacity()) {
+            return false;
+        }
+
+        // Finde freien Slot
+        List<Integer> freeSlots = getFreeSlots();
+        if (freeSlots.isEmpty()) {
+            return false;
+        }
+
+        // Wähle ersten freien Slot
+        int slot = freeSlots.get(0);
+
+        // Berechne Spawn-Location (Plot-Center + Slot-Offset)
+        Location spawnLoc = calculateSlotLocation(slot);
+
+        // Spawne NPC
+        UUID entityId = npc.spawn(spawnLoc);
+
+        // Platziere in Slot
+        placeNpcInSlot(slot, entityId);
+
+        // Registriere in NpcContainer
+        registerNpc(entityId);
+        setNpcType(entityId, npc.getNpcType());
+
+        // Cache NPC
+        npcCache.put(entityId, npc);
+
+        // Callback
+        npc.onDistributed(this);
+
+        return true;
+    }
+
+    @Override
+    public boolean undistribute(DistributableNpc npc) {
+        Optional<UUID> entityIdOpt = npc.getEntityId();
+        if (entityIdOpt.isEmpty()) {
+            return false;
+        }
+
+        UUID entityId = entityIdOpt.get();
+
+        // Finde Slot
+        Optional<Integer> slotOpt = getSlotForNpc(entityId);
+        if (slotOpt.isEmpty()) {
+            return false;
+        }
+
+        // Entferne aus Slot
+        removeNpcFromSlot(slotOpt.get());
+
+        // Entferne aus NpcContainer
+        unregisterNpc(entityId);
+
+        // Entferne aus Cache
+        npcCache.remove(entityId);
+
+        // Despawne NPC
+        npc.despawn();
+
+        // Callback
+        npc.onUndistributed();
+
+        return true;
+    }
+
+    @Override
+    public int getCapacity() {
+        return getMaxSlots();
+    }
+
+    @Override
+    public int getCurrentCount() {
+        return getOccupiedSlotCount();
+    }
+
+    @Override
+    public List<DistributableNpc> getDistributed() {
+        return new ArrayList<>(npcCache.values());
+    }
+
+    @Override
+    public Optional<Integer> getSlotForNpc(UUID npcId) {
+        return slots.entrySet().stream()
+            .filter(e -> e.getValue().equals(npcId))
+            .map(Map.Entry::getKey)
+            .findFirst();
+    }
+
+    public Optional<DistributableNpc> getDistributableNpcInSlot(int slot) {
+        return super.getNpcInSlot(slot)
+            .flatMap(npcId -> Optional.ofNullable(npcCache.get(npcId)));
+    }
+
+    @Override
+    public boolean removeNpcFromSlot(int slot) {
+        Optional<UUID> npcIdOpt = super.getNpcInSlot(slot);
+        if (npcIdOpt.isEmpty()) {
+            return false;
+        }
+
+        UUID npcId = npcIdOpt.get();
+        DistributableNpc npc = npcCache.get(npcId);
+
+        if (npc != null) {
+            undistribute(npc);
+        } else {
+            // Fallback: Entferne manuell
+            removeNpcFromSlot(slot);
+            unregisterNpc(npcId);
+        }
+
+        return true;
+    }
+
+    /**
+     * Berechnet die Spawn-Location für einen Slot.
+     *
+     * TODO: Bessere Slot-Positionierung implementieren
+     *
+     * @param slot Slot-Nummer
+     * @return Spawn-Location
+     */
+    private Location calculateSlotLocation(int slot) {
+        // Placeholder: Plot-Center + Offset basierend auf Slot
+        Location center = getLocation().clone();
+        center.add(slot * 2, 0, 0); // 2 Blöcke Abstand pro Slot
+        return center;
+    }
+
+    // ========== QuestDistributor Implementation ==========
+
+    @Override
+    public boolean distribute(DistributableQuest quest) {
+        // Hole alle NPCs die Quests halten können
+        List<QuestContainer> containers = getQuestContainers();
+
+        if (containers.isEmpty()) {
+            return false; // Keine NPCs vorhanden
+        }
+
+        // Filtere Container mit Kapazität
+        List<QuestContainer> available = containers.stream()
+            .filter(QuestContainer::hasQuestCapacity)
+            .toList();
+
+        if (available.isEmpty()) {
+            return false; // Alle NPCs voll
+        }
+
+        // Wähle zufälligen Container
+        QuestContainer container = available.get(
+            ThreadLocalRandom.current().nextInt(available.size())
+        );
+
+        // Weise Quest zu
+        boolean success = container.addQuest(quest);
+        if (success) {
+            quest.setCurrentContainer(container);
+            quests.add(quest);
+            quest.onDistributed(this);
+        }
+
+        return success;
+    }
+
+    @Override
+    public boolean undistribute(DistributableQuest quest) {
+        Optional<QuestContainer> containerOpt = quest.getCurrentContainer();
+        if (containerOpt.isEmpty()) {
+            return false;
+        }
+
+        QuestContainer container = containerOpt.get();
+        boolean success = container.removeQuest(quest);
+
+        if (success) {
+            quest.setCurrentContainer(null);
+            quests.remove(quest);
+            quest.onUndistributed();
+        }
+
+        return success;
+    }
+
+    @Override
+    public List<QuestContainer> getQuestContainers() {
+        // Hole alle NPCs die QuestContainer sind
+        return npcCache.values().stream()
+            .filter(npc -> npc instanceof QuestContainer)
+            .map(npc -> (QuestContainer) npc)
+            .toList();
+    }
+
+    @Override
+    public List<DistributableQuest> getDistributed() {
+        return new ArrayList<>(quests);
+    }
+
     // ========== Helper Methods ==========
 
     /**
@@ -409,5 +629,26 @@ public class TradeguildPlot extends BasePlot implements
     private boolean isOwner(Player player) {
         // TODO: PlotProvider.isOwner() aufrufen
         return player.hasPermission("fallenstar.admin"); // Placeholder
+    }
+
+    /**
+     * Registriert einen DistributableNpc im Cache.
+     *
+     * Wird von externen Systemen aufgerufen wenn NPC manuell erstellt wurde.
+     *
+     * @param npc Der NPC
+     */
+    public void registerDistributableNpc(DistributableNpc npc) {
+        npc.getEntityId().ifPresent(entityId -> npcCache.put(entityId, npc));
+    }
+
+    /**
+     * Gibt einen DistributableNpc aus dem Cache zurück.
+     *
+     * @param entityId Entity-ID
+     * @return Optional mit NPC
+     */
+    public Optional<DistributableNpc> getDistributableNpc(UUID entityId) {
+        return Optional.ofNullable(npcCache.get(entityId));
     }
 }
