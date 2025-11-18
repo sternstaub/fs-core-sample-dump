@@ -60,6 +60,31 @@ private void initializeProviders() {
 4. ✅ **User-Kommunikation auf Deutsch** - Antworten, Erklärungen, Fragen
 5. ✅ **Log-Messages gemischt** - Technische Begriffe auf Englisch, Kontext auf Deutsch
 
+### 📚 **WICHTIG: README-Aktualisierungs-Regel**
+
+**Bei JEDER Änderung an Code, Architektur oder Features:**
+
+1. ✅ **Prüfe betroffene README-Dateien:**
+   - `/README.md` - Haupt-Dokumentation
+   - `core/README.md` - Core-Plugin-Dokumentation
+   - `module-*/README.md` - Modul-spezifische Dokumentation
+   - `CLAUDE.md` - AI-Assistant Guide (dieses Dokument)
+
+2. ✅ **Aktualisiere alle relevanten READMEs:**
+   - Neue Features dokumentieren
+   - Geänderte APIs aktualisieren
+   - Obsolete Informationen entfernen
+   - Code-Beispiele auf aktuellem Stand halten
+
+3. ✅ **Checkliste für README-Updates:**
+   - [ ] Feature-Listen aktualisiert?
+   - [ ] Code-Beispiele aktualisiert?
+   - [ ] Abhängigkeiten aktualisiert?
+   - [ ] Architektur-Diagramme aktualisiert?
+   - [ ] Sprint-Status aktualisiert?
+
+**Beispiel:** Neue Provider-Methode hinzugefügt → `core/README.md` + `CLAUDE.md` aktualisieren!
+
 ---
 
 ## Project Overview
@@ -87,7 +112,7 @@ A **modular Minecraft plugin system** for Paper 1.21.1 with provider-based archi
 
 - **Version:** 1.0-SNAPSHOT
 - **Phase:** Aktive Entwicklung
-- **Completion:** ~50% (Core ✅ + Plots ✅ + UI-Framework ✅ + Items ✅ + UI-Modul ✅ + Economy ✅)
+- **Completion:** ~50% (Core ✅ (mit UI-Funktionalität) + Plots ✅ + Items ✅ + Economy ✅)
 - **Aktueller Sprint:** Sprint 11-12 🔨 IN ARBEIT (Trading-System, PlotRegistry, Händler-Inventar, NPC-Reisesystem)
 - **Nächster Sprint:** Sprint 13-14 - NPCs (Citizens-Integration, NPC-Typen)
 - **Wichtige Architektur:** Provider-Implementierungen in Modulen, Core nur Interfaces!
@@ -96,7 +121,7 @@ A **modular Minecraft plugin system** for Paper 1.21.1 with provider-based archi
 - **UI-Framework:** ✅ Basis-Klassen implementiert (BaseUI, SmallChestUI, etc.)
 - **ItemProvider:** ✅ Interface erweitert, MMOItems 6.10+ Integration abgeschlossen
 - **Items-Modul:** ✅ Vollständig implementiert mit Reflection-basiertem MMOItems-Zugriff
-- **UI-Modul:** ✅ Abgeschlossen (ConfirmationUI, SimpleTradeUI, UIButtonManager)
+- **UI-Funktionalität:** ✅ Im Core integriert (UIButtonManager, ConfirmationUI, SimpleTradeUI in core/ui/)
 - **Economy-Modul:** ✅ Abgeschlossen (CurrencyManager, Basiswährung "Sterne", VaultEconomyProvider, Withdraw-Funktionalität)
 - **Testbefehle:** ✅ Neue Struktur unter `/fscore admin [gui/items/plots/economy]`
 - **Architektur-Refactoring:** ✅ Reflection-Eliminierung (AdminCommandRegistry, Handler-Pattern)
@@ -194,19 +219,6 @@ fs-core-sample-dump/
 │   │       └── TestTradeUI.java               # ✅ MMOItems Trading Demo
 │   └── src/main/resources/
 │       ├── plugin.yml                         # Dependency: FallenStar-Core, MMOItems
-│       └── config.yml
-│
-├── module-ui/                       # FallenStar UI (Sprint 7-8) 🔨
-│   ├── pom.xml                      # Konkrete UIs: ConfirmationUI, SimpleTradeUI
-│   ├── src/main/java/de/fallenstar/ui/
-│   │   ├── UIModule.java                      # Main class (ProvidersReadyEvent)
-│   │   ├── manager/                           # UI-Manager
-│   │   │   └── UIButtonManager.java           # ✅ UI-Button Items (Confirm, Cancel, Close)
-│   │   └── ui/                                # Konkrete UI-Implementierungen
-│   │       ├── ConfirmationUI.java            # ✅ Ja/Nein Dialog
-│   │       └── SimpleTradeUI.java             # ✅ Vanilla Trading Demo
-│   └── src/main/resources/
-│       ├── plugin.yml                         # Dependency: FallenStar-Core
 │       └── config.yml
 │
 ├── module-economy/                  # FallenStar Economy (Sprint 9-10)
@@ -862,6 +874,46 @@ Das Projekt folgt einem 20-Sprint-Fahrplan (40 Wochen):
 - ✅ SimpleTradeUI (Vanilla Trading Demo)
 - ✅ Testbefehle: `/fscore admin gui confirm`, `/fscore admin gui trade`
 - 📋 Weitere UIs (AmbassadorUI, DialogUI, etc.) folgen...
+
+### Build & Testing Workflow (für AI-Assistenten)
+
+**WICHTIG:** AI-Assistenten müssen **NICHT** kompilieren!
+
+**Workflow:**
+1. **Code schreiben** - Implementiere Features vollständig
+2. **Git commit** - Sobald logische Einheit fertig
+3. **Git push** - Sofort pushen zum Remote Branch
+4. **User testet** - User kompiliert und testet lokal
+
+**Warum nicht kompilieren?**
+- Maven benötigt externe Repositories (oft Netzwerkprobleme in Claude-Umgebung)
+- User hat lokale Maven-Cache und Test-Server
+- Schnellerer Entwicklungszyklus
+- User gibt Feedback zu Compile-Fehlern
+
+**Best Practices:**
+- ✅ **Code vollständig implementieren** - Keine Platzhalter/TODOs bei kritischen Features
+- ✅ **Syntax-korrekt schreiben** - Java-Syntax muss stimmen (auch ohne Compile-Check)
+- ✅ **Imports prüfen** - Alle verwendeten Klassen importieren
+- ✅ **Sofort pushen** - Nicht mehrere Features sammeln
+- ✅ **Klare Commit-Messages** - User muss verstehen was implementiert wurde
+
+**Git-Befehle:**
+```bash
+# Änderungen hinzufügen
+git add -A
+
+# Committen (mit ausführlicher Message)
+git commit -m "Feature: XYZ implementiert"
+
+# Pushen zum Branch
+git push -u origin <branch-name>
+```
+
+**Bei Fehlern:**
+- User meldet Compile-/Runtime-Fehler
+- AI fixt Fehler
+- Erneut committen und pushen
 
 **Wichtige Architektur-Änderungen:**
 - **Core** enthält nur Interfaces + NoOp-Implementierungen + UI-Framework-Basis-Klassen

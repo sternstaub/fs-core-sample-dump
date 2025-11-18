@@ -11,6 +11,9 @@ import de.fallenstar.core.registry.PlotTypeRegistry;
 import de.fallenstar.core.registry.ProviderRegistry;
 import de.fallenstar.core.registry.UIRegistry;
 import de.fallenstar.core.ui.BaseUI;
+import de.fallenstar.core.ui.ConfirmationUI;
+import de.fallenstar.core.ui.SimpleTradeUI;
+import de.fallenstar.core.ui.manager.UIButtonManager;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -37,6 +40,7 @@ public class FallenStarCore extends JavaPlugin {
     private PlotTypeRegistry plotTypeRegistry;
     private UIRegistry uiRegistry;
     private AdminCommandRegistry adminCommandRegistry;
+    private UIButtonManager uiButtonManager;
     private DataStore dataStore;
     
     @Override
@@ -141,8 +145,49 @@ public class FallenStarCore extends JavaPlugin {
         // AdminCommandRegistry initialisieren
         adminCommandRegistry = new AdminCommandRegistry(getLogger());
         getLogger().info("✓ AdminCommandRegistry initialized");
+
+        // UIButtonManager initialisieren
+        uiButtonManager = new UIButtonManager();
+        uiButtonManager.initialize();
+        getLogger().info("✓ UIButtonManager initialized");
+
+        // Test-UIs registrieren
+        registerTestUIs();
     }
     
+    /**
+     * Registriert Test-UIs in der UIRegistry.
+     *
+     * Diese UIs sind für Testzwecke und Demos verfügbar.
+     */
+    private void registerTestUIs() {
+        // ConfirmationUI registrieren
+        uiRegistry.registerTestUI(
+                "confirm",
+                "Bestätigungs-Dialog (Ja/Nein)",
+                "Generisches Ja/Nein Confirmation UI",
+                () -> ConfirmationUI.createSimple(
+                        this,
+                        uiButtonManager,
+                        "Bist du sicher?",
+                        player -> player.sendMessage("§a✓ Bestätigt!")
+                )
+        );
+        getLogger().info("✓ ConfirmationUI registered (ID: confirm)");
+
+        // SimpleTradeUI registrieren
+        uiRegistry.registerTestUI(
+                "trade",
+                "Händler-Demo (Vanilla Items)",
+                "Test-Händler mit Vanilla Merchant-Interface",
+                () -> new SimpleTradeUI(uiButtonManager)
+        );
+        getLogger().info("✓ SimpleTradeUI registered (ID: trade)");
+
+        getLogger().info("Alle Test-UIs registriert!");
+        getLogger().info("Verwende: /fscore admin gui list");
+    }
+
     /**
      * Informiert alle Module dass Provider bereit sind.
      *
@@ -220,5 +265,16 @@ public class FallenStarCore extends JavaPlugin {
      */
     public AdminCommandRegistry getAdminCommandRegistry() {
         return adminCommandRegistry;
+    }
+
+    /**
+     * API-Methode: Gibt den UIButtonManager zurück.
+     *
+     * Wird von Modulen genutzt um UI-Buttons zu erstellen.
+     *
+     * @return UIButtonManager
+     */
+    public UIButtonManager getUIButtonManager() {
+        return uiButtonManager;
     }
 }

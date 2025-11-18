@@ -1,4 +1,4 @@
-package de.fallenstar.ui.manager;
+package de.fallenstar.core.ui.manager;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;

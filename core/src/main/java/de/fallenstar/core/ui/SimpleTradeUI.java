@@ -1,7 +1,6 @@
-package de.fallenstar.ui.ui;
+package de.fallenstar.core.ui;
 
-import de.fallenstar.core.ui.BaseUI;
-import de.fallenstar.ui.manager.UIButtonManager;
+import de.fallenstar.core.ui.manager.UIButtonManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;

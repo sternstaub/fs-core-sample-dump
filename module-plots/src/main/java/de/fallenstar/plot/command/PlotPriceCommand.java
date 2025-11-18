@@ -30,6 +30,7 @@ import java.util.UUID;
 public class PlotPriceCommand {
 
     private final ProviderRegistry providers;
+    private final java.util.logging.Logger logger;
 
     /**
      * Spieler die aktuell im Preis-Setzungs-Modus sind.
@@ -52,9 +53,11 @@ public class PlotPriceCommand {
      * Erstellt einen neuen PlotPriceCommand.
      *
      * @param providers ProviderRegistry
+     * @param logger Logger für Debug-Ausgaben
      */
-    public PlotPriceCommand(ProviderRegistry providers) {
+    public PlotPriceCommand(ProviderRegistry providers, java.util.logging.Logger logger) {
         this.providers = providers;
+        this.logger = logger;
         this.activePriceSetMode = new HashMap<>();
         this.activeSessions = new HashMap<>();
         this.playerSessions = new HashMap<>();
@@ -239,7 +242,8 @@ public class PlotPriceCommand {
                 var sortedPrices = new java.util.ArrayList<>(vanillaPrices);
                 sortedPrices.sort((a, b) -> {
                     try {
-                        var getMaterial = a.getClass().getMethod("getMaterial");
+                        // VanillaItemPrice ist ein Record - Accessor heißt material(), nicht getMaterial()!
+                        var getMaterial = a.getClass().getMethod("material");
                         Material matA = (Material) getMaterial.invoke(a);
                         Material matB = (Material) getMaterial.invoke(b);
                         return matA.name().compareTo(matB.name());
@@ -251,7 +255,8 @@ public class PlotPriceCommand {
                 // Zeige Preise an
                 for (Object priceObj : sortedPrices) {
                     try {
-                        var getMaterial = priceObj.getClass().getMethod("getMaterial");
+                        // VanillaItemPrice ist ein Record - Accessor heißt material(), nicht getMaterial()!
+                        var getMaterial = priceObj.getClass().getMethod("material");
                         var getPrice = priceObj.getClass().getMethod("getPrice");
 
                         Material material = (Material) getMaterial.invoke(priceObj);
@@ -263,7 +268,9 @@ public class PlotPriceCommand {
 
                         player.sendMessage("§e  " + materialName + " §7- §6" + price + " Sterne");
                     } catch (Exception e) {
-                        player.sendMessage("§c  Fehler beim Lesen eines Preises");
+                        player.sendMessage("§c  Fehler beim Lesen eines Preises: " + e.getMessage());
+                        logger.warning("Fehler beim Lesen eines Preises: " + e.getMessage());
+                        e.printStackTrace();
                     }
                 }
             }

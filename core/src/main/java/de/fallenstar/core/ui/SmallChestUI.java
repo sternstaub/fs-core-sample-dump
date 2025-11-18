@@ -45,6 +45,10 @@ public abstract class SmallChestUI extends BaseUI implements Listener {
 
     @Override
     public void open(Player player) {
+        // Deregistriere alte Listener BEVOR wir einen neuen registrieren
+        // (verhindert mehrfache Listener bei rebuild())
+        org.bukkit.event.HandlerList.unregisterAll(this);
+
         // Event-Listener registrieren (benötigt BaseUI.setPlugin() beim Server-Start!)
         if (getPlugin() != null) {
             Bukkit.getPluginManager().registerEvents(this, getPlugin());
@@ -97,6 +101,9 @@ public abstract class SmallChestUI extends BaseUI implements Listener {
 
     /**
      * Event-Handler für Inventory-Clicks.
+     *
+     * WICHTIG: Cancelt ALLE Clicks wenn ein UI aktiv ist!
+     * Dies verhindert das Bewegen von Items auch bei nicht-klickbaren Slots.
      */
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
@@ -105,16 +112,22 @@ public abstract class SmallChestUI extends BaseUI implements Listener {
         }
 
         SmallChestUI ui = activeUIs.get(player.getUniqueId());
-        if (ui == null || ui != this) {
-            return;
+        if (ui == null) {
+            return;  // Kein aktives UI für diesen Spieler
         }
 
-        event.setCancelled(true); // Verhindere Item-Bewegung
+        // IMMER canceln - verhindert Item-Bewegung in ALLEN Fällen
+        // Auch wenn ui != this, canceln wir trotzdem (verhindert Race Conditions)
+        event.setCancelled(true);
 
-        int slot = event.getRawSlot();
-        if (slot >= 0 && slot < SIZE) {
-            handleClick(player, slot);
+        // Nur Click-Handler für DIESES UI ausführen (wenn es das aktive ist)
+        if (ui == this) {
+            int slot = event.getRawSlot();
+            if (slot >= 0 && slot < SIZE) {
+                handleClick(player, slot);
+            }
         }
+        // Clicks außerhalb des UI-Inventars (z.B. Spieler-Inventar) werden auch gecancelt!
     }
 
     /**
