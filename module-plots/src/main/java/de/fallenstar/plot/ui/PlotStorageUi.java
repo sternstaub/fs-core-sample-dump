@@ -383,24 +383,12 @@ public class PlotStorageUi extends GenericUiLargeChest implements PageNavigation
     /**
      * Baut das UI neu auf und öffnet es wieder.
      *
-     * **WICHTIG:** Nutzt buildUi() + build() + open() Pattern!
+     * **WICHTIG:** Nutzt buildUi() + open() Pattern!
+     * GenericUiLargeChest.open() ruft automatisch build() auf!
      */
     private void rebuild(Player player) {
         buildUi();  // Rows neu befüllen
-        build();    // Rows → BaseUi Items konvertieren (MIT Click-Handlern!)
-        open(player); // Inventory öffnen/updaten
-    }
-
-    /**
-     * Öffnet das UI für einen Spieler.
-     *
-     * **WICHTIG:** build() MUSS vor open() aufgerufen werden!
-     */
-    @Override
-    public void open(Player player) {
-        // Beim ersten Öffnen: Build ausführen
-        build();
-        super.open(player);
+        open(player); // build() + Inventory öffnen (von GenericUiLargeChest.open())
     }
 
     // ========================================
