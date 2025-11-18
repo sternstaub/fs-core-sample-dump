@@ -30,7 +30,10 @@ import java.util.Objects;
  */
 public abstract sealed class ClickableUiElement<T extends UiAction>
         implements UiElement
-        permits ClickableUiElement.CustomButton {
+        permits ClickableUiElement.CustomButton,
+                de.fallenstar.core.ui.element.navigation.NavigateLeftButton,
+                de.fallenstar.core.ui.element.navigation.NavigateRightButton,
+                de.fallenstar.core.ui.element.navigation.CloseButton {
 
     /**
      * Die Action die beim Click ausgeführt wird.

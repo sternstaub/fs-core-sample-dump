@@ -216,7 +216,8 @@ public class PageableBasicUi extends BasicUi implements PageNavigationAction.Pag
      *
      * @param player Spieler
      */
-    private void refresh(Player player) {
+    @Override
+    public void refresh(Player player) {
         // Baue UI neu auf
         build();
 
