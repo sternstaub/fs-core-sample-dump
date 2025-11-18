@@ -222,11 +222,13 @@ public class MarketPlotUI extends SmallChestUI {
                         "§7Verwalte Händler-NPCs",
                         "§7auf diesem Marktplatz",
                         "§7",
-                        "§a§lKlicke zum Öffnen"
+                        "§7[ROADMAP] Feature noch nicht verfügbar"
                 )
         );
         setItem(14, npcButton, player -> {
-            openSlotManagementUI(player);
+            player.sendMessage("§c[Roadmap] NPC-Verwaltung noch nicht implementiert!");
+            player.sendMessage("§7Geplant für zukünftige Sprints");
+            player.sendMessage("§7Nutze §e/plot npc list§7 für NPC-Liste");
         });
 
         // Slot 16: Storage verwalten
