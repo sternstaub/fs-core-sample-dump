@@ -12,6 +12,7 @@ import de.fallenstar.core.ui.row.BasicUiRow;
 import de.fallenstar.core.ui.row.BasicUiRowForContent;
 import de.fallenstar.core.ui.row.BasicUiRowForControl;
 import de.fallenstar.plot.PlotModule;
+import de.fallenstar.plot.action.npc.ConfigureNpcAction;
 import de.fallenstar.plot.action.npc.SpawnNpcAction;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -102,12 +103,14 @@ public class NpcManagementUi extends GenericUiLargeChest implements PageNavigati
         // Konvertiere Registry-NPCInfo zu UI-NpcInfo
         for (var registryNpc : registryNpcs) {
             // Erstelle UI-NpcInfo aus Registry-Daten
+            UUID npcId = registryNpc.npcId();
             String npcName = generateNpcName(registryNpc.npcType());
-            NpcType npcType = mapNpcType(registryNpc.npcType());
+            String npcType = registryNpc.npcType();
+            NpcType uiType = mapNpcType(registryNpc.npcType());
             String ownerName = "System";  // TODO: Owner-Tracking
             boolean active = true;  // TODO: Citizens-Check
 
-            npcs.add(new NpcInfo(npcName, npcType, ownerName, active));
+            npcs.add(new NpcInfo(npcId, npcName, npcType, uiType, ownerName, active));
         }
     }
 
@@ -203,8 +206,15 @@ public class NpcManagementUi extends GenericUiLargeChest implements PageNavigati
 
             BasicUiRowForContent contentRow = (BasicUiRowForContent) getRow(rowIndex);
 
-            // TODO: Erstelle ConfigureNpcAction statt Placeholder
-            contentRow.setElement(position, new StaticUiElement(npcItem));
+            // Erstelle ConfigureNpcAction für NPC-Konfiguration
+            ConfigureNpcAction configAction = new ConfigureNpcAction(
+                    plot,
+                    npc.npcId,
+                    npc.name,
+                    npc.npcType,
+                    plotModule
+            );
+            contentRow.setElement(position, new ClickableUiElement.CustomButton<>(npcItem, configAction));
 
             slot++;
         }
@@ -301,14 +311,14 @@ public class NpcManagementUi extends GenericUiLargeChest implements PageNavigati
      * Erstellt ein NPC-Item.
      */
     private ItemStack createNpcItem(NpcInfo npc) {
-        ItemStack item = new ItemStack(getNpcMaterial(npc.type));
+        ItemStack item = new ItemStack(getNpcMaterial(npc.uiType));
         ItemMeta meta = item.getItemMeta();
 
         meta.displayName(Component.text("§e§l" + npc.name)
                 .decoration(TextDecoration.ITALIC, false));
 
         List<Component> lore = new ArrayList<>();
-        lore.add(Component.text("§7Typ: §e" + getNpcTypeName(npc.type))
+        lore.add(Component.text("§7Typ: §e" + getNpcTypeName(npc.uiType))
                 .decoration(TextDecoration.ITALIC, false));
         lore.add(Component.text("§7Besitzer: §e" + npc.ownerName)
                 .decoration(TextDecoration.ITALIC, false));
@@ -468,12 +478,12 @@ public class NpcManagementUi extends GenericUiLargeChest implements PageNavigati
 
     /**
      * NPC-Info Record für UI-Darstellung.
-     *
-     * TODO: Ersetzen durch echte NPC-Entity-Referenzen
      */
     private record NpcInfo(
+            UUID npcId,
             String name,
-            NpcType type,
+            String npcType,
+            NpcType uiType,
             String ownerName,
             boolean active
     ) {}
