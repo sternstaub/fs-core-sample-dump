@@ -49,6 +49,7 @@ public class GuildTraderNPC implements NPCType, TradingEntity {
     private final PlotProvider plotProvider;
     private final FileConfiguration config;
     private final Logger logger;
+    private final de.fallenstar.core.registry.ProviderRegistry providers;
 
     /**
      * Zuordnung: NPC-UUID → Plot
@@ -67,15 +68,18 @@ public class GuildTraderNPC implements NPCType, TradingEntity {
      *
      * @param npcManager NPCManager
      * @param plotProvider PlotProvider
+     * @param providers ProviderRegistry
      * @param config Plugin-Config
      */
     public GuildTraderNPC(
             NPCManager npcManager,
             PlotProvider plotProvider,
+            de.fallenstar.core.registry.ProviderRegistry providers,
             FileConfiguration config
     ) {
         this.npcManager = npcManager;
         this.plotProvider = plotProvider;
+        this.providers = providers;
         this.config = config;
         this.logger = npcManager.getLogger();
 
@@ -498,20 +502,14 @@ public class GuildTraderNPC implements NPCType, TradingEntity {
 
             logger.info("Found " + items.size() + " items in plot storage");
 
-            // Hole PlotPriceManager via Reflection (Plots-Modul)
-            var plotsPlugin = Bukkit.getPluginManager().getPlugin("FallenStar-Plots");
-            if (plotsPlugin == null) {
-                logger.warning("Plots module not loaded - cannot generate prices");
+            // Hole EconomyProvider (Core-Provider statt Reflection!)
+            de.fallenstar.core.provider.EconomyProvider economyProvider = providers.getEconomyProvider();
+            if (economyProvider == null || !economyProvider.isAvailable()) {
+                logger.warning("Economy-Provider not available - cannot generate prices");
                 return tradeSets;
             }
 
-            var getPriceManager = plotsPlugin.getClass().getMethod("getPriceManager");
-            var priceManager = getPriceManager.invoke(plotsPlugin);
-
-            if (priceManager == null) {
-                logger.warning("PlotPriceManager not available");
-                return tradeSets;
-            }
+            logger.info("Using EconomyProvider for price lookup");
 
             // Hole Economy-Plugin für Münz-Erstellung
             var economyPlugin = Bukkit.getPluginManager().getPlugin("FallenStar-Economy");
@@ -528,8 +526,8 @@ public class GuildTraderNPC implements NPCType, TradingEntity {
 
                 logger.info("Processing item: " + item.getType() + " x" + item.getAmount());
 
-                // Hole Verkaufspreis für Item (plot-basiert!)
-                BigDecimal price = getPlotItemPrice(priceManager, plot, item);
+                // Hole Verkaufspreis für Item (aus EconomyProvider!)
+                BigDecimal price = getItemSellPrice(economyProvider, item);
 
                 logger.info("  Price for " + item.getType() + ": " + price);
 
@@ -584,35 +582,29 @@ public class GuildTraderNPC implements NPCType, TradingEntity {
     }
 
     /**
-     * Holt den plot-basierten Verkaufspreis für ein Item aus dem PlotPriceManager.
+     * Holt den Verkaufspreis für ein Item aus dem EconomyProvider.
      *
      * Der Verkaufspreis ist der Preis, den der Spieler zahlt um das Item vom NPC zu kaufen.
      *
-     * @param priceManager PlotPriceManager-Instanz
-     * @param plot Das Grundstück
+     * @param economyProvider EconomyProvider-Instanz
      * @param item Das Item
      * @return Verkaufspreis in Basiswährung
      */
-    private BigDecimal getPlotItemPrice(Object priceManager, Plot plot, ItemStack item) {
+    private BigDecimal getItemSellPrice(de.fallenstar.core.provider.EconomyProvider economyProvider, ItemStack item) {
         try {
             Material material = item.getType();
 
-            logger.info("    getPlotItemPrice: material=" + material + ", plot=" + plot.getUuid());
+            logger.info("    getItemSellPrice: material=" + material);
 
-            // Reflection: hole Plot-Interface-Klasse
-            Class<?> plotClass = Class.forName("de.fallenstar.core.provider.Plot");
-
-            // Reflection: getSellPrice(Plot plot, Material material)
-            var getSellPriceMethod = priceManager.getClass().getMethod("getSellPrice", plotClass, Material.class);
-            @SuppressWarnings("unchecked")
-            Optional<BigDecimal> priceOpt = (Optional<BigDecimal>) getSellPriceMethod.invoke(priceManager, plot, material);
+            // Hole Verkaufspreis vom EconomyProvider (Type-Safe!)
+            Optional<BigDecimal> priceOpt = economyProvider.getSellPrice(material);
 
             logger.info("    getSellPrice returned: " + priceOpt);
 
             return priceOpt.orElse(BigDecimal.ZERO);
 
         } catch (Exception e) {
-            logger.warning("Failed to get plot price for " + item.getType() + " on plot " + plot.getUuid() + ": " + e.getMessage());
+            logger.warning("Failed to get sell price for " + item.getType() + ": " + e.getMessage());
             e.printStackTrace();
             return BigDecimal.ZERO;
         }

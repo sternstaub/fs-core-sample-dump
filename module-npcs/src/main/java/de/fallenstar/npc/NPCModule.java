@@ -265,6 +265,7 @@ public class NPCModule extends JavaPlugin implements Listener {
             GuildTraderNPC guildTraderNPC = new GuildTraderNPC(
                 npcManager,
                 providers.getPlotProvider(),
+                providers,
                 getConfig()
             );
 
