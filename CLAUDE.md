@@ -60,6 +60,31 @@ private void initializeProviders() {
 4. ✅ **User-Kommunikation auf Deutsch** - Antworten, Erklärungen, Fragen
 5. ✅ **Log-Messages gemischt** - Technische Begriffe auf Englisch, Kontext auf Deutsch
 
+### 📚 **WICHTIG: README-Aktualisierungs-Regel**
+
+**Bei JEDER Änderung an Code, Architektur oder Features:**
+
+1. ✅ **Prüfe betroffene README-Dateien:**
+   - `/README.md` - Haupt-Dokumentation
+   - `core/README.md` - Core-Plugin-Dokumentation
+   - `module-*/README.md` - Modul-spezifische Dokumentation
+   - `CLAUDE.md` - AI-Assistant Guide (dieses Dokument)
+
+2. ✅ **Aktualisiere alle relevanten READMEs:**
+   - Neue Features dokumentieren
+   - Geänderte APIs aktualisieren
+   - Obsolete Informationen entfernen
+   - Code-Beispiele auf aktuellem Stand halten
+
+3. ✅ **Checkliste für README-Updates:**
+   - [ ] Feature-Listen aktualisiert?
+   - [ ] Code-Beispiele aktualisiert?
+   - [ ] Abhängigkeiten aktualisiert?
+   - [ ] Architektur-Diagramme aktualisiert?
+   - [ ] Sprint-Status aktualisiert?
+
+**Beispiel:** Neue Provider-Methode hinzugefügt → `core/README.md` + `CLAUDE.md` aktualisieren!
+
 ---
 
 ## Project Overview
