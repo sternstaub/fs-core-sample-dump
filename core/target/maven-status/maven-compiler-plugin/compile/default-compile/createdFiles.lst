@@ -62,6 +62,7 @@ de/fallenstar/core/ui/element/navigation/NavigateLeftButton.class
 de/fallenstar/core/provider/ItemProvider.class
 de/fallenstar/core/exception/ProviderFunctionalityNotFoundException.class
 de/fallenstar/core/ui/manager/UIButtonManager.class
+de/fallenstar/core/ui/TradeUI.class
 de/fallenstar/core/ui/container/BasicGsUi$HandelsgildeExampleUi.class
 de/fallenstar/core/provider/NetworkProvider.class
 de/fallenstar/core/database/DataStore.class

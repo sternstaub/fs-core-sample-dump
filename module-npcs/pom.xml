@@ -34,14 +34,6 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- UI Module (für TradeUI) -->
-        <dependency>
-            <groupId>de.fallenstar</groupId>
-            <artifactId>module-ui</artifactId>
-            <version>${project.version}</version>
-            <scope>provided</scope>
-        </dependency>
-
         <!-- Paper API -->
         <dependency>
             <groupId>io.papermc.paper</groupId>

@@ -11,6 +11,7 @@ import de.fallenstar.core.ui.element.navigation.PageNavigationAction;
 import de.fallenstar.core.ui.row.BasicUiRow;
 import de.fallenstar.core.ui.row.BasicUiRowForContent;
 import de.fallenstar.core.ui.row.BasicUiRowForControl;
+import de.fallenstar.plot.PlotModule;
 import de.fallenstar.plot.action.npc.SpawnNpcAction;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -61,6 +62,7 @@ import java.util.Objects;
 public class NpcManagementUi extends GenericUiLargeChest implements PageNavigationAction.PageNavigable {
 
     private final Plot plot;
+    private final PlotModule plotModule;
     private final List<NpcInfo> npcs;  // Alle NPCs auf dem Plot
     private int currentPage;
 
@@ -70,14 +72,68 @@ public class NpcManagementUi extends GenericUiLargeChest implements PageNavigati
      * Konstruktor für NpcManagementUi.
      *
      * @param plot Der Plot dessen NPCs verwaltet werden
+     * @param plotModule Das PlotModule für NPC-Manager-Zugriff
      */
-    public NpcManagementUi(Plot plot) {
+    public NpcManagementUi(Plot plot, PlotModule plotModule) {
         super("§6§lNPC-Verwaltung: " + getPlotName(plot));
         this.plot = Objects.requireNonNull(plot, "Plot darf nicht null sein");
-        this.npcs = new ArrayList<>();  // TODO: Load from NPC registry
+        this.plotModule = Objects.requireNonNull(plotModule, "PlotModule darf nicht null sein");
+        this.npcs = new ArrayList<>();
         this.currentPage = 0;
 
+        // Lade NPCs aus Registry
+        loadNPCsFromRegistry();
+
         initializeRows();
+    }
+
+    /**
+     * Lädt NPCs aus der PlotBoundNPCRegistry.
+     */
+    private void loadNPCsFromRegistry() {
+        var npcRegistry = plotModule.getNPCRegistry();
+        if (npcRegistry == null) {
+            return;
+        }
+
+        // Hole alle NPCs für diesen Plot
+        var registryNpcs = npcRegistry.getNPCsForPlot(plot);
+
+        // Konvertiere Registry-NPCInfo zu UI-NpcInfo
+        for (var registryNpc : registryNpcs) {
+            // Erstelle UI-NpcInfo aus Registry-Daten
+            String npcName = generateNpcName(registryNpc.npcType());
+            NpcType npcType = mapNpcType(registryNpc.npcType());
+            String ownerName = "System";  // TODO: Owner-Tracking
+            boolean active = true;  // TODO: Citizens-Check
+
+            npcs.add(new NpcInfo(npcName, npcType, ownerName, active));
+        }
+    }
+
+    /**
+     * Generiert NPC-Namen aus Typ.
+     */
+    private String generateNpcName(String npcType) {
+        return switch (npcType.toLowerCase()) {
+            case "guildtrader" -> "Gildenhändler";
+            case "playertrader" -> "Spielerhändler";
+            case "worldbanker" -> "Weltbankier";
+            case "ambassador" -> "Botschafter";
+            default -> "NPC";
+        };
+    }
+
+    /**
+     * Mappt Registry-NPC-Typ zu UI-Enum.
+     */
+    private NpcType mapNpcType(String npcType) {
+        return switch (npcType.toLowerCase()) {
+            case "guildtrader", "playertrader" -> NpcType.TRADER;
+            case "worldbanker" -> NpcType.WORLD_BANKER;
+            case "ambassador" -> NpcType.AMBASSADOR;
+            default -> NpcType.TRADER;
+        };
     }
 
     /**
@@ -115,7 +171,7 @@ public class NpcManagementUi extends GenericUiLargeChest implements PageNavigati
 
         // Slot 4: Spawn-Menü Button
         ItemStack spawnMenuItem = createSpawnMenuButton();
-        SpawnNpcAction spawnAction = new SpawnNpcAction(plot, NpcType.TRADER);  // Öffnet Spawn-Menü
+        SpawnNpcAction spawnAction = new SpawnNpcAction(plot, plotModule);  // Öffnet Spawn-Menü
         controlRow.setElement(4, new ClickableUiElement.CustomButton<>(spawnMenuItem, spawnAction));
 
         // Slot 8: Close-Button

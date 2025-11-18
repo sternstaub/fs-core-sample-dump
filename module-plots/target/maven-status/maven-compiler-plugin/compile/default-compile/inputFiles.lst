@@ -4,6 +4,7 @@
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/registry/PlotRegistry.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/trader/VirtualTraderInventory.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/provider/TownyPlotProvider.java
+/home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/action/npc/ConfirmSpawnNpcAction.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/storage/command/StorageListCommand.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/provider/TownyTownProvider.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/trader/VirtualTraderInventoryManager.java
@@ -28,6 +29,7 @@
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/command/PlotInfoCommand.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/action/OpenTraderSelectionAction.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/npc/manager/NPCManager.java
+/home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/ui/NpcSpawnMenuUi.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/PlotModule.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/slot/MarketPlot.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/storage/command/StorageInfoCommand.java

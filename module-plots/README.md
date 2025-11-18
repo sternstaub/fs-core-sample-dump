@@ -212,12 +212,12 @@ Integration:
 - **Plot-Listen**: Custom-Namen in Listen anzeigen
 - **PlotInfo-Command**: Custom-Namen in `/plot info`
 
-### 📋 Geplant (zukünftige Sprints)
+### 📋 Geplant (Sprint 13-14)
 
-- Slot-System Implementierung (SlottedPlot, PlotSlot)
-- NPC-Spawning auf Slots
 - Citizens-Integration (NPCProvider)
-- Konkrete TradingEntity-Implementierungen (GuildTrader, PlayerTrader)
+- Konkrete NPC-Implementierungen (GuildTraderNPC, PlayerTraderNPC, BankerNPC)
+- NPC-Spawning auf Slots mit Citizens
+- PlotSlot-Klasse vervollständigen
 
 ---
 
@@ -650,9 +650,8 @@ Output: `target/FallenStar-Plots-1.0-SNAPSHOT.jar`
 ## Bekannte Einschränkungen
 
 1. **Towny-Abhängigkeit**: Aktuell nur Towny-Integration (keine Factions)
-2. **NPC-Typen nicht implementiert**: Nur Interfaces, keine konkreten NPCs
-3. **Slot-System unvollständig**: PlotSlot-Klasse fehlt noch
-4. **Keine GUI für Storage**: Nur Commands verfügbar
+2. **NPC-Typen nicht implementiert**: Nur Interfaces und Skin-Pool, keine konkreten Citizens-NPCs (kommt in Sprint 13-14)
+3. **Slot-System teilweise implementiert**: UI und Travel-System vorhanden, aber PlotSlot-Klasse noch rudimentär
 
 ---
 

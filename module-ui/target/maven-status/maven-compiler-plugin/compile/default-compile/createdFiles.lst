@@ -1,9 +1,0 @@
-de/fallenstar/ui/UIModule.class
-de/fallenstar/ui/ui/PriceEditorUI.class
-de/fallenstar/ui/ui/TradeUI.class
-de/fallenstar/ui/manager/UIButtonManager.class
-de/fallenstar/ui/ui/PriceEditorUI$PriceCallback.class
-de/fallenstar/ui/ui/ConfirmationUI.class
-de/fallenstar/ui/ui/SimpleTradeUI.class
-de/fallenstar/ui/ui/AnvilUI.class
-de/fallenstar/ui/manager/UIButtonManager$ButtonType.class

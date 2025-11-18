@@ -9,7 +9,7 @@ import de.fallenstar.plot.slot.PlotSlotManager;
 import de.fallenstar.plot.storage.manager.StorageManager;
 import de.fallenstar.plot.storage.provider.PlotStorageProvider;
 import org.bukkit.Material;
-import org.bukkit.plugin.Plugin;
+import de.fallenstar.plot.PlotModule;
 
 import java.util.List;
 
@@ -42,7 +42,7 @@ import java.util.List;
  */
 public class MarketPlotUi extends BasicGsUi {
 
-    private final Plugin plugin;
+    private final PlotModule plotModule;
     private final Plot plot;
     private final MarketPlot marketPlot;
     private final PlotSlotManager slotManager;
@@ -54,7 +54,7 @@ public class MarketPlotUi extends BasicGsUi {
     /**
      * Erstellt eine neue MarketPlotUi.
      *
-     * @param plugin Plugin-Instanz
+     * @param plotModule PlotModule-Instanz
      * @param plot Der Plot
      * @param marketPlot Das MarketPlot
      * @param slotManager PlotSlotManager
@@ -64,7 +64,7 @@ public class MarketPlotUi extends BasicGsUi {
      * @param isOwner Ob der öffnende Spieler der Besitzer ist
      */
     public MarketPlotUi(
-            Plugin plugin,
+            PlotModule plotModule,
             Plot plot,
             MarketPlot marketPlot,
             PlotSlotManager slotManager,
@@ -74,7 +74,7 @@ public class MarketPlotUi extends BasicGsUi {
             boolean isOwner
     ) {
         super(isOwner ? "§6§lMarkt - Verwaltung" : "§e§lMarkt - Übersicht");
-        this.plugin = plugin;
+        this.plotModule = plotModule;
         this.plot = plot;
         this.marketPlot = marketPlot;
         this.slotManager = slotManager;
@@ -170,8 +170,8 @@ public class MarketPlotUi extends BasicGsUi {
 
         // Slot kaufen (conditional)
         if (canBuyMore) {
-            double slotPrice = slotManager.getSlotPrice(plugin.getConfig());
-            String currency = slotManager.getSlotCurrency(plugin.getConfig());
+            double slotPrice = slotManager.getSlotPrice(plotModule.getConfig());
+            String currency = slotManager.getSlotCurrency(plotModule.getConfig());
 
             addFunctionButton(
                     Material.GOLD_INGOT,
@@ -199,7 +199,7 @@ public class MarketPlotUi extends BasicGsUi {
                         "§7",
                         "§a§lKlicke zum Öffnen"
                 ),
-                new ManageNpcsAction(plot, providers)  // Type-Safe Action!
+                new ManageNpcsAction(plot, providers, plotModule)  // Type-Safe Action!
         );
 
         // Storage verwalten

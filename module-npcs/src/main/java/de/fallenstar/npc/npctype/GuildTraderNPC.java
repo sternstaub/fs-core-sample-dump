@@ -368,25 +368,25 @@ public class GuildTraderNPC implements NPCType, TradingEntity {
     /**
      * Öffnet das Trading-UI für einen Spieler mit einer NPC-spezifischen Instanz.
      *
-     * Nutzt das TradeUI aus dem UI-Modul (Reflection-basiert).
-     * Falls UI-Modul nicht verfügbar → Fallback zu einfacher Chat-Liste.
+     * Nutzt das TradeUI aus dem Core-Modul (Reflection-basiert).
+     * Falls Core nicht verfügbar → Fallback zu einfacher Chat-Liste.
      *
      * @param player Der Spieler
      * @param traderInstance Die NPC-spezifische TradingEntity-Instanz
      */
     private void openTradeUIForInstance(Player player, GuildTraderInstance traderInstance) {
         try {
-            // Prüfe ob UI-Modul geladen ist
-            var uiPlugin = Bukkit.getPluginManager().getPlugin("FallenStar-UI");
-            if (uiPlugin == null) {
+            // Prüfe ob Core-Plugin geladen ist
+            var corePlugin = Bukkit.getPluginManager().getPlugin("FallenStar-Core");
+            if (corePlugin == null) {
                 // Fallback: Zeige einfache Nachricht
-                player.sendMessage("§eUI-Modul nicht geladen - Trading UI nicht verfügbar");
+                player.sendMessage("§eCore-Plugin nicht geladen - Trading UI nicht verfügbar");
                 showSimpleTradeList(player, traderInstance.getNpcId());
                 return;
             }
 
             // Reflection: Hole TradeUI-Klasse
-            Class<?> tradeUIClass = Class.forName("de.fallenstar.ui.ui.TradeUI");
+            Class<?> tradeUIClass = Class.forName("de.fallenstar.core.ui.TradeUI");
 
             // Reflection: Hole openTradeUI(Player, TradingEntity) Methode
             var openMethod = tradeUIClass.getMethod("openTradeUI", Player.class,
@@ -400,13 +400,13 @@ public class GuildTraderNPC implements NPCType, TradingEntity {
 
         } catch (ClassNotFoundException e) {
             // TradeUI-Klasse nicht gefunden → Fallback
-            logger.warning("TradeUI class not found - UI module may not be loaded");
+            logger.warning("TradeUI class not found - Core module may not be loaded correctly");
             player.sendMessage("§eTrading-UI nicht verfügbar");
             showSimpleTradeList(player, traderInstance.getNpcId());
 
         } catch (NoSuchMethodException e) {
             // openTradeUI Methode nicht gefunden → API-Änderung?
-            logger.warning("TradeUI.openTradeUI() method not found - API may have changed");
+            logger.warning("TradeUI.openTradeUI() method not found - Core API may have changed");
             player.sendMessage("§cFehler: Trading-UI API inkompatibel!");
             showSimpleTradeList(player, traderInstance.getNpcId());
 
@@ -446,7 +446,7 @@ public class GuildTraderNPC implements NPCType, TradingEntity {
      *
      * Ablauf:
      * 1. Hole alle Items aus Output-Chests
-     * 2. Für jedes Item: Preis aus ItemBasePriceProvider laden
+     * 2. Für jedes Item: Preis aus PlotPriceManager laden (plot-basiert!)
      * 3. Erstelle TradeSet (Item + Münzen)
      *
      * @param plot Das Grundstück
@@ -470,15 +470,27 @@ public class GuildTraderNPC implements NPCType, TradingEntity {
                 return tradeSets;
             }
 
-            // Hole ItemBasePriceProvider via Reflection
-            var economyPlugin = Bukkit.getPluginManager().getPlugin("FallenStar-Economy");
-            if (economyPlugin == null) {
-                logger.warning("Economy module not loaded - cannot generate prices");
+            // Hole PlotPriceManager via Reflection (Plots-Modul)
+            var plotsPlugin = Bukkit.getPluginManager().getPlugin("FallenStar-Plots");
+            if (plotsPlugin == null) {
+                logger.warning("Plots module not loaded - cannot generate prices");
                 return tradeSets;
             }
 
-            var getPriceProvider = economyPlugin.getClass().getMethod("getPriceProvider");
-            var priceProvider = getPriceProvider.invoke(economyPlugin);
+            var getPriceManager = plotsPlugin.getClass().getMethod("getPriceManager");
+            var priceManager = getPriceManager.invoke(plotsPlugin);
+
+            if (priceManager == null) {
+                logger.warning("PlotPriceManager not available");
+                return tradeSets;
+            }
+
+            // Hole Economy-Plugin für Münz-Erstellung
+            var economyPlugin = Bukkit.getPluginManager().getPlugin("FallenStar-Economy");
+            if (economyPlugin == null) {
+                logger.warning("Economy module not loaded - cannot create coins");
+                return tradeSets;
+            }
 
             // Für jedes Item: Erstelle TradeSet
             for (ItemStack item : storageItems.get()) {
@@ -486,11 +498,11 @@ public class GuildTraderNPC implements NPCType, TradingEntity {
                     continue;
                 }
 
-                // Hole Preis für Item
-                BigDecimal price = getItemPrice(priceProvider, item);
+                // Hole Verkaufspreis für Item (plot-basiert!)
+                BigDecimal price = getPlotItemPrice(priceManager, plot, item);
 
                 if (price.compareTo(BigDecimal.ZERO) <= 0) {
-                    logger.fine("No price for item " + item.getType() + " - skipping");
+                    logger.fine("No price for item " + item.getType() + " on plot " + plot.getUuid() + " - skipping");
                     continue;
                 }
 
@@ -540,24 +552,31 @@ public class GuildTraderNPC implements NPCType, TradingEntity {
     }
 
     /**
-     * Holt den Preis für ein Item aus dem ItemBasePriceProvider.
+     * Holt den plot-basierten Verkaufspreis für ein Item aus dem PlotPriceManager.
      *
-     * @param priceProvider ItemBasePriceProvider-Instanz
+     * Der Verkaufspreis ist der Preis, den der Spieler zahlt um das Item vom NPC zu kaufen.
+     *
+     * @param priceManager PlotPriceManager-Instanz
+     * @param plot Das Grundstück
      * @param item Das Item
-     * @return Preis in Basiswährung
+     * @return Verkaufspreis in Basiswährung
      */
-    private BigDecimal getItemPrice(Object priceProvider, ItemStack item) {
+    private BigDecimal getPlotItemPrice(Object priceManager, Plot plot, ItemStack item) {
         try {
             Material material = item.getType();
 
-            // Reflection: hole Preis
-            var getPriceMethod = priceProvider.getClass().getMethod("getVanillaPriceOrDefault", Material.class);
-            BigDecimal price = (BigDecimal) getPriceMethod.invoke(priceProvider, material);
+            // Reflection: hole Plot-Interface-Klasse
+            Class<?> plotClass = Class.forName("de.fallenstar.core.provider.Plot");
 
-            return price != null ? price : BigDecimal.ZERO;
+            // Reflection: getSellPrice(Plot plot, Material material)
+            var getSellPriceMethod = priceManager.getClass().getMethod("getSellPrice", plotClass, Material.class);
+            @SuppressWarnings("unchecked")
+            Optional<BigDecimal> priceOpt = (Optional<BigDecimal>) getSellPriceMethod.invoke(priceManager, plot, material);
+
+            return priceOpt.orElse(BigDecimal.ZERO);
 
         } catch (Exception e) {
-            logger.fine("Failed to get price for " + item.getType() + ": " + e.getMessage());
+            logger.fine("Failed to get plot price for " + item.getType() + " on plot " + plot.getUuid() + ": " + e.getMessage());
             return BigDecimal.ZERO;
         }
     }

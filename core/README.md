@@ -151,8 +151,8 @@ CompletableFuture<Optional<MyData>> future = dataStore.load("namespace", "key", 
 
 ## 📊 Status
 
-**Sprint:** 1-2  
-**Status:** ⚙️ In Development  
+**Sprint:** 1-2
+**Status:** ✅ Abgeschlossen
 **Version:** 1.0-SNAPSHOT
 
 ---

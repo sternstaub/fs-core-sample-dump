@@ -61,11 +61,9 @@ Das Economy-Modul erweitert FallenStar um ein flexibles, erweiterbares Wirtschaf
 
 ### 📋 Geplant (zukünftige Sprints)
 
-- Vault Economy Provider
+- Erweiterte Vault-Funktionalität (deposit, getBalance)
 - Spieler-Balances verwalten
-- Transaktionen (Einzahlen/Abheben)
-- Preisberechnungen
-- Währungskonvertierung
+- Dynamische Preisberechnungen
 - Shop-Integration
 - Quest-Rewards
 
@@ -411,29 +409,25 @@ Output: `target/FallenStar-Economy-1.0-SNAPSHOT.jar`
 
 ## Erweiterungen (Roadmap)
 
-### Sprint 11-12: Vault-Integration
-- VaultEconomyProvider implementieren
-- Balance-System (getBalance, setBalance)
-- Transaktionen (deposit, withdraw)
+### Sprint 13-14: NPCs & Erweiterte Vault-Integration
+- Citizens-Integration (NPCProvider)
+- VaultEconomyProvider erweitern (deposit, getBalance, setBalance)
+- NPC-Händler mit TradeSet-System
 
-### Sprint 13-14: Preissystem
+### Sprint 15-16: Preissystem & Shop-System
 - Dynamische Preisberechnungen
 - Material-basierte Preise
-- Region-basierte Preise
-
-### Sprint 15-16: Shop-System
 - Admin-Shops (unendliche Vorräte)
 - Player-Shops (begrenzte Vorräte)
-- Shop-UIs (Integration mit UI-Modul)
 
 ---
 
 ## Bekannte Einschränkungen
 
-1. **Nur Auszahlung**: Aktuell können nur Münzen ausgezahlt werden, nicht eingezogen
+1. **Basis Vault-Integration**: VaultEconomyProvider hat withdraw-Funktionalität, aber deposit/getBalance noch nicht implementiert
 2. **Keine Balance-Persistierung**: Balances werden noch nicht gespeichert
-3. **Keine Vault-Integration**: Provider noch nicht implementiert
-4. **Keine GUI**: Economy-UIs kommen in späteren Sprints
+3. **Keine GUI**: Economy-UIs kommen in späteren Sprints
+4. **TradeSet-System**: Funktioniert, wird aber erst mit NPCs voll nutzbar (Sprint 13-14)
 
 ---
 
@@ -450,5 +444,5 @@ Output: `target/FallenStar-Economy-1.0-SNAPSHOT.jar`
 
 ---
 
-**Status:** ✅ Basis-Implementierung abgeschlossen (Sprint 9-10)
-**Nächster Sprint:** Sprint 11-12 - WorldAnchors (Schnellreisen, POIs, Wegpunkte)
+**Status:** ✅ Sprint 9-10 abgeschlossen, ✅ Sprint 11-12 TradeSet-System implementiert
+**Nächster Sprint:** Sprint 13-14 - NPCs (Citizens-Integration)

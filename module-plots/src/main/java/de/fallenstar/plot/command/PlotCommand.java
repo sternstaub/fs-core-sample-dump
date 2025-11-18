@@ -321,6 +321,7 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
                     plugin.getStorageProvider(),
                     plugin.getStorageManager(),
                     providers,  // ProviderRegistry für NPC-Verwaltung
+                    plugin,     // PlotModule für NPC-Manager-Zugriff
                     isOwner
             );
 
@@ -353,7 +354,7 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
 
             // Öffne MarketPlotUi (Type-Safe)
             de.fallenstar.plot.ui.MarketPlotUi ui = new de.fallenstar.plot.ui.MarketPlotUi(
-                    plugin,
+                    plugin,     // PlotModule
                     plot,
                     marketPlot,
                     slotManager,

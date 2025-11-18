@@ -2,30 +2,23 @@ package de.fallenstar.plot.action.npc;
 
 import de.fallenstar.core.provider.Plot;
 import de.fallenstar.core.ui.element.UiAction;
-import de.fallenstar.plot.ui.NpcManagementUi;
+import de.fallenstar.plot.PlotModule;
+import de.fallenstar.plot.ui.NpcSpawnMenuUi;
 import org.bukkit.entity.Player;
 
 import java.util.Objects;
 
 /**
- * Action zum Spawnen eines NPCs auf einem Plot.
+ * Action zum Öffnen des NPC-Spawn-Menüs.
  *
- * **Status:** Basis-Implementierung (Sprint 11-12)
- *
- * **Aktuelle Funktionalität:**
- * - Öffnet Spawn-Menü (zukünftig)
- * - Zeigt verfügbare NPC-Typen an
- * - Prüft Slot-Verfügbarkeit
- *
- * **Geplante Features (Sprint 13-14):**
- * - Citizens-Integration (echte NPC-Entities)
- * - NPC-Skin-Pool-Selektion
- * - Slot-basierte Platzierung
- * - NPC-Reisesystem-Integration
+ * **Funktionalität:**
+ * - Öffnet Spawn-Menü mit verfügbaren NPC-Typen
+ * - Zeigt Gildenhändler, Spielerhändler, Bankier, Botschafter
+ * - Ermöglicht Auswahl und Spawn an Spieler-Position
  *
  * **Type-Safety:**
  * - Compiler erzwingt Plot-Referenz
- * - NPC-Typ muss übergeben werden
+ * - PlotModule für Manager-Zugriff
  *
  * **Verwendung:**
  * ```java
@@ -33,54 +26,41 @@ import java.util.Objects;
  *     Material.VILLAGER_SPAWN_EGG,
  *     "§a§lNPC spawnen",
  *     List.of("§7Öffnet das Spawn-Menü"),
- *     new SpawnNpcAction(plot, NpcType.TRADER)
+ *     new SpawnNpcAction(plot, plotModule)
  * );
  * ```
  *
  * @author FallenStar
- * @version 1.0
+ * @version 2.0
  */
 public final class SpawnNpcAction implements UiAction {
 
     private final Plot plot;
-    private final NpcManagementUi.NpcType npcType;
+    private final PlotModule plotModule;
 
     /**
      * Konstruktor für SpawnNpcAction.
      *
      * @param plot Der Plot auf dem der NPC gespawnt werden soll
-     * @param npcType Der Typ des NPCs
+     * @param plotModule Das PlotModule für Manager-Zugriff
      */
-    public SpawnNpcAction(Plot plot, NpcManagementUi.NpcType npcType) {
+    public SpawnNpcAction(Plot plot, PlotModule plotModule) {
         this.plot = Objects.requireNonNull(plot, "Plot darf nicht null sein");
-        this.npcType = Objects.requireNonNull(npcType, "NpcType darf nicht null sein");
+        this.plotModule = Objects.requireNonNull(plotModule, "PlotModule darf nicht null sein");
     }
 
     @Override
     public void execute(Player player) {
-        // TODO Sprint 13-14: Öffne NPC-Spawn-Menü mit Typ-Auswahl
-        // Für jetzt: Zeige Placeholder-Nachricht
-
         player.closeInventory();
 
-        player.sendMessage("§6§m----------§r §e§lNPC Spawnen §6§m----------");
-        player.sendMessage("§7Plot: §e" + plot.getIdentifier());
-        player.sendMessage("§7Typ: §e" + getNpcTypeName(npcType));
-        player.sendMessage("");
-        player.sendMessage("§c§lNoch nicht implementiert!");
-        player.sendMessage("§7Wird in Sprint 13-14 verfügbar sein");
-        player.sendMessage("");
-        player.sendMessage("§7Geplante Features:");
-        player.sendMessage("§7  • §eNPC-Typ auswählen");
-        player.sendMessage("§7  • §eSkin aus Pool wählen");
-        player.sendMessage("§7  • §eSlot-Position festlegen");
-        player.sendMessage("§7  • §eNPC konfigurieren (Inventar, Preise)");
-        player.sendMessage("§6§m--------------------------------");
+        // Öffne NPC-Spawn-Menü
+        NpcSpawnMenuUi spawnMenu = new NpcSpawnMenuUi(plot, plotModule, player);
+        spawnMenu.open(player);
     }
 
     @Override
     public String getActionName() {
-        return "SpawnNpc[" + plot.getIdentifier() + ", " + npcType + "]";
+        return "SpawnNpc[" + plot.getIdentifier() + "]";
     }
 
     /**
@@ -90,27 +70,5 @@ public final class SpawnNpcAction implements UiAction {
      */
     public Plot getPlot() {
         return plot;
-    }
-
-    /**
-     * Gibt den NPC-Typ zurück.
-     *
-     * @return Der NPC-Typ
-     */
-    public NpcManagementUi.NpcType getNpcType() {
-        return npcType;
-    }
-
-    /**
-     * Gibt Namen für NPC-Typ zurück.
-     */
-    private String getNpcTypeName(NpcManagementUi.NpcType type) {
-        return switch (type) {
-            case TRADER -> "Händler";
-            case BANKER -> "Bankier";
-            case AMBASSADOR -> "Botschafter";
-            case CRAFTSMAN -> "Handwerker";
-            case WORLD_BANKER -> "Weltbankier";
-        };
     }
 }

@@ -33,6 +33,7 @@ de/fallenstar/plot/ui/HandelsgildeUi.class
 de/fallenstar/plot/model/NamedPlot.class
 de/fallenstar/plot/command/PlotsAdminHandler.class
 de/fallenstar/plot/action/ManageSlotsAction.class
+de/fallenstar/plot/action/npc/ConfirmSpawnNpcAction$1.class
 de/fallenstar/plot/ui/PlayerNpcManagementUi$PlayerNpcInfo.class
 de/fallenstar/plot/PlotModule$1.class
 de/fallenstar/plot/storage/manager/ChestScanService.class
@@ -45,6 +46,7 @@ de/fallenstar/plot/storage/command/StorageSetReceiverCommand.class
 de/fallenstar/plot/storage/provider/PlotStorageProvider.class
 de/fallenstar/plot/storage/model/PlotStorage.class
 de/fallenstar/plot/action/ViewMarketStatsAction.class
+de/fallenstar/plot/ui/NpcSpawnMenuUi.class
 de/fallenstar/plot/ui/MarketPlotUi.class
 de/fallenstar/plot/storage/model/StoredMaterial.class
 de/fallenstar/plot/npc/model/PlotNPC.class
@@ -73,6 +75,7 @@ de/fallenstar/plot/npc/NPCSkinPool.class
 de/fallenstar/plot/ui/StoragePriceUi.class
 de/fallenstar/plot/provider/TownyTownProvider.class
 de/fallenstar/plot/npc/TravelTicket.class
+de/fallenstar/plot/action/npc/ConfirmSpawnNpcAction.class
 de/fallenstar/plot/action/ViewAvailableGoodsAction.class
 de/fallenstar/plot/ui/SlotManagementUi.class
 de/fallenstar/plot/registry/PlotRegistry.class
@@ -80,4 +83,3 @@ de/fallenstar/plot/npc/NPCTravelSystem.class
 de/fallenstar/plot/storage/command/StorageListCommand.class
 de/fallenstar/plot/storage/model/ChestType.class
 de/fallenstar/plot/action/ViewPricesAction.class
-de/fallenstar/plot/action/npc/SpawnNpcAction$1.class

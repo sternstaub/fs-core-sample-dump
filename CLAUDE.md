@@ -56,10 +56,10 @@ private void initializeProviders() {
 ### Status
 
 - **Version:** 1.0-SNAPSHOT
-- **Phase:** Aktive Entwicklung (~55%)
-- **Abgeschlossen:** Core ✅, Plots ✅, Items ✅, UI ✅, Economy ✅
-- **Aktuell:** Sprint 11-12 (Trading, NPC-GUI ✅)
-- **Nächster:** Sprint 13-14 (Citizens-Integration)
+- **Phase:** Aktive Entwicklung (~70%)
+- **Abgeschlossen:** Core ✅, Plots ✅, Items ✅, Economy ✅, Trading-System ✅
+- **Aktuell:** Sprint 13-14 (NPCs - Citizens-Integration 🔨)
+- **Nächster:** Sprint 15+ (Chat, Auth, WebHooks)
 
 ---
 
@@ -69,24 +69,22 @@ private void initializeProviders() {
 
 ```
 fs-core-sample-dump/
-├── core/                   # Core Plugin (Provider-Interfaces, NoOp-Implementierungen)
+├── core/                   # Core Plugin (Provider-Interfaces, NoOp, UI-Framework)
 ├── module-plots/           # Plot-System + Storage (Towny-Integration)
-├── module-items/           # MMOItems-Wrapper
-├── module-ui/              # UI-Framework Erweiterungen
-├── module-economy/         # Währungssystem, Vault-Integration
-└── module-npcs/            # NPC-System (geplant)
+├── module-items/           # Vanilla Currency Items + Optional MMOItems
+├── module-economy/         # Währungssystem, Vault-Integration, TradeSet-System
+└── module-npcs/            # NPC-System + Händler-NPCs (Citizens-Integration)
 ```
 
 ### Dependency Graph
 
 ```
-Core (Interfaces + NoOp + UI-Framework)
+Core (Interfaces + NoOp + UI-Framework inkl. TradeUI)
  ↑
- ├── Plots (Towny → TownyPlotProvider)
- ├── Items (MMOItems → MMOItemsItemProvider)
- ├── UI (ConfirmationUI, SimpleTradeUI, UIButtonManager)
- ├── Economy (Vault → VaultEconomyProvider)
- └── NPCs (Citizens → CitizensNPCProvider)
+ ├── Plots (Towny → TownyPlotProvider, VirtualTraderInventory, PlotRegistry)
+ ├── Items (Vanilla Coins, Optional: MMOItems → MMOItemsItemProvider)
+ ├── Economy (Vault → VaultEconomyProvider, TradeSet-System)
+ └── NPCs (Citizens → CitizensNPCProvider, Händler-NPCs)
 ```
 
 **Wichtig:** Module kommunizieren NUR über Core-Interfaces, nie direkt untereinander!
@@ -283,12 +281,12 @@ git push -u origin <branch-name>
 |--------|-------|--------|
 | 1-2 | Core + UI Framework | ✅ |
 | 3-4 | Plots (inkl. Storage) | ✅ |
-| 5-6 | Items (MMOItems) | ✅ |
-| 7-8 | UI-Modul | ✅ |
+| 5-6 | Items (Vanilla Coins + MMOItems) | ✅ |
+| 7-8 | UI-Refactoring (in Core integriert) | ✅ |
 | 9-10 | Economy | ✅ |
-| 11-12 | Trading + NPC-GUI | 🔨 |
-| 13-14 | NPCs (Citizens) | 📋 |
-| 15-20 | Chat, Auth, WebHooks | 📋 |
+| 11-12 | Trading + NPC-GUI | ✅ |
+| 13-14 | NPCs (Citizens + Händler-NPCs) | 🔨 |
+| 15+ | Chat, Auth, WebHooks | 📋 |
 
 ### Testbefehle
 
@@ -401,26 +399,152 @@ var button = new ClickableUiElement.CustomButton<>(item, action);
 
 ---
 
-## Current Sprint (11-12)
+## Current Sprint (13-14)
 
-### Implementierte Features
+### Abgeschlossen (Sprint 11-12)
 
 1. ✅ **TradeSet-System** (Economy-Modul)
 2. ✅ **TradingEntity-Interface** (Core)
-3. ✅ **TradeUI** (UI-Modul)
+3. ✅ **TradeUI** (Core - migriert von UI-Modul)
 4. ✅ **PlotRegistry** (Plots-Modul)
 5. ✅ **Virtuelles Händler-Inventar** (Plots-Modul)
 6. ✅ **NPC-Verwaltungs-GUI** (Plots-Modul)
-   - Owner-View: Alle NPCs auf Plot
-   - Spieler-View: Nur eigene NPCs
-   - Plot-gebundene NPCs (IMMER!)
 
-### Geplant (Sprint 13-14)
+### Aktuell in Arbeit (Sprint 13-14)
 
-- Citizens-Integration (NPCProvider)
-- NPC-Typen: Weltbankier, Lokaler Bankier, Botschafter, Gildenhändler, Spielerhändler
-- Slot-System (NPC-Platzierung)
-- NPC-Reisesystem
+**NPCs-Modul - Citizens-Integration + Gildenhändler:**
+- 🔨 CitizensNPCProvider (NPCProvider-Implementierung)
+- 🔨 NPCType Interface + Konkrete Implementierungen:
+  - GuildTraderNPC (Gildenhändler - PlotBoundNPC mit ItemBasePriceProvider)
+  - AmbassadorNPC (Botschafter - Teleport zu Towns)
+  - PlayerTraderNPC (Spielerhändler - PlayerBoundNPC, später)
+  - WorldBankerNPC (Weltbankier - Währungsumtausch, später)
+- 🔨 NPCManager + GuildTraderManager
+- 🔨 Admin-Befehle (/fscore admin npc)
+
+**Plots-Modul - NPC-Bindungssystem:**
+- 🔨 PlotBoundNPCRegistry (Verwaltung Plot-gebundener NPCs)
+- 🔨 PlotPriceManager (ItemBasePriceProvider-Implementierung)
+- 🔨 PlotPriceData (Ankauf/Verkauf-Preise pro Material)
+
+**Core - Neue Interfaces:**
+- 🔨 ItemBasePriceProvider (Preis-Schnittstelle für Handelsgründe)
+
+---
+
+## NPC-Bindungssystem (Design-Konzept)
+
+### Übersicht
+
+NPCs können an **Plots** oder **Spieler** gebunden werden. Die Bindung bezieht sich auf **Verwaltung/Registrierung/Speicherung**, NICHT auf die physische Position!
+
+### PlotBoundNPC (Plot-gebundene NPCs)
+
+**Konzept:**
+- NPCs gehören zu einem Grundstück (z.B. Gildenhändler)
+- Werden über das Plot verwaltet, gespeichert, geladen
+- Können auf andere Grundstücke geschickt werden (z.B. Trader Slots auf Marktplatz)
+- Nur Plot-Owner kann sie verwalten
+
+**Implementierung:**
+```java
+// PlotBoundNPCRegistry (Plots-Modul)
+registry.registerNPC(plotId, npcId, npcType);
+List<UUID> npcs = registry.getNPCsForPlot(plotId);
+```
+
+**Beispiele:**
+- **GuildTraderNPC** - Händler auf Handelsgilde
+- **Wächter-NPC** - Verteidigung (später)
+- **Crafter-NPC** - Handwerk (später)
+
+**Verwaltung:**
+- Owner-UI: NPCs spawnen, entfernen, konfigurieren
+- Guest-UI: Nur interagieren (Trading)
+
+### PlayerBoundNPC (Spieler-gebundene NPCs)
+
+**Konzept:**
+- Spieler KAUFT NPC auf speziellem Grundstück (z.B. Handelsgilde)
+- NPC wird an Spieler gebunden
+- Spieler kann NPC auf eigene Grundstücke platzieren
+- Wird über Spieler-UUID verwaltet/gespeichert
+
+**Implementierung (geplant für später):**
+```java
+// PlayerBoundNPCRegistry (NPCs-Modul)
+registry.registerNPC(playerUuid, npcId, npcType);
+List<UUID> npcs = registry.getNPCsForPlayer(playerUuid);
+```
+
+**Beispiele:**
+- **PlayerTraderNPC** - Privater Händler
+- **Butler-NPC** - Helfer (später)
+
+**Kauf-Mechanik:**
+- Handelsgilde zeigt Guest-UI: "Händler kaufen"
+- Spieler zahlt (Economy-Integration)
+- NPC wird an Spieler gebunden
+- Spieler platziert NPC auf eigenem Grundstück
+
+### NPC-Positions-System (Trader Slots)
+
+**Wichtig:** Bindung ≠ Position!
+
+**PlotBoundNPC kann reisen:**
+```
+Gildenhändler (PlotBound zu Handelsgilde A)
+  → Wird auf Marktplatz-Slot platziert
+  → Verwaltet/gespeichert über Handelsgilde A
+  → Position: Marktplatz
+```
+
+**Trader Slots:**
+- Grundstücke haben NPC-Slots (bereits implementiert)
+- PlotBoundNPCs können auf fremde Slots platziert werden
+- Registrierung bleibt beim Ursprungs-Plot
+
+### ItemBasePriceProvider-System
+
+**Konzept:**
+- Handelsgilde-Grundstücke SIND ItemBasePriceProvider
+- Preise werden PRO GRUNDSTÜCK festgelegt
+- Ankauf UND Verkauf getrennt
+
+**Implementierung:**
+```java
+// PlotPriceManager (Plots-Modul)
+public class PlotPriceManager implements ItemBasePriceProvider {
+    // Preise pro Plot
+    Map<UUID, PlotPriceData> plotPrices;
+
+    @Override
+    public Optional<BigDecimal> getBuyPrice(Plot plot, Material material) {
+        // Preis für Ankauf (NPC kauft von Spieler)
+    }
+
+    @Override
+    public Optional<BigDecimal> getSellPrice(Plot plot, Material material) {
+        // Preis für Verkauf (Spieler kauft von NPC)
+    }
+}
+```
+
+**TradeSet-Generierung:**
+```java
+// GuildTraderNPC nutzt ItemBasePriceProvider
+ItemBasePriceProvider priceProvider = getProviderForPlot(plot);
+BigDecimal buyPrice = priceProvider.getBuyPrice(plot, Material.DIAMOND);
+BigDecimal sellPrice = priceProvider.getSellPrice(plot, Material.DIAMOND);
+
+// TradeSet: 1 Diamond → buyPrice Sterne (Spieler verkauft)
+// TradeSet: sellPrice Sterne → 1 Diamond (Spieler kauft)
+```
+
+**Modifikatoren (später):**
+- Reputation-Bonus
+- Gilden-Rabatte
+- Eventbedingte Preisschwankungen
 
 ---
 
@@ -472,7 +596,9 @@ git push -u origin <branch>
 
 ---
 
-**Last Updated:** 2025-11-17
+**Last Updated:** 2025-11-18
 **Version:** 1.0-SNAPSHOT
-**Sprint:** 11-12 (Trading + NPC-GUI ✅)
+**Sprint:** 13-14 (NPCs - Citizens-Integration 🔨)
 **Branch:** claude/migrate-storage-price-ui-01XKnojmCKHCGNiSBZgzUsro
+
+**Hinweis:** module-merchants und module-adminshops wurden entfernt (obsolet - Funktionalität in NPCs-Modul)

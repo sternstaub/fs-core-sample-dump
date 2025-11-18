@@ -59,6 +59,7 @@
 /home/jonas/git/fs-core-sample-dump/core/src/main/java/de/fallenstar/core/provider/impl/NoOpPlotStorageProvider.java
 /home/jonas/git/fs-core-sample-dump/core/src/main/java/de/fallenstar/core/provider/ItemProvider.java
 /home/jonas/git/fs-core-sample-dump/core/src/main/java/de/fallenstar/core/FallenStarCore.java
+/home/jonas/git/fs-core-sample-dump/core/src/main/java/de/fallenstar/core/ui/TradeUI.java
 /home/jonas/git/fs-core-sample-dump/core/src/main/java/de/fallenstar/core/ui/UIButton.java
 /home/jonas/git/fs-core-sample-dump/core/src/main/java/de/fallenstar/core/event/ProvidersReadyEvent.java
 /home/jonas/git/fs-core-sample-dump/core/src/main/java/de/fallenstar/core/registry/ProviderRegistry.java

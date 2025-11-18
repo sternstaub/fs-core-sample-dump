@@ -38,12 +38,11 @@ mvn clean package
 
 | Modul | Status | Beschreibung |
 |-------|--------|--------------|
-| [Core](core/) | ✅ Abgeschlossen | Provider-Interfaces, NoOp-Implementierungen, UI-Framework |
+| [Core](core/) | ✅ Abgeschlossen | Provider-Interfaces, NoOp-Implementierungen, UI-Framework (inkl. TradeUI) |
 | [FallenStar Plots](module-plots/) | ✅ Abgeschlossen | Plot-System + Storage + Slot-System + TownyPlotProvider |
 | [FallenStar Items](module-items/) | ✅ Abgeschlossen | Vanilla Currency Items + Optional MMOItems |
-| [FallenStar UI](module-ui/) | ✅ Abgeschlossen | ConfirmationUI, SimpleTradeUI, UIButtonManager |
-| [FallenStar Economy](module-economy/) | ✅ Abgeschlossen | Weltwirtschaft + VaultEconomyProvider + Währungssystem |
-| [FallenStar NPCs](module-npcs/) | 📋 Geplant | NPC-System + CitizensNPCProvider + Botschafter-NPCs |
+| [FallenStar Economy](module-economy/) | ✅ Abgeschlossen | Weltwirtschaft + VaultEconomyProvider + Währungssystem + TradeSet-System |
+| [FallenStar NPCs](module-npcs/) | 🔨 In Arbeit | NPC-System + CitizensNPCProvider + Händler-NPCs (GuildTrader, PlayerTrader) |
 
 ---
 
@@ -67,11 +66,12 @@ mvn clean package
 - ✅ Custom Model Data Support
 - ✅ Funktioniert OHNE externe Plugins
 
-**UI-Framework:**
+**UI-Framework (Core-integriert):**
 - ✅ BaseUI Abstraktionsklassen
 - ✅ SmallChestUI, LargeChestUI, SignUI, AnvilUI, BookUI
 - ✅ UIRegistry für zentrale UI-Verwaltung
 - ✅ Guest/Owner View Pattern für Plot-UIs
+- ✅ TradeUI (Vanilla Merchant Interface)
 - ✅ Testbefehle: `/fscore admin gui <ui-id>`
 
 **Economy-System:**
@@ -141,19 +141,20 @@ mvn clean package
 
 **Fertiggestellt:**
 - ✅ Architektur-Design & Provider-System
-- ✅ Core-Plugin (Interfaces + NoOp + UI-Framework)
+- ✅ Core-Plugin (Sprint 1-2 - Interfaces + NoOp + UI-Framework inkl. TradeUI)
 - ✅ FallenStar Plots (Sprint 3-4 - Plot-System + Storage + Slot-System)
 - ✅ FallenStar Items (Sprint 5-6 - Vanilla Coins + MMOItems)
-- ✅ FallenStar UI (Sprint 7-8 - ConfirmationUI + SimpleTradeUI)
+- ✅ UI-Refactoring (Sprint 7-8 - UI-Modul in Core integriert)
 - ✅ FallenStar Economy (Sprint 9-10 - Weltwirtschaft + Vault + Währungssystem)
 - ✅ Trading-System (Sprint 11-12 - TradeSet, TradingEntity, PlotRegistry, NPC-Reisen)
 - ✅ Testbefehl-Struktur (`/fscore admin [gui/items/plots/economy]`)
 
-**Nächster Sprint:**
-- 📋 FallenStar NPCs (Sprint 13-14 - NPC-System + Botschafter + Citizens)
+**Aktueller Sprint:**
+- 🔨 FallenStar NPCs (Sprint 13-14 - NPC-System + Citizens-Integration)
 
 **Wichtige Architektur-Änderungen:**
 - ✅ Storage-Modul in Plots-Modul integriert
+- ✅ UI-Modul in Core-Plugin integriert (TradeUI migriert)
 - ✅ WorldAnchors-Modul entfernt → Plot-Slots System
 - ✅ MMOItems ist jetzt OPTIONAL (Graceful Degradation)
 - ✅ Vanilla Currency Items unabhängig von MMOItems

@@ -4,6 +4,7 @@ import de.fallenstar.core.provider.Plot;
 import de.fallenstar.core.provider.PlotProvider;
 import de.fallenstar.core.registry.ProviderRegistry;
 import de.fallenstar.core.ui.element.UiAction;
+import de.fallenstar.plot.PlotModule;
 import de.fallenstar.plot.ui.NpcManagementUi;
 import de.fallenstar.plot.ui.PlayerNpcManagementUi;
 import org.bukkit.entity.Player;
@@ -58,16 +59,19 @@ public final class ManageNpcsAction implements UiAction {
 
     private final Plot plot;
     private final ProviderRegistry providers;
+    private final PlotModule plotModule;
 
     /**
      * Konstruktor für ManageNpcsAction.
      *
      * @param plot Der Plot dessen NPCs verwaltet werden sollen
      * @param providers Die ProviderRegistry für Owner-Checks
+     * @param plotModule Das PlotModule für NPC-Manager-Zugriff
      */
-    public ManageNpcsAction(Plot plot, ProviderRegistry providers) {
+    public ManageNpcsAction(Plot plot, ProviderRegistry providers, PlotModule plotModule) {
         this.plot = Objects.requireNonNull(plot, "Plot darf nicht null sein");
         this.providers = Objects.requireNonNull(providers, "ProviderRegistry darf nicht null sein");
+        this.plotModule = Objects.requireNonNull(plotModule, "PlotModule darf nicht null sein");
     }
 
     @Override
@@ -79,7 +83,7 @@ public final class ManageNpcsAction implements UiAction {
 
         if (isOwner) {
             // Owner-Ansicht: Alle NPCs auf dem Plot
-            NpcManagementUi ownerUi = new NpcManagementUi(plot);
+            NpcManagementUi ownerUi = new NpcManagementUi(plot, plotModule);
             ownerUi.open(player);
         } else {
             // Spieler-Ansicht: Nur eigene NPCs
