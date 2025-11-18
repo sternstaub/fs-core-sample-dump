@@ -5,7 +5,7 @@ import de.fallenstar.core.ui.element.UiAction;
 import de.fallenstar.plot.storage.manager.StorageManager;
 import de.fallenstar.plot.storage.model.PlotStorage;
 import de.fallenstar.plot.storage.provider.PlotStorageProvider;
-import de.fallenstar.plot.ui.PlotStorageUI;
+import de.fallenstar.plot.ui.PlotStorageUi;
 import org.bukkit.entity.Player;
 
 import java.util.Objects;
@@ -13,7 +13,7 @@ import java.util.Objects;
 /**
  * Action zum Öffnen des Plot-Storage-UI.
  *
- * Öffnet die PlotStorageUI, die alle gespeicherten
+ * Öffnet die PlotStorageUi, die alle gespeicherten
  * Materialien auf dem Grundstück anzeigt.
  *
  * **Features:**
@@ -72,8 +72,8 @@ public final class OpenStorageUiAction implements UiAction {
             return;
         }
 
-        // Öffne PlotStorageUI
-        PlotStorageUI storageUI = new PlotStorageUI(
+        // Öffne PlotStorageUi
+        PlotStorageUi storageUI = new PlotStorageUi(
                 plot,
                 plotStorage,
                 storageProvider,
