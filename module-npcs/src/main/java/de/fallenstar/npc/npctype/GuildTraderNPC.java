@@ -640,7 +640,8 @@ public class GuildTraderNPC implements NPCType, TradingEntity {
             }
 
             // Reflection: createCoin(String, CurrencyTier, int)
-            Class<?> currencyTierClass = Class.forName("de.fallenstar.economy.model.CurrencyTier");
+            // CurrencyTier ist eine innere Klasse von CurrencyItemSet
+            Class<?> currencyTierClass = Class.forName("de.fallenstar.economy.model.CurrencyItemSet$CurrencyTier");
             var tierEnum = Enum.valueOf((Class<Enum>) currencyTierClass, tier);
 
             var createCoinMethod = currencyManager.getClass().getMethod(

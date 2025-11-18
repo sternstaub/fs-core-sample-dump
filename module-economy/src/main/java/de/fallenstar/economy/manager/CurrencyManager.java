@@ -268,6 +268,45 @@ public class CurrencyManager {
     }
 
     /**
+     * Erstellt Münzen als ItemStack (ohne Auszahlung an Spieler).
+     *
+     * Diese Methode wird von TradeSet-Generatoren verwendet, um Münzen
+     * für Handelstransaktionen zu erstellen.
+     *
+     * @param currencyId Währungs-ID (z.B. "sterne")
+     * @param tier Münz-Tier (BRONZE, SILVER, GOLD)
+     * @param amount Anzahl
+     * @return ItemStack mit Münzen, oder null wenn fehlgeschlagen
+     */
+    public ItemStack createCoin(String currencyId, CurrencyItemSet.CurrencyTier tier, int amount) {
+        Optional<CurrencyItemSet> currencyOpt = getCurrency(currencyId);
+
+        if (currencyOpt.isEmpty()) {
+            logger.warning("Währung nicht gefunden: " + currencyId);
+            return null;
+        }
+
+        CurrencyItemSet currency = currencyOpt.get();
+        String itemId = currency.getItemId(tier);
+
+        // Erstelle Münzen via ItemProvider
+        Optional<ItemStack> coins;
+        try {
+            coins = itemProvider.getSpecialItem(itemId, amount);
+        } catch (Exception e) {
+            logger.warning("Fehler beim Erstellen von Münzen: " + e.getMessage());
+            return null;
+        }
+
+        if (coins.isEmpty()) {
+            logger.warning("Konnte Münzen nicht erstellen: " + itemId);
+            return null;
+        }
+
+        return coins.get();
+    }
+
+    /**
      * Nimmt Münzen vom Spieler-Inventar und zahlt den Gegenwert auf Vault ein.
      *
      * Diese Methode:
