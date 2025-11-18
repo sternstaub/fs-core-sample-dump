@@ -105,6 +105,12 @@ public class PlotModule extends JavaPlugin implements Listener {
             saveConfiguration();
         }
 
+        // Speichere alle TradeguildPlots synchron (Server-Shutdown)
+        if (tradeguildPlotFactory != null) {
+            int saved = tradeguildPlotFactory.saveAllSync();
+            getLogger().info("✓ TradeguildPlots gespeichert: " + saved);
+        }
+
         getLogger().info("Plot Module disabled");
     }
 
@@ -834,8 +840,9 @@ public class PlotModule extends JavaPlugin implements Listener {
      * Initialisiert die TradeguildPlotFactory.
      */
     private void initializeTradeguildPlotFactory() {
-        this.tradeguildPlotFactory = new de.fallenstar.plot.factory.TradeguildPlotFactory(getLogger());
-        getLogger().info("✓ TradeguildPlotFactory initialized");
+        de.fallenstar.core.database.DataStore dataStore = corePlugin.getDataStore();
+        this.tradeguildPlotFactory = new de.fallenstar.plot.factory.TradeguildPlotFactory(getLogger(), dataStore);
+        getLogger().info("✓ TradeguildPlotFactory initialized with DataStore");
     }
 
     /**

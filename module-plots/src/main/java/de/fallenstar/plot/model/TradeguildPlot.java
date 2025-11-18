@@ -651,4 +651,85 @@ public class TradeguildPlot extends BasePlot implements
     public Optional<DistributableNpc> getDistributableNpc(UUID entityId) {
         return Optional.ofNullable(npcCache.get(entityId));
     }
+
+    // ========== Persistenz ==========
+
+    /**
+     * Exportiert alle Plot-Daten in serialisierbares Objekt.
+     *
+     * Wird von TradeguildPlotFactory zum Speichern verwendet.
+     *
+     * @return TradeguildPlotData mit allen aktuellen Daten
+     */
+    public TradeguildPlotData exportData() {
+        TradeguildPlotData data = new TradeguildPlotData(getIdentifier());
+
+        // NamedPlot
+        data.setCustomName(customName);
+
+        // StorageContainerPlot
+        data.setStorage(TradeguildPlotData.convertStorageToStrings(storage));
+        data.setBuyPrices(TradeguildPlotData.convertPricesToStrings(buyPrices));
+        data.setSellPrices(TradeguildPlotData.convertPricesToStrings(sellPrices));
+
+        // NpcContainerPlot
+        data.setNpcIds(TradeguildPlotData.convertUuidsToStrings(npcIds));
+        data.setNpcTypes(TradeguildPlotData.convertUuidMapToStrings(npcTypes));
+
+        // SlottablePlot
+        data.setSlots(TradeguildPlotData.convertSlotMapToStrings(slots));
+        data.setMaxSlots(maxSlots);
+
+        // QuestDistributor
+        List<String> questIdStrings = quests.stream()
+                .map(q -> q.getId().toString())
+                .collect(Collectors.toList());
+        data.setQuestIds(questIdStrings);
+
+        return data;
+    }
+
+    /**
+     * Importiert Plot-Daten aus serialisiertem Objekt.
+     *
+     * Wird von TradeguildPlotFactory beim Laden verwendet.
+     *
+     * HINWEIS: npcCache wird NICHT wiederhergestellt (nur zur Laufzeit)!
+     * Quest-Objekte müssen separat geladen und via distribute() zugewiesen werden!
+     *
+     * @param data Die zu importierenden Daten
+     */
+    public void importData(TradeguildPlotData data) {
+        if (data == null) {
+            return;
+        }
+
+        // NamedPlot
+        this.customName = data.getCustomName();
+
+        // StorageContainerPlot
+        this.storage.clear();
+        this.storage.putAll(TradeguildPlotData.convertStorageFromStrings(data.getStorage()));
+
+        this.buyPrices.clear();
+        this.buyPrices.putAll(TradeguildPlotData.convertPricesFromStrings(data.getBuyPrices()));
+
+        this.sellPrices.clear();
+        this.sellPrices.putAll(TradeguildPlotData.convertPricesFromStrings(data.getSellPrices()));
+
+        // NpcContainerPlot
+        this.npcIds.clear();
+        this.npcIds.addAll(TradeguildPlotData.convertUuidsFromStrings(data.getNpcIds()));
+
+        this.npcTypes.clear();
+        this.npcTypes.putAll(TradeguildPlotData.convertUuidMapFromStrings(data.getNpcTypes()));
+
+        // SlottablePlot
+        this.slots.clear();
+        this.slots.putAll(TradeguildPlotData.convertSlotMapFromStrings(data.getSlots()));
+        this.maxSlots = data.getMaxSlots();
+
+        // QuestDistributor - Quest-IDs werden gespeichert, aber Objekte müssen separat geladen werden
+        // quests.clear(); // NICHT clearen! Quests werden via QuestDistributor.distribute() zugewiesen
+    }
 }
