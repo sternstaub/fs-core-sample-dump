@@ -19,19 +19,11 @@
     <description>Plot management and NPC spawning system</description>
 
     <dependencies>
-        <!-- Core Plugin (REQUIRED) -->
+        <!-- Core Plugin (REQUIRED - enthält UI-Framework) -->
         <dependency>
             <groupId>de.fallenstar</groupId>
             <artifactId>fallenstar-core</artifactId>
             <version>${project.version}</version>
-        </dependency>
-
-        <!-- UI Module (für PriceEditorUI) -->
-        <dependency>
-            <groupId>de.fallenstar</groupId>
-            <artifactId>module-ui</artifactId>
-            <version>${project.version}</version>
-            <scope>provided</scope>
         </dependency>
 
         <!-- Paper API -->
