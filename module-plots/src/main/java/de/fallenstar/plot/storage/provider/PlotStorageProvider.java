@@ -278,53 +278,6 @@ public class PlotStorageProvider implements de.fallenstar.core.provider.PlotStor
     }
 
     @Override
-    public int getMaterialAmount(Plot plot, Material material) {
-        PlotStorage storage = plotStorageMap.get(plot.getUuid());
-        if (storage == null) {
-            return 0;
-        }
-        return storage.getTotalAmount(material);
-    }
-
-    @Override
-    public boolean removeMaterial(Plot plot, Material material, int amount) {
-        PlotStorage storage = plotStorageMap.get(plot.getUuid());
-        if (storage == null) {
-            return false;
-        }
-
-        int available = storage.getTotalAmount(material);
-        if (available < amount) {
-            return false;
-        }
-
-        // Entferne Material aus Truhen
-        int remaining = amount;
-        List<StoredMaterial> materialLocations = storage.getMaterialLocations(material);
-
-        for (StoredMaterial stored : materialLocations) {
-            if (remaining <= 0) break;
-
-            int toRemove = Math.min(remaining, stored.getAmount());
-            stored.removeAmount(toRemove);
-            remaining -= toRemove;
-
-            // Entferne Eintrag wenn leer
-            if (stored.getAmount() == 0) {
-                storage.removeMaterial(stored);
-            }
-        }
-
-        return remaining == 0;
-    }
-
-    @Override
-    public boolean addToInputChests(Plot plot, ItemStack item)
-            throws ProviderFunctionalityNotFoundException {
-        return addToInputChest(plot, item);
-    }
-
-    @Override
     public Map<Material, Integer> getAllMaterials(Plot plot) {
         PlotStorage storage = plotStorageMap.get(plot.getUuid());
         if (storage == null) {
@@ -352,9 +305,12 @@ public class PlotStorageProvider implements de.fallenstar.core.provider.PlotStor
             return Collections.emptyList();
         }
 
-        return storage.getInputChests().stream()
-                .map(ChestData::getLocation)
-                .toList();
+        // getInputChest() gibt nur EINE Input-Chest zurück
+        ChestData inputChest = storage.getInputChest();
+        if (inputChest != null) {
+            return Collections.singletonList(inputChest.getLocation());
+        }
+        return Collections.emptyList();
     }
 
     @Override
@@ -378,9 +334,24 @@ public class PlotStorageProvider implements de.fallenstar.core.provider.PlotStor
             return false;
         }
 
-        // Erstelle ChestData für Empfangskiste
-        ChestData receiverChest = new ChestData(location);
-        storage.setReceiverChest(receiverChest);
+        // Finde existierende ChestData an dieser Location oder erstelle neue
+        ChestData chestData = storage.getAllChests().stream()
+                .filter(chest -> chest.getLocation().equals(location))
+                .findFirst()
+                .orElseGet(() -> {
+                    // Erstelle neue ChestData
+                    ChestData newChest = new ChestData(
+                            UUID.randomUUID(),
+                            plot.getUuid(),
+                            location,
+                            de.fallenstar.plot.storage.model.ChestType.INPUT
+                    );
+                    storage.registerChest(newChest);
+                    return newChest;
+                });
+
+        // Setze ChestType auf INPUT
+        chestData.setChestType(de.fallenstar.plot.storage.model.ChestType.INPUT);
 
         return true;
     }
