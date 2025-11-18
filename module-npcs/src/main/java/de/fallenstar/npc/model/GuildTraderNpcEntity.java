@@ -224,24 +224,82 @@ public class GuildTraderNpcEntity implements UiTarget, DistributableNpc, QuestCo
 
     @Override
     public List<UiActionInfo> getAvailableActions(Player player, UiContext context) {
-        // GuildTrader hat keine konfigurierbaren Aktionen
-        // Das Trade-UI wird direkt beim Klick geöffnet
-        return List.of();
+        List<UiActionInfo> actions = new ArrayList<>();
+
+        // Handels-Aktion (immer verfügbar)
+        actions.add(UiActionInfo.builder()
+                .id("trade")
+                .displayName("§6Handeln")
+                .lore(List.of("§7Klicke um mit mir zu handeln"))
+                .icon(org.bukkit.Material.GOLD_INGOT)
+                .slot(11)
+                .build());
+
+        // Quest-Aktion (nur wenn Quests vorhanden)
+        if (!quests.isEmpty()) {
+            actions.add(UiActionInfo.builder()
+                    .id("quests")
+                    .displayName("§eQuests")
+                    .lore(List.of(
+                            "§7Verfügbare Quests: " + quests.size(),
+                            "§7Klicke um Quests anzuzeigen"
+                    ))
+                    .icon(org.bukkit.Material.WRITABLE_BOOK)
+                    .slot(13)
+                    .build());
+        }
+
+        // Info-Aktion
+        actions.add(UiActionInfo.builder()
+                .id("info")
+                .displayName("§bInformationen")
+                .lore(List.of(
+                        "§7Grundstück: " + plot.getIdentifier(),
+                        "§7Typ: Gildenhändler"
+                ))
+                .icon(org.bukkit.Material.BOOK)
+                .slot(15)
+                .build());
+
+        return actions;
     }
 
     @Override
     public boolean executeAction(Player player, String actionId) {
-        // Keine Aktionen verfügbar
-        return false;
+        return switch (actionId) {
+            case "trade" -> {
+                // Öffne Trade-UI via GuildTraderNPC
+                guildTraderType.onClick(player, getNpcId());
+                yield true;
+            }
+            case "quests" -> {
+                // TODO: Öffne Quest-UI
+                player.sendMessage("§eVerfügbare Quests:");
+                quests.forEach(quest ->
+                        player.sendMessage("§7- " + quest.getTitle() + " §8(Level " + quest.getLevel() + ")")
+                );
+                yield true;
+            }
+            case "info" -> {
+                player.sendMessage("§b§l=== Gildenhändler-Info ===");
+                player.sendMessage("§7Grundstück: " + plot.getIdentifier());
+                player.sendMessage("§7Quest-Slots: " + quests.size() + "/" + maxQuests);
+                yield true;
+            }
+            default -> false;
+        };
     }
 
     // ========== UiTarget Implementation ==========
 
     @Override
     public Optional<BaseUi> createUi(Player player, InteractionContext context) {
-        // Trade-UI wird von GuildTraderNPC.onClick() geöffnet
-        // Daher geben wir empty zurück (UI-Opening erfolgt in onInteract)
-        return Optional.empty();
+        // Erstelle Generic Interaction Menu (Self-Constructing!)
+        UiContext uiContext = UiContext.MAIN_MENU; // NPC-Hauptmenü
+        de.fallenstar.core.ui.GenericInteractionMenuUi menu =
+                new de.fallenstar.core.ui.GenericInteractionMenuUi(this, player, uiContext);
+
+        return Optional.of(menu);
     }
 
     // ========== TradingEntity Delegation ==========

@@ -399,11 +399,12 @@ public class TradeguildPlot extends BasePlot implements
 
     @Override
     public Optional<BaseUi> createUi(Player player, InteractionContext context) {
-        // TODO: PlotMainMenuUi erstellen
-        // Placeholder: Zeige Message
-        player.sendMessage("§6Handelsgilde: " + getDisplayName());
-        player.sendMessage("§7Main-Menu-UI wird noch implementiert");
-        return Optional.empty();
+        // Erstelle Generic Interaction Menu (Self-Constructing!)
+        UiContext uiContext = UiContext.MAIN_MENU; // Default: Main Menu
+        de.fallenstar.core.ui.GenericInteractionMenuUi menu =
+                new de.fallenstar.core.ui.GenericInteractionMenuUi(this, player, uiContext);
+
+        return Optional.of(menu);
     }
 
     @Override
