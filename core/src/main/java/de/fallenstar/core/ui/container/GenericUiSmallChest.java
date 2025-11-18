@@ -121,9 +121,11 @@ public abstract class GenericUiSmallChest extends SmallChestUI implements UiPare
             }
 
             // Konvertiere Row-Elemente zu Inventory-Items
+            final int currentRow = rowIndex; // Final für Lambda
             for (int position = 0; position < row.getSize(); position++) {
-                row.getElement(position).ifPresent(uiElement -> {
-                    int slot = rowIndex * BasicUiRow.DEFAULT_ROW_SIZE + position;
+                final int currentPos = position; // Final für Lambda
+                row.getElement(currentPos).ifPresent(uiElement -> {
+                    int slot = currentRow * BasicUiRow.DEFAULT_ROW_SIZE + currentPos;
 
                     // Setze Item in BaseUI
                     setItem(slot, uiElement.getItemStack());
