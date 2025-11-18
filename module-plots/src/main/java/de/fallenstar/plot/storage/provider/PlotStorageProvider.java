@@ -207,6 +207,11 @@ public class PlotStorageProvider implements de.fallenstar.core.provider.PlotStor
      * **Auto-Scan:**
      * Wenn noch keine Truhen registriert sind, wird automatisch ein Scan durchgeführt.
      *
+     * **ChestType-Logik:**
+     * - OUTPUT: Explizit als Verkaufstruhe markiert
+     * - STORAGE: Standard-Truhen (werden auch durchsucht für Verkauf)
+     * - INPUT: Empfangstruhen (werden NICHT durchsucht)
+     *
      * @param plot Das Plot-Objekt
      * @return Liste aller ItemStacks aus allen Output-Chests
      */
@@ -231,10 +236,16 @@ public class PlotStorageProvider implements de.fallenstar.core.provider.PlotStor
 
         List<org.bukkit.inventory.ItemStack> allItems = new ArrayList<>();
 
-        // Hole alle Output-Chests
-        List<ChestData> outputChests = storage.getOutputChests();
+        // Hole alle Truhen die zum Verkauf genutzt werden können
+        // Das sind: OUTPUT (explizit markiert) + STORAGE (Standard beim Scan)
+        // NICHT: INPUT (Empfangstruhen)
+        List<ChestData> sellableChests = storage.getAllChests().stream()
+                .filter(chest -> chest.isOutputChest() || chest.isStorageChest())
+                .toList();
 
-        for (ChestData chestData : outputChests) {
+        logger.fine("getOutputChestContents: Durchsuche " + sellableChests.size() + " Truhen (OUTPUT + STORAGE)");
+
+        for (ChestData chestData : sellableChests) {
             Location chestLocation = chestData.getLocation();
 
             // Prüfe ob Truhe noch vorhanden ist
@@ -250,6 +261,8 @@ public class PlotStorageProvider implements de.fallenstar.core.provider.PlotStor
                 }
             }
         }
+
+        logger.fine("getOutputChestContents: Gefunden " + allItems.size() + " Items");
 
         return allItems;
     }
