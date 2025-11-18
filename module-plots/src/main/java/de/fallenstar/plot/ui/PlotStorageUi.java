@@ -31,24 +31,29 @@ import java.util.Set;
 /**
  * Type-Safe Plot-Storage Verwaltungs-UI.
  *
- * **Migration:** Ersetzt alte PlotStorageUI (396 Zeilen) durch
- * type-safe GenericUiLargeChest-basierte Implementierung.
+ * **Version 2.0:** Komplett neu geschrieben mit GenericUiLargeChest-Architektur.
  *
  * **Features:**
- * - Material-Liste mit Mengen (sortiert)
+ * - Material-Liste mit Mengen (sortiert nach Anzahl)
  * - Receiver-Kiste Status
- * - Storage-Scan Funktion (Owner)
+ * - Storage-Scan Funktion (nur Owner)
  * - Pagination für viele Items
  *
  * **Layout:**
- * - Row 0 (Slots 0-8): Navigation (Close, Receiver-Info, Storage-Info, Scan)
- * - Row 1-4 (Slots 9-44): Material-Liste (bis zu 36 Items pro Seite)
- * - Row 5 (Slots 45-53): Pagination (Previous, Page-Info, Next)
+ * - Row 0 (Slots 0-8): Kontrollelemente
+ *   - Slot 0: Zurück-Button (Close)
+ *   - Slot 2: Receiver-Info
+ *   - Slot 3: Storage-Info
+ *   - Slot 4: Page-Info (Mitte)
+ *   - Slot 6: Previous Page
+ *   - Slot 7: Next Page
+ *   - Slot 8: Scan-Button (Owner) / Info (Guest)
+ * - Row 1-5 (Slots 9-53): Material-Liste (bis zu 45 Items pro Seite, mit Index)
  *
  * **Type-Safety:**
- * - Scan-Button nutzt ScanStorageAction (wiederverwendbar)
+ * - Scan-Button nutzt ScanStorageAction
  * - Navigation nutzt PageNavigationAction
- * - Alle Buttons compiler-enforced
+ * - Material-Items nutzen MaterialInfoAction
  *
  * @author FallenStar
  * @version 2.0
@@ -62,7 +67,7 @@ public class PlotStorageUi extends GenericUiLargeChest implements PageNavigation
     private final boolean isOwner;
 
     private int currentPage = 0;
-    private static final int ITEMS_PER_PAGE = 36; // 4 Rows × 9 Slots
+    private static final int ITEMS_PER_PAGE = 45; // 5 Rows × 9 Slots (Rows 1-5)
 
     /**
      * Konstruktor für PlotStorageUi.
@@ -87,39 +92,79 @@ public class PlotStorageUi extends GenericUiLargeChest implements PageNavigation
         this.storageManager = storageManager;
         this.isOwner = isOwner;
 
-        // Initialisiere Rows
+        // Initialisiere alle 6 Rows
         for (int i = 0; i < ROW_COUNT; i++) {
             setRow(i, new BasicUiRowForContent());
         }
 
+        // Baue UI initial auf
         buildUi();
     }
 
     /**
-     * Baut das UI auf.
+     * Baut das UI auf - befüllt Rows mit UiElements.
      */
     private void buildUi() {
-        buildNavigationBar();
-        buildMaterialList();
-        buildPaginationBar();
+        // Lösche alle Rows
+        for (int i = 0; i < ROW_COUNT; i++) {
+            getRow(i).clear();
+        }
+
+        // Baue Komponenten
+        buildControlRow();   // Row 0: Zurück + Kontrollelemente + Pagination
+        buildMaterialList(); // Rows 1-5: Material-Liste
     }
 
     /**
-     * Baut die Navigation-Bar (Row 0).
+     * Baut die Control-Row (Row 0).
+     *
+     * Layout:
+     * - Slot 0: Zurück-Button (Close)
+     * - Slot 2: Receiver-Info
+     * - Slot 3: Storage-Info
+     * - Slot 4: Page-Info (Mitte)
+     * - Slot 6: Previous Page
+     * - Slot 7: Next Page
+     * - Slot 8: Scan-Button (Owner) / Info (Guest)
      */
-    private void buildNavigationBar() {
+    private void buildControlRow() {
         var row = getRow(0);
 
-        // Slot 0: Close Button
+        // Slot 0: Zurück-Button
         row.setElement(0, CloseButton.create(this));
 
         // Slot 2: Receiver-Kiste Status
         row.setElement(2, createReceiverInfo());
 
-        // Slot 4: Storage-Info
-        row.setElement(4, createStorageInfo());
+        // Slot 3: Storage-Info
+        row.setElement(3, createStorageInfo());
 
-        // Slot 8: Scan Button (nur Owner)
+        // Slot 4: Page-Info (Mitte)
+        Set<Material> materials = plotStorage.getAllMaterials();
+        int totalPages = Math.max(1, (int) Math.ceil((double) materials.size() / ITEMS_PER_PAGE));
+
+        row.setElement(4, new StaticUiElement(
+                createButtonItem(
+                        Material.PAPER,
+                        "§7Seite " + (currentPage + 1) + " / " + totalPages,
+                        List.of(
+                                "§7Materialien gesamt: §e" + materials.size(),
+                                "§7Pro Seite: §e" + ITEMS_PER_PAGE
+                        )
+                )
+        ));
+
+        // Slot 6: Previous Page
+        if (currentPage > 0) {
+            row.setElement(6, NavigateLeftButton.previous(this));
+        }
+
+        // Slot 7: Next Page
+        if ((currentPage + 1) * ITEMS_PER_PAGE < materials.size()) {
+            row.setElement(7, NavigateRightButton.next(this));
+        }
+
+        // Slot 8: Scan-Button (Owner) oder Info (Guest)
         if (isOwner) {
             var scanButton = new ClickableUiElement.CustomButton<>(
                     createButtonItem(
@@ -222,10 +267,36 @@ public class PlotStorageUi extends GenericUiLargeChest implements PageNavigation
     }
 
     /**
-     * Baut die Material-Liste (Rows 1-4).
+     * Baut die Material-Liste (Rows 1-5).
+     *
+     * Zeigt bis zu 45 Materialien pro Seite (5 Rows × 9 Slots).
      */
     private void buildMaterialList() {
         Set<Material> materials = plotStorage.getAllMaterials();
+
+        if (materials.isEmpty()) {
+            // Kein Storage vorhanden - Zeige Info in Row 3, Slot 4 (Mitte)
+            var emptyInfo = new StaticUiElement(
+                    createButtonItem(
+                            Material.PAPER,
+                            "§7Kein Storage gefunden",
+                            isOwner ?
+                                    List.of(
+                                            "§7Dieser Plot hat noch keine",
+                                            "§7Truhen mit Materialien",
+                                            "§7",
+                                            "§7Nutze den §a§lScan-Button§7 oben",
+                                            "§7um Truhen zu scannen"
+                                    ) :
+                                    List.of(
+                                            "§7Dieser Plot hat noch keine",
+                                            "§7Truhen mit Materialien"
+                                    )
+                    )
+            );
+            getRow(3).setElement(4, emptyInfo); // Row 3, Mitte (vertikale Mitte)
+            return;
+        }
 
         // Sortiere Materialien nach Menge (absteigend)
         List<Material> sortedMaterials = new ArrayList<>(materials);
@@ -237,83 +308,28 @@ public class PlotStorageUi extends GenericUiLargeChest implements PageNavigation
         int startIndex = currentPage * ITEMS_PER_PAGE;
         int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, sortedMaterials.size());
 
-        if (sortedMaterials.isEmpty()) {
-            // Kein Storage vorhanden - Zeige Info in Row 2, Slot 4 (Mitte)
-            var emptyInfo = new StaticUiElement(
-                    createButtonItem(
-                            Material.PAPER,
-                            "§7Kein Storage gefunden",
-                            isOwner ?
-                                    List.of(
-                                            "§7Dieser Plot hat noch keine",
-                                            "§7Truhen mit Materialien",
-                                            "§7",
-                                            "§7Nutze §e/plot storage scan§7 um",
-                                            "§7Truhen zu scannen"
-                                    ) :
-                                    List.of(
-                                            "§7Dieser Plot hat noch keine",
-                                            "§7Truhen mit Materialien"
-                                    )
-                    )
-            );
-            getRow(2).setElement(4, emptyInfo); // Row 2, Mitte
-            return;
-        }
-
-        // Fülle Material-Liste (Rows 1-4, Slots 9-44)
-        int materialIndex = 0;
+        // Fülle Material-Liste (Rows 1-5, Slots 9-53)
+        int slotOffset = 9; // Start bei Row 1, Slot 0
         for (int i = startIndex; i < endIndex; i++) {
             Material material = sortedMaterials.get(i);
             int amount = plotStorage.getTotalAmount(material);
 
-            // Berechne Row und Position
-            int absoluteSlot = 9 + materialIndex; // Start bei Slot 9 (Row 1, Pos 0)
+            // Berechne Position (mit Index-Anzeige)
+            int listIndex = i - startIndex; // 0-44
+            int absoluteSlot = slotOffset + listIndex;
             int rowIndex = absoluteSlot / 9;
             int position = absoluteSlot % 9;
 
-            // Erstelle Material-Item mit Click-Action (zeigt Info)
+            // Erstelle Material-Button mit Info-Action und Index
             var materialButton = new ClickableUiElement.CustomButton<>(
-                    createMaterialItem(material, amount),
+                    createMaterialItem(material, amount, listIndex + 1), // Index 1-45
                     new MaterialInfoAction(material, amount)
             );
 
             getRow(rowIndex).setElement(position, materialButton);
-            materialIndex++;
         }
     }
 
-    /**
-     * Baut die Pagination-Bar (Row 5).
-     */
-    private void buildPaginationBar() {
-        var row = getRow(5);
-
-        Set<Material> materials = plotStorage.getAllMaterials();
-        int totalPages = (int) Math.ceil((double) materials.size() / ITEMS_PER_PAGE);
-
-        // Slot 45 (Row 5, Pos 0): Previous Page
-        if (currentPage > 0) {
-            row.setElement(0, NavigateLeftButton.previous(this));
-        }
-
-        // Slot 49 (Row 5, Pos 4): Page-Info
-        row.setElement(4, new StaticUiElement(
-                createButtonItem(
-                        Material.PAPER,
-                        "§7Seite " + (currentPage + 1) + " / " + Math.max(1, totalPages),
-                        List.of(
-                                "§7Materialien: §e" + materials.size(),
-                                "§7Pro Seite: §e" + ITEMS_PER_PAGE
-                        )
-                )
-        ));
-
-        // Slot 53 (Row 5, Pos 8): Next Page
-        if ((currentPage + 1) * ITEMS_PER_PAGE < materials.size()) {
-            row.setElement(8, NavigateRightButton.next(this));
-        }
-    }
 
     // ========================================
     // PageNavigable Implementation
@@ -365,19 +381,26 @@ public class PlotStorageUi extends GenericUiLargeChest implements PageNavigation
     }
 
     /**
-     * Baut das UI neu auf und aktualisiert die Anzeige.
+     * Baut das UI neu auf und öffnet es wieder.
+     *
+     * **WICHTIG:** Nutzt buildUi() + build() + open() Pattern!
      */
     private void rebuild(Player player) {
-        // Lösche alle Rows
-        for (int i = 0; i < ROW_COUNT; i++) {
-            getRow(i).clear();
-        }
+        buildUi();  // Rows neu befüllen
+        build();    // Rows → BaseUi Items konvertieren (MIT Click-Handlern!)
+        open(player); // Inventory öffnen/updaten
+    }
 
-        // Baue UI neu auf
-        buildUi();
-
-        // Öffne neu
-        open(player);
+    /**
+     * Öffnet das UI für einen Spieler.
+     *
+     * **WICHTIG:** build() MUSS vor open() aufgerufen werden!
+     */
+    @Override
+    public void open(Player player) {
+        // Beim ersten Öffnen: Build ausführen
+        build();
+        super.open(player);
     }
 
     // ========================================
@@ -404,19 +427,25 @@ public class PlotStorageUi extends GenericUiLargeChest implements PageNavigation
     }
 
     /**
-     * Erstellt ein Material-Item mit Menge.
+     * Erstellt ein Material-Item mit Menge und Index.
+     *
+     * @param material Das Material
+     * @param amount Die Menge
+     * @param index Der Index in der Liste (1-45)
+     * @return Das ItemStack
      */
-    private ItemStack createMaterialItem(Material material, int amount) {
+    private ItemStack createMaterialItem(Material material, int amount, int index) {
         ItemStack item = new ItemStack(material, Math.min(amount, 64));
         ItemMeta meta = item.getItemMeta();
 
-        // Name
+        // Name mit Index
         String materialName = material.name().replace("_", " ").toLowerCase();
         materialName = capitalizeWords(materialName);
 
         meta.displayName(
-                Component.text(materialName)
-                        .color(NamedTextColor.YELLOW)
+                Component.text("#" + index + " ")
+                        .color(NamedTextColor.GRAY)
+                        .append(Component.text(materialName).color(NamedTextColor.YELLOW))
                         .decoration(TextDecoration.ITALIC, false)
         );
 
@@ -431,7 +460,7 @@ public class PlotStorageUi extends GenericUiLargeChest implements PageNavigation
         );
         lore.add(Component.empty());
         lore.add(
-                Component.text("§7Auf diesem Grundstück gelagertes Material")
+                Component.text("§7Klicke für Material-Info")
                         .decoration(TextDecoration.ITALIC, false)
         );
 
@@ -474,7 +503,10 @@ public class PlotStorageUi extends GenericUiLargeChest implements PageNavigation
         public void execute(Player player) {
             player.sendMessage("§e§lMaterial-Info:");
             player.sendMessage("§7Material: §e" + material.name());
-            player.sendMessage("§7Menge: §e" + amount);
+            player.sendMessage("§7Menge: §e" + amount + "x");
+            player.sendMessage("§7");
+            player.sendMessage("§7Dieses Material ist auf dem");
+            player.sendMessage("§7Grundstück in Truhen gelagert");
         }
 
         @Override
