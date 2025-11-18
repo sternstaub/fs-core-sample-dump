@@ -35,6 +35,12 @@ public abstract class SmallChestUi extends BaseUi implements Listener {
     protected static final Map<UUID, SmallChestUi> activeUIs = new HashMap<>();
 
     /**
+     * Das aktuell geöffnete Inventory dieser UI-Instanz.
+     * Wird verwendet um zu prüfen ob Clicks zum richtigen Inventory gehören.
+     */
+    private Inventory currentInventory;
+
+    /**
      * Konstruktor für SmallChestUi.
      *
      * @param title Titel des Chest-UI
@@ -76,6 +82,9 @@ public abstract class SmallChestUi extends BaseUi implements Listener {
                 inventory.setItem(entry.getKey(), entry.getValue());
             }
         }
+
+        // Speichere das Inventory für diese UI-Instanz
+        this.currentInventory = inventory;
 
         // UI für Spieler speichern
         activeUIs.put(player.getUniqueId(), this);
@@ -128,21 +137,20 @@ public abstract class SmallChestUi extends BaseUi implements Listener {
             return;
         }
 
-        SmallChestUi ui = activeUIs.get(player.getUniqueId());
-        if (ui == null) {
-            return;  // Kein aktives UI für diesen Spieler
+        // WICHTIG: Prüfe ob der Click zum Inventory DIESER UI-Instanz gehört!
+        // Problem: Mehrere UI-Instanzen haben Event-Handler registriert.
+        // Lösung: Nur reagieren wenn event.getInventory() == this.currentInventory
+        if (event.getInventory() != this.currentInventory) {
+            return;  // Nicht mein Inventory - ignorieren!
         }
 
-        // IMMER canceln - verhindert Item-Bewegung in ALLEN Fällen
-        // Auch wenn ui != this, canceln wir trotzdem (verhindert Race Conditions)
+        // IMMER canceln - verhindert Item-Bewegung
         event.setCancelled(true);
 
-        // Nur Click-Handler für DIESES UI ausführen (wenn es das aktive ist)
-        if (ui == this) {
-            int slot = event.getRawSlot();
-            if (slot >= 0 && slot < SIZE) {
-                handleClick(player, slot);
-            }
+        // Click-Handler ausführen
+        int slot = event.getRawSlot();
+        if (slot >= 0 && slot < SIZE) {
+            handleClick(player, slot);
         }
         // Clicks außerhalb des UI-Inventars (z.B. Spieler-Inventar) werden auch gecancelt!
     }
@@ -152,14 +160,19 @@ public abstract class SmallChestUi extends BaseUi implements Listener {
      */
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
-        if (event.getPlayer() instanceof Player player) {
-            SmallChestUi ui = activeUIs.get(player.getUniqueId());
-            if (ui == this) {
-                activeUIs.remove(player.getUniqueId());
+        // Nur reagieren wenn es MEIN Inventory ist
+        if (event.getInventory() != this.currentInventory) {
+            return;
+        }
 
-                // Event-Listener unregistrieren, um Memory-Leaks zu vermeiden
-                org.bukkit.event.HandlerList.unregisterAll(this);
-            }
+        if (event.getPlayer() instanceof Player player) {
+            activeUIs.remove(player.getUniqueId());
+
+            // Inventory-Referenz löschen (Memory-Leak vermeiden)
+            this.currentInventory = null;
+
+            // Event-Listener unregistrieren, um Memory-Leaks zu vermeiden
+            org.bukkit.event.HandlerList.unregisterAll(this);
         }
     }
 

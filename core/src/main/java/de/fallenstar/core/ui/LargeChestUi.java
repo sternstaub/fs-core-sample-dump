@@ -34,6 +34,12 @@ public abstract class LargeChestUi extends BaseUi implements Listener {
     protected static final Map<UUID, LargeChestUi> activeUIs = new HashMap<>();
 
     /**
+     * Das aktuell geöffnete Inventory dieser UI-Instanz.
+     * Wird verwendet um zu prüfen ob Clicks zum richtigen Inventory gehören.
+     */
+    private Inventory currentInventory;
+
+    /**
      * Konstruktor für LargeChestUi.
      *
      * @param title Titel des Chest-UI
@@ -86,6 +92,9 @@ public abstract class LargeChestUi extends BaseUi implements Listener {
             }
         }
 
+        // Speichere das Inventory für diese UI-Instanz
+        this.currentInventory = inventory;
+
         // UI für Spieler speichern
         activeUIs.put(player.getUniqueId(), this);
 
@@ -114,33 +123,29 @@ public abstract class LargeChestUi extends BaseUi implements Listener {
             return;
         }
 
-        LargeChestUi ui = activeUIs.get(player.getUniqueId());
+        // WICHTIG: Prüfe ob der Click zum Inventory DIESER UI-Instanz gehört!
+        // Problem: Mehrere UI-Instanzen haben Event-Handler registriert.
+        // Lösung: Nur reagieren wenn event.getInventory() == this.currentInventory
+        if (event.getInventory() != this.currentInventory) {
+            return;  // Nicht mein Inventory - ignorieren!
+        }
 
         // DEBUG
         if (getPlugin() != null) {
-            getPlugin().getLogger().info("[DEBUG] onInventoryClick() aufgerufen!");
+            getPlugin().getLogger().info("[DEBUG] onInventoryClick() FÜR KORREKTES INVENTORY!");
             getPlugin().getLogger().info("[DEBUG] this.getClass(): " + this.getClass().getSimpleName());
-            getPlugin().getLogger().info("[DEBUG] ui: " + (ui != null ? ui.getClass().getSimpleName() : "null"));
-            getPlugin().getLogger().info("[DEBUG] ui == this: " + (ui == this));
         }
 
-        if (ui == null) {
-            return;  // Kein aktives UI für diesen Spieler
-        }
-
-        // IMMER canceln - verhindert Item-Bewegung in ALLEN Fällen
-        // Auch wenn ui != this, canceln wir trotzdem (verhindert Race Conditions)
+        // IMMER canceln - verhindert Item-Bewegung
         event.setCancelled(true);
 
-        // Nur Click-Handler für DIESES UI ausführen (wenn es das aktive ist)
-        if (ui == this) {
-            int slot = event.getRawSlot();
-            if (slot >= 0 && slot < SIZE) {
-                if (getPlugin() != null) {
-                    getPlugin().getLogger().info("[DEBUG] handleClick() für Slot " + slot);
-                }
-                handleClick(player, slot);
+        // Click-Handler ausführen
+        int slot = event.getRawSlot();
+        if (slot >= 0 && slot < SIZE) {
+            if (getPlugin() != null) {
+                getPlugin().getLogger().info("[DEBUG] handleClick() für Slot " + slot);
             }
+            handleClick(player, slot);
         }
         // Clicks außerhalb des UI-Inventars (z.B. Spieler-Inventar) werden auch gecancelt!
     }
@@ -150,14 +155,19 @@ public abstract class LargeChestUi extends BaseUi implements Listener {
      */
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
-        if (event.getPlayer() instanceof Player player) {
-            LargeChestUi ui = activeUIs.get(player.getUniqueId());
-            if (ui == this) {
-                activeUIs.remove(player.getUniqueId());
+        // Nur reagieren wenn es MEIN Inventory ist
+        if (event.getInventory() != this.currentInventory) {
+            return;
+        }
 
-                // Event-Listener unregistrieren, um Memory-Leaks zu vermeiden
-                org.bukkit.event.HandlerList.unregisterAll(this);
-            }
+        if (event.getPlayer() instanceof Player player) {
+            activeUIs.remove(player.getUniqueId());
+
+            // Inventory-Referenz löschen (Memory-Leak vermeiden)
+            this.currentInventory = null;
+
+            // Event-Listener unregistrieren, um Memory-Leaks zu vermeiden
+            org.bukkit.event.HandlerList.unregisterAll(this);
         }
     }
 
