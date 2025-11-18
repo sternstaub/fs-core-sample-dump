@@ -112,9 +112,10 @@ A **modular Minecraft plugin system** for Paper 1.21.1 with provider-based archi
 
 - **Version:** 1.0-SNAPSHOT
 - **Phase:** Aktive Entwicklung
-- **Completion:** ~50% (Core ✅ (mit UI-Funktionalität) + Plots ✅ + Items ✅ + Economy ✅)
-- **Aktueller Sprint:** Sprint 11-12 🔨 IN ARBEIT (Trading-System, PlotRegistry, Händler-Inventar, NPC-Reisesystem)
-- **Nächster Sprint:** Sprint 13-14 - NPCs (Citizens-Integration, NPC-Typen)
+- **Completion:** ~55% (Core ✅ (mit UI-Funktionalität) + Plots ✅ + Items ✅ + Economy ✅ + NPC-GUI ✅)
+- **Aktueller Sprint:** Sprint 11-12 🔨 IN ARBEIT (Trading-System, PlotRegistry, Händler-Inventar, NPC-Verwaltungs-GUI ✅)
+- **Nächster Sprint:** Sprint 13-14 - NPCs (Citizens-Integration, NPC-Typen, NPC-Funktionen)
+- **NPC-System:** ✅ Plot-gebundene NPCs mit Owner/Spieler-Ansichten, Virtuelle Verwaltung über GUI
 - **Wichtige Architektur:** Provider-Implementierungen in Modulen, Core nur Interfaces!
 - **Planung:** 20 Sprints (40 Wochen) mit Items, UI, Economy, Chat, Auth, WebHooks
 - **Storage-Modul:** ✅ Entfernt (redundant, in Plots integriert)
@@ -3173,6 +3174,107 @@ custom-names:
   plot-uuid-456: "Zentral-Markt"
 ```
 
+#### 10. NPC-Verwaltungs-GUI (Plots-Modul)
+
+**Virtuelle NPC-Verwaltung über Plot-GUI:**
+
+```java
+package de.fallenstar.plot.ui;
+
+/**
+ * NPC-Verwaltungs-UI mit Owner/Spieler-Ansichten.
+ *
+ * **WICHTIG: NPCs sind IMMER plot-gebunden!**
+ * - Jeder NPC gehört zu einem Plot
+ * - Jeder Plot hat ein NPC-Verwaltungsmenü
+ * - Virtuelles Management (alle Funktionen über GUI)
+ * - Bidirektionale Type-Safety (Action ↔ UI-Element)
+ *
+ * **Zwei Ansichten:**
+ * 1. Owner-View (NpcManagementUi):
+ *    - Zeigt alle NPCs auf dem Plot
+ *    - Spawnen neuer NPCs (alle Typen)
+ *    - Vollständige Plot-NPC-Verwaltung
+ *
+ * 2. Spieler-View (PlayerNpcManagementUi):
+ *    - Zeigt nur eigene NPCs
+ *    - NPC-Slot kaufen (500 Sterne)
+ *    - Eigene Händler-Inventare verwalten
+ */
+public class NpcManagementUi extends GenericUiLargeChest {
+    // Owner sieht alle NPCs, kann alle Typen spawnen
+}
+
+public class PlayerNpcManagementUi extends GenericUiLargeChest {
+    // Spieler sieht nur eigene NPCs, kann Slots kaufen
+}
+```
+
+**ManageNpcsAction (automatische Ansichtswahl):**
+
+```java
+public final class ManageNpcsAction implements UiAction {
+    private final Plot plot;
+    private final ProviderRegistry providers;
+
+    @Override
+    public void execute(Player player) {
+        player.closeInventory();
+
+        // Prüfe ob Spieler Owner ist
+        boolean isOwner = isPlotOwner(player);
+
+        if (isOwner) {
+            // Owner-Ansicht: Alle NPCs auf dem Plot
+            NpcManagementUi ownerUi = new NpcManagementUi(plot);
+            ownerUi.open(player);
+        } else {
+            // Spieler-Ansicht: Nur eigene NPCs
+            PlayerNpcManagementUi playerUi = new PlayerNpcManagementUi(plot, player);
+            playerUi.open(player);
+        }
+    }
+}
+```
+
+**Integration in HandelsgildeUi:**
+
+```java
+// Owner-View Button
+addFunctionButton(
+    Material.VILLAGER_SPAWN_EGG,
+    "§6§lNPCs verwalten",
+    List.of(
+        "§7Verwalte Gildenhändler und",
+        "§7Spielerhändler auf diesem Plot",
+        "§7",
+        "§a§lKlicke zum Öffnen"
+    ),
+    new ManageNpcsAction(plot, providers)  // Type-Safe!
+);
+```
+
+**Features:**
+- ✅ **Plot-Bindung**: Jeder NPC ist einem Plot zugeordnet
+- ✅ **Owner-Check**: Automatische Ansichtswahl (Owner/Spieler)
+- ✅ **Type-Safety**: Compiler erzwingt ProviderRegistry-Parameter
+- ✅ **Pagination**: Unterstützung für viele NPCs (36 pro Seite)
+- ✅ **Bidirektionale UI**: Jede NPC-Funktion hat UI-Element, jedes UI-Element hat Action
+- ✅ **Graceful Degradation**: Funktioniert ohne Citizens (Placeholders)
+
+**NPC-Actions:**
+- `SpawnNpcAction` - Spawnt NPC (öffnet Spawn-Menü)
+- `BuyNpcSlotAction` - Kauft Spielerhändler-Slot (500 Sterne)
+- `ConfigureNpcAction` - Konfiguriert NPC (zukünftig)
+- `ConfigurePlayerNpcAction` - Konfiguriert eigenen NPC (zukünftig)
+
+**Geplant für Sprint 13-14:**
+- Citizens-Integration (echte NPC-Entities)
+- NPC-Spawn-Menü mit Typ-Auswahl
+- NPC-Konfigurations-UIs (Inventar, Preise, Skins)
+- Slot-System-Integration
+- NPC-Reisesystem-Integration
+
 ### Zusammenfassung Sprint 11-12
 
 **Implementierte Features:**
@@ -3185,6 +3287,7 @@ custom-names:
 7. ✅ NPC-Reisesystem (Verzögerung, Kosten, Restart-Handling)
 8. ✅ NPC-Skin-Pool (Zufällige Skins)
 9. ✅ Plot-Namen-Feature (Owner GUI + Listen)
+10. ✅ NPC-Verwaltungs-GUI (Owner/Spieler-Ansichten, Plot-gebundene NPCs)
 
 **Architektur-Highlights:**
 - **Provider-Pattern**: TradingEntity als Core-Interface
