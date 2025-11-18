@@ -78,6 +78,9 @@ public class TradeguildPlot extends BasePlot implements
     // QuestDistributor-Daten
     private final List<DistributableQuest> quests = Collections.synchronizedList(new ArrayList<>());
 
+    // Dependencies (Injected)
+    private de.fallenstar.plot.manager.PlotNameManager plotNameManager;
+
     /**
      * Erstellt einen TradeguildPlot.
      *
@@ -88,6 +91,15 @@ public class TradeguildPlot extends BasePlot implements
      */
     public TradeguildPlot(UUID uuid, String identifier, Location location, Object nativePlot) {
         super(uuid, identifier, location, nativePlot);
+    }
+
+    /**
+     * Setzt den PlotNameManager (Dependency Injection).
+     *
+     * @param plotNameManager PlotNameManager-Instanz
+     */
+    public void setPlotNameManager(de.fallenstar.plot.manager.PlotNameManager plotNameManager) {
+        this.plotNameManager = plotNameManager;
     }
 
     // ========== NamedPlot Implementation ==========
@@ -387,32 +399,20 @@ public class TradeguildPlot extends BasePlot implements
                 yield true;
             }
             case "set_name" -> {
-                // Öffne Namen-Eingabe via TextInputUI
-                try {
-                    // Hole PlotModule und PlotNameManager
-                    var plotsPlugin = org.bukkit.Bukkit.getPluginManager().getPlugin("FallenStar-Plots");
-                    if (plotsPlugin == null) {
-                        player.sendMessage("§cPlots-Plugin nicht gefunden!");
-                        yield false;
-                    }
-
-                    var getPlotNameManager = plotsPlugin.getClass().getMethod("getPlotNameManager");
-                    var plotNameManager = (de.fallenstar.plot.manager.PlotNameManager) getPlotNameManager.invoke(plotsPlugin);
-
-                    // Öffne Namen-Eingabe
-                    de.fallenstar.plot.ui.PlotNameInputUi.openNameInput(
-                        player,
-                        this,
-                        plotNameManager,
-                        name -> player.sendMessage("§a✓ Plot-Name gesetzt: §e" + name)
-                    );
-                    yield true;
-
-                } catch (Exception e) {
-                    player.sendMessage("§cFehler beim Öffnen der Namen-Eingabe!");
-                    e.printStackTrace();
+                // Öffne Namen-Eingabe via TextInputUI (Type-Safe via Dependency Injection!)
+                if (plotNameManager == null) {
+                    player.sendMessage("§cPlotNameManager nicht verfügbar!");
                     yield false;
                 }
+
+                // Öffne Namen-Eingabe
+                de.fallenstar.plot.ui.PlotNameInputUi.openNameInput(
+                    player,
+                    this,
+                    plotNameManager,
+                    name -> player.sendMessage("§a✓ Plot-Name gesetzt: §e" + name)
+                );
+                yield true;
             }
             default -> false;
         };

@@ -842,6 +842,13 @@ public class PlotModule extends JavaPlugin implements Listener {
     private void initializeTradeguildPlotFactory() {
         de.fallenstar.core.database.DataStore dataStore = corePlugin.getDataStore();
         this.tradeguildPlotFactory = new de.fallenstar.plot.factory.TradeguildPlotFactory(getLogger(), dataStore);
+
+        // Injiziere PlotNameManager (Dependency Injection)
+        if (plotNameManager != null) {
+            tradeguildPlotFactory.setPlotNameManager(plotNameManager);
+            getLogger().info("✓ PlotNameManager in TradeguildPlotFactory injiziert");
+        }
+
         getLogger().info("✓ TradeguildPlotFactory initialized with DataStore");
     }
 

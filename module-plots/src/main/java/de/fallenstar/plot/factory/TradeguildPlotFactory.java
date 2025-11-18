@@ -60,6 +60,7 @@ public class TradeguildPlotFactory {
     private final Logger logger;
     private final DataStore dataStore;
     private final Map<UUID, TradeguildPlot> plotCache = new ConcurrentHashMap<>();
+    private de.fallenstar.plot.manager.PlotNameManager plotNameManager;
 
     /**
      * Erstellt eine TradeguildPlotFactory.
@@ -70,6 +71,16 @@ public class TradeguildPlotFactory {
     public TradeguildPlotFactory(Logger logger, DataStore dataStore) {
         this.logger = logger;
         this.dataStore = dataStore;
+    }
+
+    /**
+     * Setzt den PlotNameManager (Dependency Injection).
+     *
+     * @param plotNameManager PlotNameManager-Instanz
+     */
+    public void setPlotNameManager(de.fallenstar.plot.manager.PlotNameManager plotNameManager) {
+        this.plotNameManager = plotNameManager;
+        logger.info("PlotNameManager gesetzt für TradeguildPlotFactory");
     }
 
     /**
@@ -97,6 +108,11 @@ public class TradeguildPlotFactory {
             basePlot.getLocation(),
             basePlot.getNativePlot()
         );
+
+        // Injiziere Dependencies
+        if (plotNameManager != null) {
+            tradePlot.setPlotNameManager(plotNameManager);
+        }
 
         // Versuche Daten zu laden (synchron für Lazy Loading)
         boolean loaded = loadPlotDataSync(tradePlot);

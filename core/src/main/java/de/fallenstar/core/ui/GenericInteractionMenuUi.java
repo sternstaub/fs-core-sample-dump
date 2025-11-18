@@ -83,7 +83,7 @@ public class GenericInteractionMenuUi extends SmallChestUi {
 
             ItemStack button = createActionButton(action);
             setItem(slot, button);
-            slotToActionId.put(slot, action.getActionId());
+            slotToActionId.put(slot, action.id());
 
             slot++;
         }
@@ -106,14 +106,24 @@ public class GenericInteractionMenuUi extends SmallChestUi {
      * @return ItemStack-Button
      */
     private ItemStack createActionButton(UiActionInfo action) {
-        ItemStack button = new ItemStack(action.getIcon());
+        // Icon kann Material oder ItemStack sein
+        ItemStack button;
+        if (action.hasIconMaterial()) {
+            button = new ItemStack(action.getIconMaterial());
+        } else if (action.hasIconItemStack()) {
+            button = action.getIconItemStack().clone();
+        } else {
+            button = new ItemStack(Material.BARRIER); // Fallback
+        }
+
         ItemMeta meta = button.getItemMeta();
 
         if (meta != null) {
-            meta.setDisplayName(action.getDisplayName());
+            meta.setDisplayName(action.displayName());
 
-            if (action.getDescription() != null && !action.getDescription().isEmpty()) {
-                meta.setLore(List.of("§7" + action.getDescription()));
+            // Lore ist bereits eine Liste
+            if (action.lore() != null && !action.lore().isEmpty()) {
+                meta.setLore(action.lore());
             }
 
             button.setItemMeta(meta);
@@ -122,7 +132,6 @@ public class GenericInteractionMenuUi extends SmallChestUi {
         return button;
     }
 
-    @Override
     protected void handleClick(InventoryClickEvent event, Player player) {
         event.setCancelled(true); // Verhindere Item-Manipulation
 
