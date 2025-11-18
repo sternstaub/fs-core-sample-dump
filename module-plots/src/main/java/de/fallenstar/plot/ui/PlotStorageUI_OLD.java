@@ -38,7 +38,7 @@ import java.util.Set;
  * @author FallenStar
  * @version 1.0
  */
-public class PlotStorageUI extends LargeChestUI {
+class PlotStorageUI extends LargeChestUI {
 
     private final Plot plot;
     private final PlotStorage plotStorage;

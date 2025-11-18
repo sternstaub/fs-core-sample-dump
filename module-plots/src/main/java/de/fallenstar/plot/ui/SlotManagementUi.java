@@ -184,7 +184,7 @@ public class SlotManagementUi extends GenericUiLargeChest {
         lore.add("");
 
         if (slot.isOccupied()) {
-            lore.add("§7Händler: §e" + slot.getAssignedNPC().orElse("Unbekannt"));
+            lore.add("§7Händler: §e" + slot.getAssignedNPC().map(uuid -> uuid.toString().substring(0, 8)).orElse("Unbekannt"));
             lore.add("");
             lore.add("§c§lKlicke um zu entfernen");
         } else {

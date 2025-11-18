@@ -52,7 +52,7 @@ public final class BuySlotAction implements UiAction {
 
     @Override
     public String getActionName() {
-        return "BuySlot[" + slottedPlot.getIdentifier() + "]";
+        return "BuySlot[" + slottedPlot.getClass().getSimpleName() + "]";
     }
 
     /**

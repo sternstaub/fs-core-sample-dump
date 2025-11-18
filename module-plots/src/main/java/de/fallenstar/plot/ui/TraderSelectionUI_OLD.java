@@ -44,7 +44,7 @@ import java.util.UUID;
  * @author FallenStar
  * @version 1.0
  */
-public class TraderSelectionUI extends LargeChestUI {
+class TraderSelectionUI extends LargeChestUI {
 
     private final PlotModule plotModule;
     private final PlotSlot targetSlot;

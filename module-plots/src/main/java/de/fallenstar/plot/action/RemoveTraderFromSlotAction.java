@@ -51,7 +51,7 @@ public final class RemoveTraderFromSlotAction implements UiAction {
         }
 
         // Zeige Info
-        String npcId = slot.getAssignedNPC().orElse("Unbekannt");
+        String npcId = slot.getAssignedNPC().map(uuid -> uuid.toString().substring(0, 8)).orElse("Unbekannt");
         player.sendMessage("§7Händler: §e" + npcId);
         player.sendMessage("§7Rechtsklick um zu entfernen (noch nicht implementiert)");
 

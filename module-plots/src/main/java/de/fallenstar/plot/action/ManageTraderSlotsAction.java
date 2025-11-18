@@ -52,7 +52,7 @@ public final class ManageTraderSlotsAction implements UiAction {
 
     @Override
     public String getActionName() {
-        return "ManageTraderSlots[" + slottedPlot.getIdentifier() + "]";
+        return "ManageTraderSlots[" + slottedPlot.getClass().getSimpleName() + "]";
     }
 
     /**

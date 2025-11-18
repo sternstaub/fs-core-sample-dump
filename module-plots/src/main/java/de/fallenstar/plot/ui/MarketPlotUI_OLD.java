@@ -41,7 +41,7 @@ import java.util.List;
  * @author FallenStar
  * @version 1.0
  */
-public class MarketPlotUI extends SmallChestUI {
+class MarketPlotUI extends SmallChestUI {
 
     private final Plugin plugin;
     private final ProviderRegistry providers;
