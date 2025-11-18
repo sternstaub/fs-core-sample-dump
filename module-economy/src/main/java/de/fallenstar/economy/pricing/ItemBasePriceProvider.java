@@ -270,7 +270,9 @@ public class ItemBasePriceProvider {
      * @return Preis (oder Default-Preis wenn nicht definiert)
      */
     public BigDecimal getVanillaPriceOrDefault(Material material) {
-        return getVanillaPrice(material).orElse(defaultVanillaPrice);
+        return getVanillaPrice(material)
+                .map(ItemBasePrice.VanillaItemPrice::getSellPrice)
+                .orElse(defaultVanillaPrice);
     }
 
     /**
@@ -314,7 +316,8 @@ public class ItemBasePriceProvider {
         // TODO: Check for Custom-Item (PDC-based)
         // Für jetzt nur Vanilla-Preise
 
-        return getVanillaPrice(stack.getType());
+        return getVanillaPrice(stack.getType())
+                .map(ItemBasePrice.VanillaItemPrice::getSellPrice);
     }
 
     /**
