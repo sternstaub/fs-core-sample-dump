@@ -164,14 +164,28 @@ public class PlayerTraderNPC implements NPCType, TradingEntity {
     }
 
     @Override
-    public boolean canExecuteTrade(TradeSet trade, Player player) {
+    public boolean canExecuteTrade(Object trade, Player player) {
+        // Cast zu TradeSet (safe in diesem Kontext)
+        if (!(trade instanceof TradeSet)) {
+            return false;
+        }
+
+        TradeSet tradeSet = (TradeSet) trade;
+
         // TODO: Prüfe ob genug Items im virtuellen Inventar
         // Für jetzt: false
         return false;
     }
 
     @Override
-    public boolean executeTrade(TradeSet trade, Player player) {
+    public boolean executeTrade(Object trade, Player player) {
+        // Cast zu TradeSet (safe in diesem Kontext)
+        if (!(trade instanceof TradeSet)) {
+            return false;
+        }
+
+        TradeSet tradeSet = (TradeSet) trade;
+
         // TODO: Führe Trade aus (Inventar-Update)
         // Für jetzt: false
         logger.warning("PlayerTraderNPC.executeTrade() noch nicht vollständig implementiert!");

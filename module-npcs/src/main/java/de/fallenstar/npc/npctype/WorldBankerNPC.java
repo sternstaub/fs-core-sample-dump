@@ -134,7 +134,14 @@ public class WorldBankerNPC implements NPCType, TradingEntity {
     }
 
     @Override
-    public boolean canExecuteTrade(TradeSet trade, Player player) {
+    public boolean canExecuteTrade(Object trade, Player player) {
+        // Cast zu TradeSet (safe in diesem Kontext)
+        if (!(trade instanceof TradeSet)) {
+            return false;
+        }
+
+        TradeSet tradeSet = (TradeSet) trade;
+
         // Weltbankier hat unbegrenzte Resourcen
         // Prüfe nur ob Spieler genug Vault-Guthaben hat (für Auszahlungen)
         EconomyProvider economyProvider = providers.getEconomyProvider();
@@ -149,7 +156,14 @@ public class WorldBankerNPC implements NPCType, TradingEntity {
     }
 
     @Override
-    public boolean executeTrade(TradeSet trade, Player player) {
+    public boolean executeTrade(Object trade, Player player) {
+        // Cast zu TradeSet (safe in diesem Kontext)
+        if (!(trade instanceof TradeSet)) {
+            return false;
+        }
+
+        TradeSet tradeSet = (TradeSet) trade;
+
         // Weltbankier-Trades werden custom gehandhabt
         // Vanilla Merchant Interface nicht ideal für Banking
         // TODO: Implementiere Custom-Banking-UI statt Vanilla Merchant
@@ -185,7 +199,7 @@ public class WorldBankerNPC implements NPCType, TradingEntity {
             BigDecimal vaultAmount = amount.multiply(EXCHANGE_RATE);
 
             // Zahle in Vault ein
-            economyProvider.deposit(player.getUniqueId(), vaultAmount.doubleValue());
+            economyProvider.deposit(player, vaultAmount.doubleValue());
 
             player.sendMessage("§a✓ " + amount + " Sterne eingezahlt → " + vaultAmount + " Guthaben");
             logger.info(player.getName() + " deposited " + amount + " stars");
@@ -216,7 +230,7 @@ public class WorldBankerNPC implements NPCType, TradingEntity {
 
         try {
             // Prüfe Vault-Guthaben
-            double balance = economyProvider.getBalance(player.getUniqueId());
+            double balance = economyProvider.getBalance(player);
 
             if (balance < amount.doubleValue()) {
                 player.sendMessage("§cNicht genug Guthaben! (Verfügbar: " + balance + ")");
@@ -227,7 +241,7 @@ public class WorldBankerNPC implements NPCType, TradingEntity {
             BigDecimal starAmount = amount.multiply(EXCHANGE_RATE);
 
             // Ziehe von Vault ab
-            economyProvider.withdraw(player.getUniqueId(), amount.doubleValue());
+            economyProvider.withdraw(player, amount.doubleValue());
 
             // TODO: Füge Sterne zum Inventar hinzu (via CurrencyManager)
 
@@ -257,7 +271,7 @@ public class WorldBankerNPC implements NPCType, TradingEntity {
         }
 
         try {
-            double balance = economyProvider.getBalance(player.getUniqueId());
+            double balance = economyProvider.getBalance(player);
             String formatted = economyProvider.format(balance);
 
             player.sendMessage("§6Dein Guthaben: §e" + formatted);

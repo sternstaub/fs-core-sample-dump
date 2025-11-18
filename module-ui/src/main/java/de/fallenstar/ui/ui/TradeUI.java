@@ -52,7 +52,9 @@ public class TradeUI {
         }
 
         // Hole TradeSets von der TradingEntity
-        List<TradeSet> tradeSets = trader.getTradeSets();
+        // Safe cast: TradeUI ist im UI-Modul und kennt TradeSet aus Economy-Modul
+        @SuppressWarnings("unchecked")
+        List<TradeSet> tradeSets = (List<TradeSet>) trader.getTradeSets();
 
         if (tradeSets.isEmpty()) {
             player.sendMessage("§cDieser Händler hat derzeit keine Angebote.");
