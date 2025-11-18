@@ -30,6 +30,7 @@ import java.util.UUID;
 public class PlotPriceCommand {
 
     private final ProviderRegistry providers;
+    private final java.util.logging.Logger logger;
 
     /**
      * Spieler die aktuell im Preis-Setzungs-Modus sind.
@@ -52,9 +53,11 @@ public class PlotPriceCommand {
      * Erstellt einen neuen PlotPriceCommand.
      *
      * @param providers ProviderRegistry
+     * @param logger Logger für Debug-Ausgaben
      */
-    public PlotPriceCommand(ProviderRegistry providers) {
+    public PlotPriceCommand(ProviderRegistry providers, java.util.logging.Logger logger) {
         this.providers = providers;
+        this.logger = logger;
         this.activePriceSetMode = new HashMap<>();
         this.activeSessions = new HashMap<>();
         this.playerSessions = new HashMap<>();

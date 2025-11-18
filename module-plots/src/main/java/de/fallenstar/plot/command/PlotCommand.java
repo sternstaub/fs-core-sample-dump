@@ -92,7 +92,7 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
         // Subcommands initialisieren
         this.infoCommand = new PlotInfoCommand(providers, plotTypeRegistry);
         this.npcCommand = new PlotNpcCommand(plugin, providers, plotTypeRegistry);
-        this.priceCommand = new PlotPriceCommand(providers);
+        this.priceCommand = new PlotPriceCommand(providers, plugin.getLogger());
         this.nameCommand = new PlotNameCommand(plugin.getLogger(), plugin, providers, plugin.getPlotNameManager());
 
         // Slot-Command initialisieren (wenn Slot-System aktiviert)
