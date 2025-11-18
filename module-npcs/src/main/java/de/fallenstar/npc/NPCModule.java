@@ -23,13 +23,15 @@ import org.bukkit.plugin.java.JavaPlugin;
  *
  * Funktionen:
  * - Botschafter-NPC (Teleport zu anderen Towns gegen Geld)
- * - Banker-NPC (Geldmünzen auszahlen) - TODO
- * - Event-basierte NPC-Konfiguration
+ * - Gildenhändler-NPC (Plot-basierter Händler)
+ * - Spielerhändler-NPC (Virtueller Händler)
+ * - Weltbankier-NPC (Währungsumtausch)
  *
  * Abhängigkeiten:
  * - Core Plugin (required)
  * - NPCProvider (required)
- * - TownProvider (required für Botschafter)
+ * - TownProvider (optional für Botschafter)
+ * - PlotProvider (optional für Gildenhändler)
  * - EconomyProvider (optional für Kosten)
  *
  * @author FallenStar
@@ -166,16 +168,6 @@ public class NPCModule extends JavaPlugin implements Listener {
             npcSystemEnabled = true;
             getLogger().info("✓ NPCProvider available");
 
-            // TownProvider ist KRITISCH für Botschafter
-            TownProvider townProvider = providers.getTownProvider();
-            if (!townProvider.isAvailable()) {
-                getLogger().severe("TownProvider nicht verfügbar - benötigt für Botschafter-NPC!");
-                return false;
-            }
-
-            townSystemEnabled = true;
-            getLogger().info("✓ TownProvider available");
-
             return true;
 
         } catch (Exception e) {
@@ -188,6 +180,16 @@ public class NPCModule extends JavaPlugin implements Listener {
      * Prüft welche optionalen Features verfügbar sind.
      */
     private void checkOptionalFeatures() {
+        // TownProvider (für Botschafter-NPC) - jetzt OPTIONAL statt kritisch
+        TownProvider townProvider = providers.getTownProvider();
+        if (townProvider != null && townProvider.isAvailable()) {
+            townSystemEnabled = true;
+            getLogger().info("✓ TownProvider enabled (Botschafter-NPC verfügbar)");
+        } else {
+            townSystemEnabled = false;
+            getLogger().info("○ TownProvider not available - Botschafter-NPC deaktiviert");
+        }
+
         // PlotProvider (für Gildenhändler)
         PlotProvider plotProvider = providers.getPlotProvider();
         if (plotProvider != null && plotProvider.isAvailable()) {
@@ -242,17 +244,21 @@ public class NPCModule extends JavaPlugin implements Listener {
      * Registriert alle NPC-Typen.
      */
     private void registerNPCTypes() {
-        // Botschafter-NPC registrieren
-        AmbassadorNPC ambassadorNPC = new AmbassadorNPC(
-            npcManager,
-            providers.getTownProvider(),
-            providers.getEconomyProvider(),
-            economySystemEnabled,
-            getConfig()
-        );
+        // Botschafter-NPC registrieren (nur wenn TownProvider verfügbar)
+        if (townSystemEnabled) {
+            AmbassadorNPC ambassadorNPC = new AmbassadorNPC(
+                npcManager,
+                providers.getTownProvider(),
+                providers.getEconomyProvider(),
+                economySystemEnabled,
+                getConfig()
+            );
 
-        npcManager.registerNPCType("ambassador", ambassadorNPC);
-        getLogger().info("✓ Ambassador NPC registered");
+            npcManager.registerNPCType("ambassador", ambassadorNPC);
+            getLogger().info("✓ Ambassador NPC registered");
+        } else {
+            getLogger().warning("○ Ambassador NPC skipped (TownProvider not available)");
+        }
 
         // Gildenhändler-NPC registrieren (nur wenn PlotProvider verfügbar)
         if (plotSystemEnabled) {

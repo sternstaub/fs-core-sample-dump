@@ -26,6 +26,14 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!-- Economy Module (für TradeSet) -->
+        <dependency>
+            <groupId>de.fallenstar</groupId>
+            <artifactId>module-economy</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- Paper API -->
         <dependency>
             <groupId>io.papermc.paper</groupId>

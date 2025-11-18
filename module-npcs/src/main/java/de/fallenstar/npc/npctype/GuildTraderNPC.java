@@ -158,20 +158,29 @@ public class GuildTraderNPC implements NPCType, TradingEntity {
      * @return Liste von TradeSets
      */
     public List<Object> getTradeSets(UUID npcId) {
+        logger.info("=== getTradeSets called for NPC " + npcId + " ===");
+
         // Cache prüfen
         if (tradeSetCache.containsKey(npcId)) {
-            return tradeSetCache.get(npcId);
+            List<Object> cached = tradeSetCache.get(npcId);
+            logger.info("Returning " + cached.size() + " cached TradeSets");
+            return cached;
         }
 
         // Hole Plot
         Plot plot = npcPlotMap.get(npcId);
         if (plot == null) {
             logger.warning("GuildTrader " + npcId + " has no plot - cannot generate TradeSets");
+            logger.warning("npcPlotMap contents: " + npcPlotMap.keySet());
             return Collections.emptyList();
         }
 
+        logger.info("Found plot for NPC: " + plot.getUuid());
+
         // Generiere TradeSets aus Plot-Storage
-        List<Object> tradeSets = generateTradeSetsFromPlotStorage(plot);
+        List<Object> tradeSets = generateTradeSetsFromPlotStorage(plot, npcId);
+
+        logger.info("Generated " + tradeSets.size() + " TradeSets");
 
         // Cache TradeSets
         tradeSetCache.put(npcId, tradeSets);
@@ -194,29 +203,43 @@ public class GuildTraderNPC implements NPCType, TradingEntity {
     public Optional<List<ItemStack>> getPlotStorageInventory(UUID npcId) {
         Plot plot = npcPlotMap.get(npcId);
         if (plot == null) {
+            logger.warning("getPlotStorageInventory: No plot found for NPC " + npcId);
             return Optional.empty();
         }
+
+        logger.info("getPlotStorageInventory: Found plot " + plot.getUuid());
 
         // Hole Items aus Plot-Storage via Reflection
         try {
             var plotsPlugin = Bukkit.getPluginManager().getPlugin("FallenStar-Plots");
             if (plotsPlugin == null) {
+                logger.warning("getPlotStorageInventory: Plots plugin not found!");
                 return Optional.empty();
             }
 
-            // Reflection: hole PlotStorageProvider
-            var getStorageProvider = plotsPlugin.getClass().getMethod("getPlotStorageProvider");
-            var storageProvider = getStorageProvider.invoke(plotsPlugin);
+            // Reflection: hole PlotStorageProvider (KORRIGIERT: getStorageProvider statt getPlotStorageProvider)
+            var getStorageProviderMethod = plotsPlugin.getClass().getMethod("getStorageProvider");
+            var storageProvider = getStorageProviderMethod.invoke(plotsPlugin);
+
+            if (storageProvider == null) {
+                logger.warning("getPlotStorageInventory: StorageProvider is null!");
+                return Optional.empty();
+            }
+
+            logger.info("getPlotStorageInventory: Got StorageProvider");
 
             // Hole Output-Chest-Contents
-            var getOutputContents = storageProvider.getClass().getMethod("getOutputChestContents", Plot.class);
+            var getOutputContentsMethod = storageProvider.getClass().getMethod("getOutputChestContents", Plot.class);
             @SuppressWarnings("unchecked")
-            List<ItemStack> items = (List<ItemStack>) getOutputContents.invoke(storageProvider, plot);
+            List<ItemStack> items = (List<ItemStack>) getOutputContentsMethod.invoke(storageProvider, plot);
 
-            return Optional.of(items);
+            logger.info("getPlotStorageInventory: Got " + (items != null ? items.size() : "null") + " items");
+
+            return Optional.ofNullable(items);
 
         } catch (Exception e) {
             logger.warning("Failed to get plot storage inventory: " + e.getMessage());
+            e.printStackTrace();
             return Optional.empty();
         }
     }
@@ -368,25 +391,25 @@ public class GuildTraderNPC implements NPCType, TradingEntity {
     /**
      * Öffnet das Trading-UI für einen Spieler mit einer NPC-spezifischen Instanz.
      *
-     * Nutzt das TradeUI aus dem UI-Modul (Reflection-basiert).
-     * Falls UI-Modul nicht verfügbar → Fallback zu einfacher Chat-Liste.
+     * Nutzt das TradeUI aus dem Core-Modul (Reflection-basiert).
+     * Falls Core nicht verfügbar → Fallback zu einfacher Chat-Liste.
      *
      * @param player Der Spieler
      * @param traderInstance Die NPC-spezifische TradingEntity-Instanz
      */
     private void openTradeUIForInstance(Player player, GuildTraderInstance traderInstance) {
         try {
-            // Prüfe ob UI-Modul geladen ist
-            var uiPlugin = Bukkit.getPluginManager().getPlugin("FallenStar-UI");
-            if (uiPlugin == null) {
+            // Prüfe ob Core-Plugin geladen ist
+            var corePlugin = Bukkit.getPluginManager().getPlugin("FallenStar-Core");
+            if (corePlugin == null) {
                 // Fallback: Zeige einfache Nachricht
-                player.sendMessage("§eUI-Modul nicht geladen - Trading UI nicht verfügbar");
+                player.sendMessage("§eCore-Plugin nicht geladen - Trading UI nicht verfügbar");
                 showSimpleTradeList(player, traderInstance.getNpcId());
                 return;
             }
 
             // Reflection: Hole TradeUI-Klasse
-            Class<?> tradeUIClass = Class.forName("de.fallenstar.ui.ui.TradeUI");
+            Class<?> tradeUIClass = Class.forName("de.fallenstar.core.ui.TradeUI");
 
             // Reflection: Hole openTradeUI(Player, TradingEntity) Methode
             var openMethod = tradeUIClass.getMethod("openTradeUI", Player.class,
@@ -400,13 +423,13 @@ public class GuildTraderNPC implements NPCType, TradingEntity {
 
         } catch (ClassNotFoundException e) {
             // TradeUI-Klasse nicht gefunden → Fallback
-            logger.warning("TradeUI class not found - UI module may not be loaded");
+            logger.warning("TradeUI class not found - Core module may not be loaded correctly");
             player.sendMessage("§eTrading-UI nicht verfügbar");
             showSimpleTradeList(player, traderInstance.getNpcId());
 
         } catch (NoSuchMethodException e) {
             // openTradeUI Methode nicht gefunden → API-Änderung?
-            logger.warning("TradeUI.openTradeUI() method not found - API may have changed");
+            logger.warning("TradeUI.openTradeUI() method not found - Core API may have changed");
             player.sendMessage("§cFehler: Trading-UI API inkompatibel!");
             showSimpleTradeList(player, traderInstance.getNpcId());
 
@@ -446,51 +469,72 @@ public class GuildTraderNPC implements NPCType, TradingEntity {
      *
      * Ablauf:
      * 1. Hole alle Items aus Output-Chests
-     * 2. Für jedes Item: Preis aus ItemBasePriceProvider laden
+     * 2. Für jedes Item: Preis aus PlotPriceManager laden (plot-basiert!)
      * 3. Erstelle TradeSet (Item + Münzen)
      *
      * @param plot Das Grundstück
+     * @param npcId Die NPC-ID
      * @return Liste von TradeSets
      */
-    private List<Object> generateTradeSetsFromPlotStorage(Plot plot) {
+    private List<Object> generateTradeSetsFromPlotStorage(Plot plot, UUID npcId) {
         List<Object> tradeSets = new ArrayList<>();
 
         try {
-            // Hole Items aus Plot-Storage
-            Optional<List<ItemStack>> storageItems = getPlotStorageInventory(
-                npcPlotMap.entrySet().stream()
-                    .filter(e -> e.getValue().equals(plot))
-                    .map(Map.Entry::getKey)
-                    .findFirst()
-                    .orElse(null)
-            );
+            logger.info("=== Generating TradeSets for plot " + plot.getUuid() + " ===");
 
-            if (storageItems.isEmpty() || storageItems.get().isEmpty()) {
-                logger.fine("No items in plot storage for plot " + plot.getUuid());
+            // Hole Items aus Plot-Storage
+            Optional<List<ItemStack>> storageItems = getPlotStorageInventory(npcId);
+
+            if (storageItems.isEmpty()) {
+                logger.warning("getPlotStorageInventory returned empty Optional");
                 return tradeSets;
             }
 
-            // Hole ItemBasePriceProvider via Reflection
+            List<ItemStack> items = storageItems.get();
+            if (items.isEmpty()) {
+                logger.info("No items in plot storage for plot " + plot.getUuid());
+                return tradeSets;
+            }
+
+            logger.info("Found " + items.size() + " items in plot storage");
+
+            // Hole PlotPriceManager via Reflection (Plots-Modul)
+            var plotsPlugin = Bukkit.getPluginManager().getPlugin("FallenStar-Plots");
+            if (plotsPlugin == null) {
+                logger.warning("Plots module not loaded - cannot generate prices");
+                return tradeSets;
+            }
+
+            var getPriceManager = plotsPlugin.getClass().getMethod("getPriceManager");
+            var priceManager = getPriceManager.invoke(plotsPlugin);
+
+            if (priceManager == null) {
+                logger.warning("PlotPriceManager not available");
+                return tradeSets;
+            }
+
+            // Hole Economy-Plugin für Münz-Erstellung
             var economyPlugin = Bukkit.getPluginManager().getPlugin("FallenStar-Economy");
             if (economyPlugin == null) {
-                logger.warning("Economy module not loaded - cannot generate prices");
+                logger.warning("Economy module not loaded - cannot create coins");
                 return tradeSets;
             }
 
-            var getPriceProvider = economyPlugin.getClass().getMethod("getPriceProvider");
-            var priceProvider = getPriceProvider.invoke(economyPlugin);
-
             // Für jedes Item: Erstelle TradeSet
-            for (ItemStack item : storageItems.get()) {
+            for (ItemStack item : items) {
                 if (item == null || item.getType() == Material.AIR) {
                     continue;
                 }
 
-                // Hole Preis für Item
-                BigDecimal price = getItemPrice(priceProvider, item);
+                logger.info("Processing item: " + item.getType() + " x" + item.getAmount());
+
+                // Hole Verkaufspreis für Item (plot-basiert!)
+                BigDecimal price = getPlotItemPrice(priceManager, plot, item);
+
+                logger.info("  Price for " + item.getType() + ": " + price);
 
                 if (price.compareTo(BigDecimal.ZERO) <= 0) {
-                    logger.fine("No price for item " + item.getType() + " - skipping");
+                    logger.info("  No price set - skipping");
                     continue;
                 }
 
@@ -540,24 +584,36 @@ public class GuildTraderNPC implements NPCType, TradingEntity {
     }
 
     /**
-     * Holt den Preis für ein Item aus dem ItemBasePriceProvider.
+     * Holt den plot-basierten Verkaufspreis für ein Item aus dem PlotPriceManager.
      *
-     * @param priceProvider ItemBasePriceProvider-Instanz
+     * Der Verkaufspreis ist der Preis, den der Spieler zahlt um das Item vom NPC zu kaufen.
+     *
+     * @param priceManager PlotPriceManager-Instanz
+     * @param plot Das Grundstück
      * @param item Das Item
-     * @return Preis in Basiswährung
+     * @return Verkaufspreis in Basiswährung
      */
-    private BigDecimal getItemPrice(Object priceProvider, ItemStack item) {
+    private BigDecimal getPlotItemPrice(Object priceManager, Plot plot, ItemStack item) {
         try {
             Material material = item.getType();
 
-            // Reflection: hole Preis
-            var getPriceMethod = priceProvider.getClass().getMethod("getVanillaPriceOrDefault", Material.class);
-            BigDecimal price = (BigDecimal) getPriceMethod.invoke(priceProvider, material);
+            logger.info("    getPlotItemPrice: material=" + material + ", plot=" + plot.getUuid());
 
-            return price != null ? price : BigDecimal.ZERO;
+            // Reflection: hole Plot-Interface-Klasse
+            Class<?> plotClass = Class.forName("de.fallenstar.core.provider.Plot");
+
+            // Reflection: getSellPrice(Plot plot, Material material)
+            var getSellPriceMethod = priceManager.getClass().getMethod("getSellPrice", plotClass, Material.class);
+            @SuppressWarnings("unchecked")
+            Optional<BigDecimal> priceOpt = (Optional<BigDecimal>) getSellPriceMethod.invoke(priceManager, plot, material);
+
+            logger.info("    getSellPrice returned: " + priceOpt);
+
+            return priceOpt.orElse(BigDecimal.ZERO);
 
         } catch (Exception e) {
-            logger.fine("Failed to get price for " + item.getType() + ": " + e.getMessage());
+            logger.warning("Failed to get plot price for " + item.getType() + " on plot " + plot.getUuid() + ": " + e.getMessage());
+            e.printStackTrace();
             return BigDecimal.ZERO;
         }
     }

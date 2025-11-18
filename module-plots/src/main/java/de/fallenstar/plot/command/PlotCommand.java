@@ -210,6 +210,7 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
             player.sendMessage("§e/plot storage list §7- Zeigt alle Materialien");
             player.sendMessage("§e/plot storage info <material> §7- Zeigt Material-Details");
             player.sendMessage("§e/plot storage setreceiver §7- Setzt Empfangskiste");
+            player.sendMessage("§e/plot storage scan §7- Scannt Plot-Kisten neu");
             return true;
         }
 
@@ -249,11 +250,77 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
 
+            case "scan" -> {
+                return handleStorageScan(player);
+            }
+
             default -> {
                 player.sendMessage("§cUnbekannter Storage-Subcommand: " + storageSubcmd);
-                player.sendMessage("§7Verfügbare Commands: list, info, setreceiver");
+                player.sendMessage("§7Verfügbare Commands: list, info, setreceiver, scan");
                 return true;
             }
+        }
+    }
+
+    /**
+     * Handhabt /plot storage scan - scannt Plot-Kisten neu.
+     */
+    private boolean handleStorageScan(Player player) {
+        try {
+            // Hole aktuellen Plot
+            var plotProvider = providers.getPlotProvider();
+            var plot = plotProvider.getPlot(player.getLocation());
+
+            if (plot == null) {
+                player.sendMessage("§cDu befindest dich auf keinem Grundstück!");
+                return true;
+            }
+
+            // Prüfe Owner
+            if (!plotProvider.isOwner(plot, player)) {
+                player.sendMessage("§cDu bist nicht der Besitzer dieses Grundstücks!");
+                return true;
+            }
+
+            // Hole ChestScanService
+            var scanService = plugin.getScanService();
+            if (scanService == null) {
+                player.sendMessage("§cChestScanService nicht verfügbar!");
+                return true;
+            }
+
+            player.sendMessage("§e§m----------§r §6§lPlot Storage Scan §e§m----------");
+            player.sendMessage("§7Scanne Kisten auf Plot §e" + plot.getIdentifier() + "§7...");
+            player.sendMessage("");
+
+            // Hole oder erstelle PlotStorage
+            var storageProvider = plugin.getStorageProvider();
+            if (storageProvider == null) {
+                player.sendMessage("§cStorageProvider nicht verfügbar!");
+                return true;
+            }
+
+            var plotStorage = storageProvider.getPlotStorage(plot);
+
+            // Scan durchführen
+            var result = scanService.scanPlotChests(plot, plotStorage);
+
+            player.sendMessage("§a§l✓ Scan abgeschlossen!");
+            player.sendMessage("");
+            player.sendMessage("§7Gefundene Kisten:");
+            player.sendMessage("§7  Input-Kisten: §e" + result.inputChests());
+            player.sendMessage("§7  Output-Kisten: §e" + result.outputChests());
+            player.sendMessage("§7  Receiver-Kisten: §e" + result.receiverChests());
+            player.sendMessage("");
+            player.sendMessage("§7Nutze §e/plot storage list§7 um Materialien anzuzeigen");
+            player.sendMessage("§e§m----------------------------------------");
+
+            return true;
+
+        } catch (Exception e) {
+            player.sendMessage("§cFehler beim Scannen: " + e.getMessage());
+            e.printStackTrace();
+            return true;
         }
     }
 
@@ -321,6 +388,7 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
                     plugin.getStorageProvider(),
                     plugin.getStorageManager(),
                     providers,  // ProviderRegistry für NPC-Verwaltung
+                    plugin,     // PlotModule für NPC-Manager-Zugriff
                     isOwner
             );
 
@@ -353,7 +421,7 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
 
             // Öffne MarketPlotUi (Type-Safe)
             de.fallenstar.plot.ui.MarketPlotUi ui = new de.fallenstar.plot.ui.MarketPlotUi(
-                    plugin,
+                    plugin,     // PlotModule
                     plot,
                     marketPlot,
                     slotManager,
@@ -509,6 +577,7 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
                         completions.add("list");
                         completions.add("info");
                         completions.add("setreceiver");
+                        completions.add("scan");
                     }
                 }
                 case "npc" -> {

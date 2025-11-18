@@ -24,7 +24,7 @@ import java.util.UUID;
 public class PlotNPC {
 
     private final UUID npcId;
-    private final NPCType type;
+    private final PlotNPCType type;
     private final UUID hostPlotId;
     private final UUID sourcePlotId;
     private final Location location;
@@ -44,7 +44,7 @@ public class PlotNPC {
      */
     public PlotNPC(
             UUID npcId,
-            NPCType type,
+            PlotNPCType type,
             UUID hostPlotId,
             UUID sourcePlotId,
             Location location,
@@ -70,7 +70,7 @@ public class PlotNPC {
     /**
      * @return NPC-Typ
      */
-    public NPCType getType() {
+    public PlotNPCType getType() {
         return type;
     }
 

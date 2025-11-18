@@ -1,6 +1,6 @@
 package de.fallenstar.plot.npc.manager;
 
-import de.fallenstar.plot.npc.model.NPCType;
+import de.fallenstar.plot.npc.model.PlotNPCType;
 import de.fallenstar.plot.npc.model.PlotNPC;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -82,7 +82,7 @@ public class NPCManager {
                 ConfigurationSection npcSection = npcsSection.getConfigurationSection(npcIdString);
 
                 // Parse NPC-Daten
-                NPCType type = NPCType.valueOf(npcSection.getString("type"));
+                PlotNPCType type = PlotNPCType.valueOf(npcSection.getString("type"));
                 UUID hostPlotId = UUID.fromString(npcSection.getString("host-plot"));
                 UUID sourcePlotId = UUID.fromString(npcSection.getString("source-plot"));
 
@@ -203,7 +203,7 @@ public class NPCManager {
      * @return Der erstellte NPC
      */
     public PlotNPC createNPC(
-            NPCType type,
+            PlotNPCType type,
             UUID hostPlotId,
             UUID sourcePlotId,
             Location location,
@@ -289,7 +289,7 @@ public class NPCManager {
      * @param type NPC-Typ
      * @return Liste aller NPCs dieses Typs
      */
-    public List<PlotNPC> getNPCsByType(NPCType type) {
+    public List<PlotNPC> getNPCsByType(PlotNPCType type) {
         return npcMap.values().stream()
                 .filter(npc -> npc.getType() == type)
                 .collect(Collectors.toList());

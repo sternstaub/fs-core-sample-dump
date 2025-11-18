@@ -1,0 +1,33 @@
+name: FallenStar-Items
+version: 1.0-SNAPSHOT
+main: de.fallenstar.items.ItemsModule
+api-version: '1.21'
+author: FallenStar
+description: Custom Items Module - MMOItems Integration
+
+# WICHTIG: Core und MMOItems müssen geladen sein
+depend:
+  - FallenStar-Core
+  - MMOItems
+
+# Commands
+commands:
+  fsitems:
+    description: Items Module commands
+    usage: /fsitems <browse|info|currency|reload|help>
+    permission: fallenstar.items.admin
+    aliases: [items, fsi]
+
+# Permissions
+permissions:
+  fallenstar.items.admin:
+    description: Access to items admin commands
+    default: op
+
+  fallenstar.items.currency:
+    description: Create and manage currency items
+    default: op
+
+  fallenstar.items.browse:
+    description: Browse all custom items
+    default: true

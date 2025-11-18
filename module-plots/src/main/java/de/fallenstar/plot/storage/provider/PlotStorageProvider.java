@@ -2,6 +2,7 @@ package de.fallenstar.plot.storage.provider;
 
 import de.fallenstar.core.exception.ProviderFunctionalityNotFoundException;
 import de.fallenstar.core.provider.Plot;
+import de.fallenstar.plot.storage.manager.ChestScanService;
 import de.fallenstar.plot.storage.model.ChestData;
 import de.fallenstar.plot.storage.model.PlotStorage;
 import de.fallenstar.plot.storage.model.StoredMaterial;
@@ -11,6 +12,7 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 
 /**
  * Provider für Plot-basiertes Storage-System.
@@ -28,12 +30,19 @@ import java.util.concurrent.ConcurrentHashMap;
 public class PlotStorageProvider implements de.fallenstar.core.provider.PlotStorageProvider {
 
     private final Map<UUID, PlotStorage> plotStorageMap;
+    private final ChestScanService scanService;
+    private final Logger logger;
 
     /**
      * Erstellt einen neuen PlotStorageProvider.
+     *
+     * @param scanService ChestScanService für Auto-Scans
+     * @param logger Logger für Ausgaben
      */
-    public PlotStorageProvider() {
+    public PlotStorageProvider(ChestScanService scanService, Logger logger) {
         this.plotStorageMap = new ConcurrentHashMap<>();
+        this.scanService = scanService;
+        this.logger = logger;
     }
 
     /**
@@ -195,21 +204,48 @@ public class PlotStorageProvider implements de.fallenstar.core.provider.PlotStor
      *
      * Output-Chests enthalten Items, die zum Verkauf angeboten werden.
      *
+     * **Auto-Scan:**
+     * Wenn noch keine Truhen registriert sind, wird automatisch ein Scan durchgeführt.
+     *
+     * **ChestType-Logik:**
+     * - OUTPUT: Explizit als Verkaufstruhe markiert
+     * - STORAGE: Standard-Truhen (werden auch durchsucht für Verkauf)
+     * - INPUT: Empfangstruhen (werden NICHT durchsucht)
+     *
      * @param plot Das Plot-Objekt
      * @return Liste aller ItemStacks aus allen Output-Chests
      */
     public List<org.bukkit.inventory.ItemStack> getOutputChestContents(Plot plot) {
         PlotStorage storage = plotStorageMap.get(plot.getUuid());
+
+        // Wenn noch kein Storage existiert, erstelle es
         if (storage == null) {
-            return Collections.emptyList();
+            storage = getPlotStorage(plot);
+        }
+
+        // Auto-Scan: Wenn keine Truhen registriert sind, scanne automatisch
+        if (storage.getAllChests().isEmpty() && scanService != null) {
+            logger.info("Auto-Scan: PlotStorage für Plot " + plot.getUuid() + " ist leer - führe Scan durch...");
+            try {
+                scanService.scanPlot(plot, storage);
+                logger.info("Auto-Scan abgeschlossen: " + storage.getAllChests().size() + " Truhen gefunden");
+            } catch (Exception e) {
+                logger.warning("Auto-Scan fehlgeschlagen für Plot " + plot.getUuid() + ": " + e.getMessage());
+            }
         }
 
         List<org.bukkit.inventory.ItemStack> allItems = new ArrayList<>();
 
-        // Hole alle Output-Chests
-        List<ChestData> outputChests = storage.getOutputChests();
+        // Hole alle Truhen die zum Verkauf genutzt werden können
+        // Das sind: OUTPUT (explizit markiert) + STORAGE (Standard beim Scan)
+        // NICHT: INPUT (Empfangstruhen)
+        List<ChestData> sellableChests = storage.getAllChests().stream()
+                .filter(chest -> chest.isOutputChest() || chest.isStorageChest())
+                .toList();
 
-        for (ChestData chestData : outputChests) {
+        logger.fine("getOutputChestContents: Durchsuche " + sellableChests.size() + " Truhen (OUTPUT + STORAGE)");
+
+        for (ChestData chestData : sellableChests) {
             Location chestLocation = chestData.getLocation();
 
             // Prüfe ob Truhe noch vorhanden ist
@@ -225,6 +261,8 @@ public class PlotStorageProvider implements de.fallenstar.core.provider.PlotStor
                 }
             }
         }
+
+        logger.fine("getOutputChestContents: Gefunden " + allItems.size() + " Items");
 
         return allItems;
     }

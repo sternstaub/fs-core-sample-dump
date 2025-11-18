@@ -6,7 +6,7 @@ authors: [FallenStar]
 description: Plot management and NPC spawning system
 
 # Abhängigkeiten
-depend: [FallenStar-Core, Towny, FallenStar-UI]
+depend: [FallenStar-Core, Towny]
 softdepend: [Citizens]
 
 # Commands werden über Towny Command Addon API registriert

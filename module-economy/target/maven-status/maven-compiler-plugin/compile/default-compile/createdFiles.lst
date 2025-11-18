@@ -1,0 +1,17 @@
+de/fallenstar/economy/model/CurrencyItemSet$InventorySlotStack.class
+de/fallenstar/economy/model/CurrencyItemSet$InventoryCoinResult.class
+de/fallenstar/economy/pricing/ItemBasePriceProvider.class
+de/fallenstar/economy/EconomyModule.class
+de/fallenstar/economy/model/CurrencyItemSet$CoinItemChecker.class
+de/fallenstar/economy/command/EconomyAdminHandler.class
+de/fallenstar/economy/model/ItemBasePrice$VanillaItemPrice.class
+de/fallenstar/economy/model/BankAccount.class
+de/fallenstar/economy/manager/BankAccountHandler.class
+de/fallenstar/economy/model/ItemBasePrice.class
+de/fallenstar/economy/provider/VaultEconomyProvider.class
+de/fallenstar/economy/model/ItemBasePrice$CustomItemPrice.class
+de/fallenstar/economy/model/CurrencyItemSet$CurrencyTier.class
+de/fallenstar/economy/manager/CurrencyManager.class
+de/fallenstar/economy/model/TradeSet.class
+de/fallenstar/coin/CoinModule.class
+de/fallenstar/economy/model/CurrencyItemSet.class

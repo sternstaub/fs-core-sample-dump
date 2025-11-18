@@ -11,6 +11,8 @@ import de.fallenstar.core.ui.element.navigation.PageNavigationAction;
 import de.fallenstar.core.ui.row.BasicUiRow;
 import de.fallenstar.core.ui.row.BasicUiRowForContent;
 import de.fallenstar.core.ui.row.BasicUiRowForControl;
+import de.fallenstar.plot.PlotModule;
+import de.fallenstar.plot.action.npc.ConfigureNpcAction;
 import de.fallenstar.plot.action.npc.SpawnNpcAction;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -23,6 +25,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 /**
  * NPC-Verwaltungs-UI für Plot-Besitzer.
@@ -61,6 +64,7 @@ import java.util.Objects;
 public class NpcManagementUi extends GenericUiLargeChest implements PageNavigationAction.PageNavigable {
 
     private final Plot plot;
+    private final PlotModule plotModule;
     private final List<NpcInfo> npcs;  // Alle NPCs auf dem Plot
     private int currentPage;
 
@@ -70,14 +74,70 @@ public class NpcManagementUi extends GenericUiLargeChest implements PageNavigati
      * Konstruktor für NpcManagementUi.
      *
      * @param plot Der Plot dessen NPCs verwaltet werden
+     * @param plotModule Das PlotModule für NPC-Manager-Zugriff
      */
-    public NpcManagementUi(Plot plot) {
+    public NpcManagementUi(Plot plot, PlotModule plotModule) {
         super("§6§lNPC-Verwaltung: " + getPlotName(plot));
         this.plot = Objects.requireNonNull(plot, "Plot darf nicht null sein");
-        this.npcs = new ArrayList<>();  // TODO: Load from NPC registry
+        this.plotModule = Objects.requireNonNull(plotModule, "PlotModule darf nicht null sein");
+        this.npcs = new ArrayList<>();
         this.currentPage = 0;
 
+        // Lade NPCs aus Registry
+        loadNPCsFromRegistry();
+
         initializeRows();
+    }
+
+    /**
+     * Lädt NPCs aus der PlotBoundNPCRegistry.
+     */
+    private void loadNPCsFromRegistry() {
+        var npcRegistry = plotModule.getNPCRegistry();
+        if (npcRegistry == null) {
+            return;
+        }
+
+        // Hole alle NPCs für diesen Plot
+        var registryNpcs = npcRegistry.getNPCsForPlot(plot);
+
+        // Konvertiere Registry-NPCInfo zu UI-NpcInfo
+        for (var registryNpc : registryNpcs) {
+            // Erstelle UI-NpcInfo aus Registry-Daten
+            UUID npcId = registryNpc.npcId();
+            String npcName = generateNpcName(registryNpc.npcType());
+            String npcType = registryNpc.npcType();
+            NpcType uiType = mapNpcType(registryNpc.npcType());
+            String ownerName = "System";  // TODO: Owner-Tracking
+            boolean active = true;  // TODO: Citizens-Check
+
+            npcs.add(new NpcInfo(npcId, npcName, npcType, uiType, ownerName, active));
+        }
+    }
+
+    /**
+     * Generiert NPC-Namen aus Typ.
+     */
+    private String generateNpcName(String npcType) {
+        return switch (npcType.toLowerCase()) {
+            case "guildtrader" -> "Gildenhändler";
+            case "playertrader" -> "Spielerhändler";
+            case "worldbanker" -> "Weltbankier";
+            case "ambassador" -> "Botschafter";
+            default -> "NPC";
+        };
+    }
+
+    /**
+     * Mappt Registry-NPC-Typ zu UI-Enum.
+     */
+    private NpcType mapNpcType(String npcType) {
+        return switch (npcType.toLowerCase()) {
+            case "guildtrader", "playertrader" -> NpcType.TRADER;
+            case "worldbanker" -> NpcType.WORLD_BANKER;
+            case "ambassador" -> NpcType.AMBASSADOR;
+            default -> NpcType.TRADER;
+        };
     }
 
     /**
@@ -115,7 +175,7 @@ public class NpcManagementUi extends GenericUiLargeChest implements PageNavigati
 
         // Slot 4: Spawn-Menü Button
         ItemStack spawnMenuItem = createSpawnMenuButton();
-        SpawnNpcAction spawnAction = new SpawnNpcAction(plot, NpcType.TRADER);  // Öffnet Spawn-Menü
+        SpawnNpcAction spawnAction = new SpawnNpcAction(plot, plotModule);  // Öffnet Spawn-Menü
         controlRow.setElement(4, new ClickableUiElement.CustomButton<>(spawnMenuItem, spawnAction));
 
         // Slot 8: Close-Button
@@ -147,8 +207,15 @@ public class NpcManagementUi extends GenericUiLargeChest implements PageNavigati
 
             BasicUiRowForContent contentRow = (BasicUiRowForContent) getRow(rowIndex);
 
-            // TODO: Erstelle ConfigureNpcAction statt Placeholder
-            contentRow.setElement(position, new StaticUiElement(npcItem));
+            // Erstelle ConfigureNpcAction für NPC-Konfiguration
+            ConfigureNpcAction configAction = new ConfigureNpcAction(
+                    plot,
+                    npc.npcId,
+                    npc.name,
+                    npc.npcType,
+                    plotModule
+            );
+            contentRow.setElement(position, new ClickableUiElement.CustomButton<>(npcItem, configAction));
 
             slot++;
         }
@@ -245,14 +312,14 @@ public class NpcManagementUi extends GenericUiLargeChest implements PageNavigati
      * Erstellt ein NPC-Item.
      */
     private ItemStack createNpcItem(NpcInfo npc) {
-        ItemStack item = new ItemStack(getNpcMaterial(npc.type));
+        ItemStack item = new ItemStack(getNpcMaterial(npc.uiType));
         ItemMeta meta = item.getItemMeta();
 
         meta.displayName(Component.text("§e§l" + npc.name)
                 .decoration(TextDecoration.ITALIC, false));
 
         List<Component> lore = new ArrayList<>();
-        lore.add(Component.text("§7Typ: §e" + getNpcTypeName(npc.type))
+        lore.add(Component.text("§7Typ: §e" + getNpcTypeName(npc.uiType))
                 .decoration(TextDecoration.ITALIC, false));
         lore.add(Component.text("§7Besitzer: §e" + npc.ownerName)
                 .decoration(TextDecoration.ITALIC, false));
@@ -412,12 +479,12 @@ public class NpcManagementUi extends GenericUiLargeChest implements PageNavigati
 
     /**
      * NPC-Info Record für UI-Darstellung.
-     *
-     * TODO: Ersetzen durch echte NPC-Entity-Referenzen
      */
     private record NpcInfo(
+            UUID npcId,
             String name,
-            NpcType type,
+            String npcType,
+            NpcType uiType,
             String ownerName,
             boolean active
     ) {}

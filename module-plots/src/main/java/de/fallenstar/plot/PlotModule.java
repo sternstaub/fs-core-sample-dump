@@ -57,6 +57,8 @@ public class PlotModule extends JavaPlugin implements Listener {
     private PlotSlotManager plotSlotManager;
     private NPCManager npcManager;
     private de.fallenstar.plot.manager.PlotNameManager plotNameManager;
+    private de.fallenstar.plot.manager.PlotPriceManager plotPriceManager;
+    private de.fallenstar.plot.manager.PlotBoundNPCRegistry npcRegistry;
     private de.fallenstar.plot.command.PlotCommand plotCommand;
     private de.fallenstar.plot.registry.PlotRegistry plotRegistry;
 
@@ -123,6 +125,12 @@ public class PlotModule extends JavaPlugin implements Listener {
         if (plotRegistry != null) {
             plotRegistry.saveToConfig(getConfig());
         }
+        if (plotPriceManager != null) {
+            plotPriceManager.saveToConfig(getConfig());
+        }
+        if (npcRegistry != null) {
+            npcRegistry.saveToConfig(getConfig());
+        }
         saveConfig();
         getLogger().fine("Config gespeichert");
     }
@@ -155,6 +163,12 @@ public class PlotModule extends JavaPlugin implements Listener {
 
         // Plot-Registry initialisieren
         initializePlotRegistry();
+
+        // Plot-Preis-Manager initialisieren
+        initializePriceManager();
+
+        // NPC-Registry initialisieren
+        initializeNPCRegistry();
 
         // Storage-System initialisieren (jetzt Teil des Plot-Moduls)
         initializeStorageSystem();
@@ -361,6 +375,40 @@ public class PlotModule extends JavaPlugin implements Listener {
     }
 
     /**
+     * Initialisiert den PlotPriceManager.
+     */
+    private void initializePriceManager() {
+        try {
+            this.plotPriceManager = new de.fallenstar.plot.manager.PlotPriceManager(this, getLogger());
+            this.plotPriceManager.loadFromConfig(getConfig());
+
+            getLogger().info("✓ PlotPriceManager initialisiert");
+            getLogger().info("  Preise für " + plotPriceManager.getPlotCount() + " Plots geladen");
+
+        } catch (Exception e) {
+            getLogger().warning("✗ PlotPriceManager konnte nicht initialisiert werden: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Initialisiert die PlotBoundNPCRegistry.
+     */
+    private void initializeNPCRegistry() {
+        try {
+            this.npcRegistry = new de.fallenstar.plot.manager.PlotBoundNPCRegistry(this, getLogger());
+            this.npcRegistry.loadFromConfig(getConfig());
+
+            getLogger().info("✓ PlotBoundNPCRegistry initialisiert");
+            getLogger().info("  " + npcRegistry.getNPCCount() + " NPCs auf " + npcRegistry.getPlotCount() + " Plots geladen");
+
+        } catch (Exception e) {
+            getLogger().warning("✗ PlotBoundNPCRegistry konnte nicht initialisiert werden: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
      * Initialisiert das Storage-System (integriert im Plot-Modul).
      */
     private void initializeStorageSystem() {
@@ -368,12 +416,18 @@ public class PlotModule extends JavaPlugin implements Listener {
 
         if (plotProvider.isAvailable()) {
             try {
-                // Erstelle Storage-Provider und Manager
-                this.storageProvider = new PlotStorageProvider();
+                // Erstelle ChestScanService zuerst (benötigt von PlotStorageProvider und StorageManager)
+                ChestScanService scanService = new ChestScanService(getLogger(), plotProvider);
+
+                // Erstelle Storage-Provider mit ScanService für Auto-Scans
+                this.storageProvider = new PlotStorageProvider(scanService, getLogger());
+
+                // Erstelle StorageManager mit geteiltem ScanService
                 this.storageManager = new StorageManager(
                     getLogger(),
                     plotProvider,
-                    storageProvider
+                    storageProvider,
+                    scanService
                 );
 
                 // Registriere Storage-Listener
@@ -386,7 +440,7 @@ public class PlotModule extends JavaPlugin implements Listener {
                 getServer().getPluginManager().registerEvents(chestListener, this);
 
                 storageSystemEnabled = true;
-                getLogger().info("✓ Storage-System aktiviert");
+                getLogger().info("✓ Storage-System aktiviert (mit Auto-Scan)");
 
             } catch (Exception e) {
                 storageSystemEnabled = false;
@@ -749,5 +803,23 @@ public class PlotModule extends JavaPlugin implements Listener {
      */
     public de.fallenstar.plot.manager.PlotNameManager getPlotNameManager() {
         return plotNameManager;
+    }
+
+    /**
+     * Gibt den PlotPriceManager zurück.
+     *
+     * @return PlotPriceManager oder null
+     */
+    public de.fallenstar.plot.manager.PlotPriceManager getPriceManager() {
+        return plotPriceManager;
+    }
+
+    /**
+     * Gibt die PlotBoundNPCRegistry zurück.
+     *
+     * @return PlotBoundNPCRegistry oder null
+     */
+    public de.fallenstar.plot.manager.PlotBoundNPCRegistry getNPCRegistry() {
+        return npcRegistry;
     }
 }
