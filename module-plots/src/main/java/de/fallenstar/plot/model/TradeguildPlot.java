@@ -387,9 +387,32 @@ public class TradeguildPlot extends BasePlot implements
                 yield true;
             }
             case "set_name" -> {
-                // TODO: AnvilUi für Namen-Eingabe öffnen
-                player.sendMessage("§dNamen-UI wird implementiert...");
-                yield true;
+                // Öffne Namen-Eingabe via TextInputUI
+                try {
+                    // Hole PlotModule und PlotNameManager
+                    var plotsPlugin = org.bukkit.Bukkit.getPluginManager().getPlugin("FallenStar-Plots");
+                    if (plotsPlugin == null) {
+                        player.sendMessage("§cPlots-Plugin nicht gefunden!");
+                        yield false;
+                    }
+
+                    var getPlotNameManager = plotsPlugin.getClass().getMethod("getPlotNameManager");
+                    var plotNameManager = (de.fallenstar.plot.manager.PlotNameManager) getPlotNameManager.invoke(plotsPlugin);
+
+                    // Öffne Namen-Eingabe
+                    de.fallenstar.plot.ui.PlotNameInputUi.openNameInput(
+                        player,
+                        this,
+                        plotNameManager,
+                        name -> player.sendMessage("§a✓ Plot-Name gesetzt: §e" + name)
+                    );
+                    yield true;
+
+                } catch (Exception e) {
+                    player.sendMessage("§cFehler beim Öffnen der Namen-Eingabe!");
+                    e.printStackTrace();
+                    yield false;
+                }
             }
             default -> false;
         };
