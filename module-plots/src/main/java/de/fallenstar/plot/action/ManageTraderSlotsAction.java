@@ -9,7 +9,7 @@ import java.util.Objects;
 /**
  * Action zum Verwalten von Händler-Slots auf einem Grundstück.
  *
- * Öffnet die SlotManagementUI, die alle verfügbaren Slots zeigt.
+ * Öffnet die SlotManagementUi, die alle verfügbaren Slots zeigt.
  *
  * **Features:**
  * - Slot-Liste mit Status (belegt/frei)

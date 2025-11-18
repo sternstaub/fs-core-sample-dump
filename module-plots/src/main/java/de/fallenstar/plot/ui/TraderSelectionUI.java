@@ -31,7 +31,7 @@ import java.util.UUID;
  * - Kosten + Verzögerung via NPC-Reisesystem
  *
  * **Workflow:**
- * 1. Spieler wählt Slot in SlotManagementUI
+ * 1. Spieler wählt Slot in SlotManagementUi
  * 2. TraderSelectionUI zeigt verfügbare Händler
  * 3. Spieler wählt Händler
  * 4. Kosten berechnen (5 Sterne/Chunk)
@@ -113,7 +113,7 @@ public class TraderSelectionUI extends LargeChestUI {
                 List.of("§7Zurück zur Slot-Verwaltung")
         );
         setItem(0, backButton, player -> {
-            // TODO: Öffne SlotManagementUI
+            // TODO: Öffne SlotManagementUi
             player.closeInventory();
         });
 

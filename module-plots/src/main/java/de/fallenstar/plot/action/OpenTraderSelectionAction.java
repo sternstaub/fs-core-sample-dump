@@ -13,7 +13,7 @@ import java.util.Objects;
  * aus PlotRegistry-Handelsgilden zeigt.
  *
  * **Workflow:**
- * 1. Spieler klickt auf freien Slot in SlotManagementUI
+ * 1. Spieler klickt auf freien Slot in SlotManagementUi
  * 2. TraderSelectionUI öffnet sich
  * 3. Spieler wählt Händler aus Handelsgilde
  * 4. Händler reist zum Slot (NPC-Reisesystem)
