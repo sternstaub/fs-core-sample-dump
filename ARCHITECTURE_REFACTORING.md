@@ -2048,10 +2048,1076 @@ public class MockPlot implements Plot, NamedPlot {
 2. Feedback einarbeiten
 3. Phase 1 starten (Plot-Interface-Refactoring)
 
+---
+
+## 🎨 ERWEITERUNG: UiActionTarget-Pattern
+
+**User-Feedback:** Objekte sollten ihre eigenen UI-Actions bereitstellen!
+
+**Problem:** Aktuell müssen UIs ihre Buttons manuell erstellen → Code-Duplikation
+
+**Lösung:** UiActionTarget-Interface → Objekte kennen ihre eigenen Operations
+
+---
+
+### UiActionTarget-Interface
+
+**Location:** `core/src/main/java/de/fallenstar/core/ui/UiActionTarget.java`
+
+```java
+package de.fallenstar.core.ui;
+
+import de.fallenstar.core.ui.element.UiAction;
+import org.bukkit.entity.Player;
+
+import java.util.List;
+
+/**
+ * Interface für Objekte die UI-Actions bereitstellen können.
+ *
+ * Ermöglicht es Objekten (Plot, NPC, Item, etc.) ihre eigenen
+ * UI-Actions zu definieren. UIs können diese dann abrufen und
+ * automatisch Buttons generieren.
+ *
+ * **Konzept:**
+ * - Objekt kennt seine eigenen Operations
+ * - UI fragt Objekt: "Was kann ich mit dir machen?"
+ * - UI generiert Buttons automatisch
+ *
+ * **Beispiel:**
+ * ```java
+ * Plot plot = ...;
+ * if (plot instanceof UiActionTarget) {
+ *     List<UiActionInfo> actions = ((UiActionTarget) plot)
+ *         .getAvailableUiActions(player, UiContext.MAIN_MENU);
+ *
+ *     // UI generiert Buttons automatisch!
+ *     for (UiActionInfo action : actions) {
+ *         addButton(action.createButton());
+ *     }
+ * }
+ * ```
+ *
+ * @author FallenStar
+ * @version 2.0
+ */
+public interface UiActionTarget {
+
+    /**
+     * Gibt verfügbare UI-Actions für einen Kontext zurück.
+     *
+     * @param player Der Spieler (für Permission-Checks)
+     * @param context UI-Kontext (MAIN_MENU, SUB_MENU, etc.)
+     * @return Liste von UiActionInfo
+     */
+    List<UiActionInfo> getAvailableUiActions(Player player, UiContext context);
+
+    /**
+     * Prüft ob Action verfügbar ist.
+     *
+     * @param player Der Spieler
+     * @param actionId Action-ID
+     * @return true wenn verfügbar
+     */
+    default boolean hasAction(Player player, String actionId) {
+        return getAvailableUiActions(player, UiContext.ANY).stream()
+                .anyMatch(action -> action.id().equals(actionId));
+    }
+}
+```
+
+---
+
+### UiContext-Enum
+
+**Location:** `core/src/main/java/de/fallenstar/core/ui/UiContext.java`
+
+```java
+package de.fallenstar.core.ui;
+
+/**
+ * Kontext für UI-Actions.
+ *
+ * Ermöglicht es, verschiedene Actions für verschiedene
+ * UI-Bereiche bereitzustellen.
+ *
+ * **Lösung für SubMenu-Problem:**
+ * - MAIN_MENU: Haupt-Menü Actions (Storage, NPCs, Preise)
+ * - STORAGE_MENU: Storage-spezifische Actions (Input/Output konfigurieren)
+ * - NPC_MENU: NPC-spezifische Actions (Spawn, Remove, Configure)
+ * - PRICE_MENU: Preis-spezifische Actions (Set Price, List Prices)
+ *
+ * @author FallenStar
+ * @version 2.0
+ */
+public enum UiContext {
+    /**
+     * Passt zu allen Kontexten (für Checks).
+     */
+    ANY,
+
+    /**
+     * Haupt-Menü eines Objekts.
+     */
+    MAIN_MENU,
+
+    /**
+     * Storage-Verwaltungs-Menü.
+     */
+    STORAGE_MENU,
+
+    /**
+     * NPC-Verwaltungs-Menü.
+     */
+    NPC_MENU,
+
+    /**
+     * Preis-Verwaltungs-Menü.
+     */
+    PRICE_MENU,
+
+    /**
+     * Slot-Verwaltungs-Menü.
+     */
+    SLOT_MENU,
+
+    /**
+     * Info/Statistik-Menü.
+     */
+    INFO_MENU,
+
+    /**
+     * Admin-/Eigentümer-Menü.
+     */
+    OWNER_MENU,
+
+    /**
+     * Gast-Menü (eingeschränkte Rechte).
+     */
+    GUEST_MENU;
+
+    /**
+     * Prüft ob dieser Kontext mit einem anderen matcht.
+     *
+     * ANY matcht mit allem.
+     *
+     * @param other Anderer Kontext
+     * @return true wenn Match
+     */
+    public boolean matches(UiContext other) {
+        return this == ANY || other == ANY || this == other;
+    }
+}
+```
+
+---
+
+### UiActionInfo-Record
+
+**Location:** `core/src/main/java/de/fallenstar/core/ui/UiActionInfo.java`
+
+```java
+package de.fallenstar.core.ui;
+
+import de.fallenstar.core.ui.element.ClickableUiElement;
+import de.fallenstar.core.ui.element.UiAction;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
+import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+
+import java.util.List;
+
+/**
+ * Informationen über eine UI-Action.
+ *
+ * Enthält alles was für die Button-Erstellung nötig ist:
+ * - ID (eindeutig)
+ * - Display-Name
+ * - Beschreibung (Lore)
+ * - Icon (Material)
+ * - Action (auszuführende Operation)
+ * - Kontext (wo die Action verfügbar ist)
+ *
+ * @author FallenStar
+ * @version 2.0
+ */
+public record UiActionInfo(
+        String id,
+        String displayName,
+        List<String> description,
+        Material icon,
+        UiAction action,
+        UiContext context,
+        int priority
+) {
+
+    /**
+     * Erstellt einen Button für diese Action.
+     *
+     * @return ClickableUiElement
+     */
+    public ClickableUiElement<UiAction> createButton() {
+        ItemStack item = new ItemStack(icon);
+        ItemMeta meta = item.getItemMeta();
+
+        // Display-Name
+        meta.displayName(
+                Component.text(displayName)
+                        .color(NamedTextColor.GOLD)
+                        .decoration(TextDecoration.ITALIC, false)
+        );
+
+        // Lore
+        List<Component> lore = description.stream()
+                .map(line -> Component.text(line)
+                        .color(NamedTextColor.GRAY)
+                        .decoration(TextDecoration.ITALIC, false))
+                .toList();
+        meta.lore(lore);
+
+        item.setItemMeta(meta);
+
+        return new ClickableUiElement.CustomButton<>(item, action);
+    }
+
+    /**
+     * Builder für UiActionInfo.
+     */
+    public static class Builder {
+        private String id;
+        private String displayName;
+        private List<String> description = List.of();
+        private Material icon = Material.PAPER;
+        private UiAction action;
+        private UiContext context = UiContext.MAIN_MENU;
+        private int priority = 0;
+
+        public Builder id(String id) {
+            this.id = id;
+            return this;
+        }
+
+        public Builder displayName(String displayName) {
+            this.displayName = displayName;
+            return this;
+        }
+
+        public Builder description(List<String> description) {
+            this.description = description;
+            return this;
+        }
+
+        public Builder description(String... lines) {
+            this.description = List.of(lines);
+            return this;
+        }
+
+        public Builder icon(Material icon) {
+            this.icon = icon;
+            return this;
+        }
+
+        public Builder action(UiAction action) {
+            this.action = action;
+            return this;
+        }
+
+        public Builder context(UiContext context) {
+            this.context = context;
+            return this;
+        }
+
+        public Builder priority(int priority) {
+            this.priority = priority;
+            return this;
+        }
+
+        public UiActionInfo build() {
+            if (id == null || displayName == null || action == null) {
+                throw new IllegalStateException("id, displayName und action sind required!");
+            }
+            return new UiActionInfo(id, displayName, description, icon, action, context, priority);
+        }
+    }
+
+    /**
+     * Erstellt einen neuen Builder.
+     */
+    public static Builder builder() {
+        return new Builder();
+    }
+}
+```
+
+---
+
+### TradeguildPlot mit UiActionTarget
+
+**Location:** `module-plots/src/main/java/de/fallenstar/plot/model/TradeguildPlot.java`
+
+```java
+package de.fallenstar.plot.model;
+
+import de.fallenstar.core.provider.*;
+import de.fallenstar.core.ui.*;
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Handelsgilde mit UiActionTarget-Implementation.
+ *
+ * @author FallenStar
+ * @version 2.0
+ */
+public class TradeguildPlot implements NamedPlot, StorageContainerPlot,
+                                        NpcContainerPlot, UiActionTarget {
+
+    // ... bestehende Fields & Methoden ...
+
+    // UiActionTarget Implementation
+    @Override
+    public List<UiActionInfo> getAvailableUiActions(Player player, UiContext context) {
+        List<UiActionInfo> actions = new ArrayList<>();
+
+        // Prüfe ob Owner
+        boolean isOwner = isOwner(player);
+
+        // MAIN_MENU Actions
+        if (context.matches(UiContext.MAIN_MENU)) {
+            // Storage-Action (für alle sichtbar)
+            if (hasStorage()) {
+                actions.add(UiActionInfo.builder()
+                        .id("storage")
+                        .displayName("§6Storage-Verwaltung")
+                        .description(
+                                "§7Verwalte Input/Output-Chests",
+                                "§7",
+                                "§eKlicke zum Öffnen"
+                        )
+                        .icon(Material.CHEST)
+                        .action(new OpenStorageMenuAction(this))
+                        .context(UiContext.MAIN_MENU)
+                        .priority(10)
+                        .build());
+            }
+
+            // NPC-Action (nur Owner)
+            if (isOwner && hasNPCs()) {
+                actions.add(UiActionInfo.builder()
+                        .id("npcs")
+                        .displayName("§6NPC-Verwaltung")
+                        .description(
+                                "§7Verwalte Gildenhändler",
+                                "§7",
+                                "§a" + getNpcContainer().getNPCCount() + " NPCs",
+                                "§7",
+                                "§eKlicke zum Öffnen"
+                        )
+                        .icon(Material.PLAYER_HEAD)
+                        .action(new OpenNpcMenuAction(this))
+                        .context(UiContext.MAIN_MENU)
+                        .priority(20)
+                        .build());
+            }
+
+            // Preis-Action (nur Owner)
+            if (isOwner) {
+                actions.add(UiActionInfo.builder()
+                        .id("prices")
+                        .displayName("§6Preis-Verwaltung")
+                        .description(
+                                "§7Setze Ankaufs-/Verkaufspreise",
+                                "§7",
+                                "§eKlicke zum Öffnen"
+                        )
+                        .icon(Material.EMERALD)
+                        .action(new OpenPriceMenuAction(this))
+                        .context(UiContext.MAIN_MENU)
+                        .priority(30)
+                        .build());
+            }
+
+            // Info-Action (für alle)
+            actions.add(UiActionInfo.builder()
+                    .id("info")
+                    .displayName("§7Plot-Informationen")
+                    .description(
+                            "§7Zeige Statistiken",
+                            "§7und Details"
+                    )
+                    .icon(Material.BOOK)
+                    .action(new ViewPlotInfoAction(this))
+                    .context(UiContext.MAIN_MENU)
+                    .priority(100)
+                    .build());
+        }
+
+        // STORAGE_MENU Actions (SubMenu!)
+        if (context.matches(UiContext.STORAGE_MENU)) {
+            if (isOwner) {
+                actions.add(UiActionInfo.builder()
+                        .id("configure_input")
+                        .displayName("§aInput-Chests konfigurieren")
+                        .description("§7Setze Input-Truhen")
+                        .icon(Material.GREEN_STAINED_GLASS)
+                        .action(new ConfigureInputChestsAction(this))
+                        .context(UiContext.STORAGE_MENU)
+                        .build());
+
+                actions.add(UiActionInfo.builder()
+                        .id("configure_output")
+                        .displayName("§6Output-Chests konfigurieren")
+                        .description("§7Setze Output-Truhen")
+                        .icon(Material.ORANGE_STAINED_GLASS)
+                        .action(new ConfigureOutputChestsAction(this))
+                        .context(UiContext.STORAGE_MENU)
+                        .build());
+            }
+
+            // View Storage (für alle)
+            actions.add(UiActionInfo.builder()
+                    .id("view_storage")
+                    .displayName("§7Storage ansehen")
+                    .description("§7Zeige Inventar")
+                    .icon(Material.ENDER_CHEST)
+                    .action(new ViewStorageAction(this))
+                    .context(UiContext.STORAGE_MENU)
+                    .build());
+        }
+
+        // NPC_MENU Actions (SubMenu!)
+        if (context.matches(UiContext.NPC_MENU)) {
+            if (isOwner) {
+                actions.add(UiActionInfo.builder()
+                        .id("spawn_npc")
+                        .displayName("§aNPC spawnen")
+                        .description("§7Erstelle neuen Händler")
+                        .icon(Material.SPAWNER)
+                        .action(new SpawnNpcAction(this))
+                        .context(UiContext.NPC_MENU)
+                        .build());
+
+                actions.add(UiActionInfo.builder()
+                        .id("manage_npcs")
+                        .displayName("§6NPCs verwalten")
+                        .description("§7Bearbeite bestehende NPCs")
+                        .icon(Material.WRITABLE_BOOK)
+                        .action(new ManageNpcsAction(this))
+                        .context(UiContext.NPC_MENU)
+                        .build());
+            }
+        }
+
+        // PRICE_MENU Actions (SubMenu!)
+        if (context.matches(UiContext.PRICE_MENU)) {
+            if (isOwner) {
+                actions.add(UiActionInfo.builder()
+                        .id("set_price")
+                        .displayName("§aPreis festlegen")
+                        .description(
+                                "§7Nimm ein Item in die Hand",
+                                "§7und setze den Preis"
+                        )
+                        .icon(Material.GOLD_INGOT)
+                        .action(new SetPriceAction(this))
+                        .context(UiContext.PRICE_MENU)
+                        .build());
+
+                actions.add(UiActionInfo.builder()
+                        .id("list_prices")
+                        .displayName("§6Alle Preise anzeigen")
+                        .description("§7Zeige Preisliste")
+                        .icon(Material.WRITABLE_BOOK)
+                        .action(new ListPricesAction(this))
+                        .context(UiContext.PRICE_MENU)
+                        .build());
+            }
+        }
+
+        // Sortiere nach Priority
+        actions.sort((a, b) -> Integer.compare(a.priority(), b.priority()));
+
+        return actions;
+    }
+
+    // Helper
+    private boolean isOwner(Player player) {
+        // Implementierung...
+        return false; // Placeholder
+    }
+}
+```
+
+---
+
+### Self-Constructing UI
+
+**Vorteil:** UI baut sich automatisch basierend auf verfügbaren Actions!
+
+**Location:** `module-plots/src/main/java/de/fallenstar/plot/ui/PlotMainMenuUi.java`
+
+```java
+package de.fallenstar.plot.ui;
+
+import de.fallenstar.core.provider.Plot;
+import de.fallenstar.core.ui.UiActionTarget;
+import de.fallenstar.core.ui.UiContext;
+import de.fallenstar.core.ui.container.GenericUiSmallChest;
+import de.fallenstar.core.ui.element.navigation.CloseButton;
+import de.fallenstar.core.ui.row.BasicUiRowForContent;
+import org.bukkit.entity.Player;
+
+/**
+ * Self-Constructing Plot Main Menu.
+ *
+ * Baut sich automatisch basierend auf verfügbaren UiActions!
+ *
+ * @author FallenStar
+ * @version 2.0
+ */
+public class PlotMainMenuUi extends GenericUiSmallChest {
+
+    private final Plot plot;
+    private final Player viewer;
+
+    public PlotMainMenuUi(Plot plot, Player viewer) {
+        super("§6§l" + getPlotTitle(plot));
+        this.plot = plot;
+        this.viewer = viewer;
+
+        buildUi();
+    }
+
+    private void buildUi() {
+        // Row 0: Navigation
+        var navigationRow = new BasicUiRowForContent();
+        navigationRow.setElement(0, CloseButton.create(this));
+        setRow(0, navigationRow);
+
+        // Row 1: Actions (automatisch generiert!)
+        var actionsRow = new BasicUiRowForContent();
+
+        if (plot instanceof UiActionTarget) {
+            var actionTarget = (UiActionTarget) plot;
+
+            // Hole Actions für MAIN_MENU Kontext
+            var actions = actionTarget.getAvailableUiActions(viewer, UiContext.MAIN_MENU);
+
+            // Generiere Buttons automatisch!
+            int slot = 1;
+            for (var actionInfo : actions) {
+                actionsRow.setElement(slot++, actionInfo.createButton());
+            }
+        }
+
+        setRow(1, actionsRow);
+    }
+
+    private static String getPlotTitle(Plot plot) {
+        if (plot instanceof NamedPlot) {
+            return ((NamedPlot) plot).getDisplayName();
+        }
+        return "Plot #" + plot.getIdentifier();
+    }
+}
+```
+
+**Ergebnis:** UI passt sich automatisch an:
+- Owner sieht: Storage, NPCs, Preise, Info
+- Gast sieht: Storage (readonly), Info
+- Keine manuellen Permission-Checks im UI-Code!
+
+---
+
+### SubMenu mit Context
+
+**Location:** `module-plots/src/main/java/de/fallenstar/plot/ui/PlotStorageUi.java`
+
+```java
+package de.fallenstar.plot.ui;
+
+import de.fallenstar.core.provider.StorageContainerPlot;
+import de.fallenstar.core.ui.*;
+import de.fallenstar.core.ui.container.GenericUiLargeChest;
+import de.fallenstar.core.ui.element.navigation.BackButton;
+import de.fallenstar.core.ui.row.BasicUiRowForContent;
+import org.bukkit.entity.Player;
+
+/**
+ * Self-Constructing Storage SubMenu.
+ *
+ * Nutzt STORAGE_MENU Context!
+ *
+ * @author FallenStar
+ * @version 2.0
+ */
+public class PlotStorageUi extends GenericUiLargeChest
+                            implements ChildUi<PlotMainMenuUi> {
+
+    private final StorageContainerPlot plot;
+    private final PlotMainMenuUi parent;
+    private final Player viewer;
+
+    public PlotStorageUi(
+            StorageContainerPlot plot,
+            PlotMainMenuUi parent,
+            Player viewer
+    ) {
+        super("§6§lStorage-Verwaltung");
+        this.plot = plot;
+        this.parent = parent;
+        this.viewer = viewer;
+
+        buildUi();
+    }
+
+    private void buildUi() {
+        // Row 0: Navigation
+        var navigationRow = new BasicUiRowForContent();
+        navigationRow.setElement(0, BackButton.create(this));
+        setRow(0, navigationRow);
+
+        // Row 1: Storage-spezifische Actions (automatisch!)
+        var actionsRow = new BasicUiRowForContent();
+
+        if (plot instanceof UiActionTarget) {
+            var actionTarget = (UiActionTarget) plot;
+
+            // Hole Actions für STORAGE_MENU Kontext!
+            var actions = actionTarget.getAvailableUiActions(viewer, UiContext.STORAGE_MENU);
+
+            int slot = 1;
+            for (var actionInfo : actions) {
+                actionsRow.setElement(slot++, actionInfo.createButton());
+            }
+        }
+
+        setRow(1, actionsRow);
+
+        // Row 2-5: Storage-Inhalt anzeigen
+        // ...
+    }
+
+    // ChildUi Interface
+    @Override
+    public PlotMainMenuUi getParent() {
+        return parent;
+    }
+
+    @Override
+    public Class<PlotMainMenuUi> getParentUiClass() {
+        return PlotMainMenuUi.class;
+    }
+}
+```
+
+**SubMenu-Problem gelöst!**
+- MAIN_MENU Context → Haupt-Actions (Storage, NPCs, Preise)
+- STORAGE_MENU Context → Storage-spezifische Actions (Configure Input/Output)
+- Unterschiedliche Actions je nach Context!
+
+---
+
+## 🌍 Projekt-weite Anwendung
+
+**Konzept auf ALLE Systeme übertragen:**
+
+### Economy-System mit UiActionTarget
+
+```java
+package de.fallenstar.economy.model;
+
+import de.fallenstar.core.ui.*;
+
+/**
+ * Currency mit UiActionTarget.
+ *
+ * @author FallenStar
+ * @version 2.0
+ */
+public class Currency implements UiActionTarget {
+
+    private final String id;
+    private final String displayName;
+    private final CurrencyTierSet tiers;
+
+    @Override
+    public List<UiActionInfo> getAvailableUiActions(Player player, UiContext context) {
+        List<UiActionInfo> actions = new ArrayList<>();
+
+        if (context.matches(UiContext.MAIN_MENU)) {
+            // Withdraw Action
+            actions.add(UiActionInfo.builder()
+                    .id("withdraw")
+                    .displayName("§aGeld abheben")
+                    .description(
+                            "§7Hebe Münzen von deinem Konto ab",
+                            "§7",
+                            "§eKlicke zum Abheben"
+                    )
+                    .icon(Material.GOLD_INGOT)
+                    .action(new WithdrawCurrencyAction(this))
+                    .context(UiContext.MAIN_MENU)
+                    .build());
+
+            // Deposit Action
+            actions.add(UiActionInfo.builder()
+                    .id("deposit")
+                    .displayName("§6Geld einzahlen")
+                    .description("§7Zahle Münzen auf dein Konto ein")
+                    .icon(Material.CHEST)
+                    .action(new DepositCurrencyAction(this))
+                    .context(UiContext.MAIN_MENU)
+                    .build());
+
+            // Exchange Action
+            actions.add(UiActionInfo.builder()
+                    .id("exchange")
+                    .displayName("§eWährung tauschen")
+                    .description("§7Tausche in andere Währungen")
+                    .icon(Material.EMERALD)
+                    .action(new ExchangeCurrencyAction(this))
+                    .context(UiContext.MAIN_MENU)
+                    .build());
+        }
+
+        return actions;
+    }
+}
+```
+
+---
+
+### Item-System mit UiActionTarget
+
+```java
+package de.fallenstar.item.model;
+
+import de.fallenstar.core.ui.*;
+
+/**
+ * CustomItem mit UiActionTarget.
+ *
+ * @author FallenStar
+ * @version 2.0
+ */
+public class CustomItem implements UiActionTarget {
+
+    private final String itemId;
+    private final String displayName;
+    private final ItemStack itemStack;
+
+    @Override
+    public List<UiActionInfo> getAvailableUiActions(Player player, UiContext context) {
+        List<UiActionInfo> actions = new ArrayList<>();
+
+        if (context.matches(UiContext.MAIN_MENU)) {
+            // Give Action (Admin only)
+            if (player.hasPermission("fallenstar.admin.items")) {
+                actions.add(UiActionInfo.builder()
+                        .id("give")
+                        .displayName("§aItem erhalten")
+                        .description("§7Gibt dir dieses Item")
+                        .icon(Material.DIAMOND)
+                        .action(new GiveItemAction(this))
+                        .build());
+            }
+
+            // View Stats Action
+            actions.add(UiActionInfo.builder()
+                    .id("stats")
+                    .displayName("§7Item-Statistiken")
+                    .description("§7Zeige Details und Stats")
+                    .icon(Material.BOOK)
+                    .action(new ViewItemStatsAction(this))
+                    .build());
+
+            // Craft Action (wenn craftbar)
+            if (isCraftable()) {
+                actions.add(UiActionInfo.builder()
+                        .id("craft")
+                        .displayName("§6Craften")
+                        .description("§7Zeige Crafting-Rezept")
+                        .icon(Material.CRAFTING_TABLE)
+                        .action(new ViewCraftingRecipeAction(this))
+                        .build());
+            }
+        }
+
+        return actions;
+    }
+
+    private boolean isCraftable() {
+        // Check ob Item Crafting-Rezept hat
+        return false;
+    }
+}
+```
+
+---
+
+### NPC-System mit UiActionTarget
+
+```java
+package de.fallenstar.npc.model;
+
+import de.fallenstar.core.ui.*;
+
+/**
+ * NPC mit UiActionTarget.
+ *
+ * @author FallenStar
+ * @version 2.0
+ */
+public class GuildTraderNPC implements NPCType, TradingEntity, UiActionTarget {
+
+    private final UUID npcId;
+    private final Plot owningPlot;
+
+    @Override
+    public List<UiActionInfo> getAvailableUiActions(Player player, UiContext context) {
+        List<UiActionInfo> actions = new ArrayList<>();
+
+        boolean isOwner = isOwner(player);
+
+        if (context.matches(UiContext.MAIN_MENU)) {
+            // Trade Action (für alle)
+            actions.add(UiActionInfo.builder()
+                    .id("trade")
+                    .displayName("§6Handeln")
+                    .description(
+                            "§7Öffne Handelsmenü",
+                            "§7",
+                            "§eKlicke zum Handeln"
+                    )
+                    .icon(Material.EMERALD)
+                    .action(new OpenTradeUiAction(this))
+                    .priority(10)
+                    .build());
+
+            // Configure Action (nur Owner)
+            if (isOwner) {
+                actions.add(UiActionInfo.builder()
+                        .id("configure")
+                        .displayName("§aNPC konfigurieren")
+                        .description("§7Verwalte Händler-Einstellungen")
+                        .icon(Material.WRITABLE_BOOK)
+                        .action(new ConfigureNpcAction(this))
+                        .priority(20)
+                        .build());
+
+                actions.add(UiActionInfo.builder()
+                        .id("remove")
+                        .displayName("§cNPC entfernen")
+                        .description("§7Entferne diesen Händler")
+                        .icon(Material.BARRIER)
+                        .action(new RemoveNpcAction(this))
+                        .priority(30)
+                        .build());
+            }
+
+            // Info Action (für alle)
+            actions.add(UiActionInfo.builder()
+                    .id("info")
+                    .displayName("§7Händler-Info")
+                    .description("§7Zeige Statistiken")
+                    .icon(Material.BOOK)
+                    .action(new ViewNpcInfoAction(this))
+                    .priority(100)
+                    .build());
+        }
+
+        return actions;
+    }
+
+    private boolean isOwner(Player player) {
+        // Check ob Player Owner des owningPlot ist
+        return false;
+    }
+}
+```
+
+---
+
+## 🎯 Konsistentes Pattern: Überall gleich!
+
+**Jedes System nutzt UiActionTarget:**
+
+```java
+// Plot
+Plot plot = ...;
+if (plot instanceof UiActionTarget) {
+    var actions = ((UiActionTarget) plot).getAvailableUiActions(player, UiContext.MAIN_MENU);
+}
+
+// Currency
+Currency currency = ...;
+if (currency instanceof UiActionTarget) {
+    var actions = ((UiActionTarget) currency).getAvailableUiActions(player, UiContext.MAIN_MENU);
+}
+
+// Item
+CustomItem item = ...;
+if (item instanceof UiActionTarget) {
+    var actions = ((UiActionTarget) item).getAvailableUiActions(player, UiContext.MAIN_MENU);
+}
+
+// NPC
+GuildTraderNPC npc = ...;
+if (npc instanceof UiActionTarget) {
+    var actions = ((UiActionTarget) npc).getAvailableUiActions(player, UiContext.MAIN_MENU);
+}
+
+// → ÜBERALL GLEICH!
+```
+
+---
+
+## 📚 Vorteile UiActionTarget-Pattern
+
+### ✅ DRY (Don't Repeat Yourself)
+
+```java
+// ❌ VORHER: Code-Duplikation
+public class PlotMainMenuUi {
+    private void buildUi() {
+        // Manuell Storage-Button erstellen
+        var storageButton = new ClickableUiElement<>(...);
+
+        // Manuell NPC-Button erstellen
+        var npcButton = new ClickableUiElement<>(...);
+
+        // Manuell Permission-Checks
+        if (isOwner) {
+            // ...
+        }
+    }
+}
+
+// ✅ NACHHER: Automatisch
+public class PlotMainMenuUi {
+    private void buildUi() {
+        // Plot kennt seine Actions!
+        var actions = plot.getAvailableUiActions(player, UiContext.MAIN_MENU);
+
+        // Automatisch Buttons generieren
+        for (var action : actions) {
+            addButton(action.createButton());
+        }
+    }
+}
+```
+
+### ✅ Self-Documenting Code
+
+```java
+// Objekt dokumentiert sich selbst!
+public class TradeguildPlot implements UiActionTarget {
+    @Override
+    public List<UiActionInfo> getAvailableUiActions(...) {
+        // Hier sieht man ALLE möglichen Operations!
+        // - Storage-Verwaltung
+        // - NPC-Verwaltung
+        // - Preis-Verwaltung
+        // - Info anzeigen
+    }
+}
+```
+
+### ✅ Einfach erweiterbar
+
+```java
+// Neue Action hinzufügen? Nur an EINER Stelle!
+public class TradeguildPlot implements UiActionTarget {
+    @Override
+    public List<UiActionInfo> getAvailableUiActions(...) {
+        actions.add(UiActionInfo.builder()
+                .id("new_feature")
+                .displayName("§aNeues Feature")
+                .action(new NewFeatureAction(this))
+                .build());
+        // → Erscheint automatisch in ALLEN UIs!
+    }
+}
+```
+
+### ✅ Konsistent projekt-weit
+
+```java
+// Plot, Currency, Item, NPC - ALLE nutzen UiActionTarget!
+// → Einheitliche API
+// → Einheitliches Verhalten
+// → Leicht zu lernen
+```
+
+---
+
+## 🚀 Implementierungs-Phasen (aktualisiert)
+
+### Phase 1: Plot-Interface-Refactoring (Sprint 15)
+- ✅ Plot-Interface-Hierarchie
+- ✅ Trait-Interfaces
+- ✅ Konkrete Implementierungen
+
+### Phase 2: UI-Navigation-System (Sprint 15-16)
+- ✅ ChildUI-Interface
+- ✅ BackButton
+- ✅ UI-Hierarchie
+
+### Phase 3: UiActionTarget-Pattern (Sprint 16) **NEU!**
+- ✅ UiActionTarget-Interface
+- ✅ UiContext-Enum
+- ✅ UiActionInfo-Record
+- ✅ Plot-Implementierung
+- ✅ Self-Constructing UIs
+
+### Phase 4: NPC-Container-Abstraktion (Sprint 16)
+- ✅ NpcContainer-Interface
+- ✅ PlotNpcContainer
+- ✅ PlayerNpcOwnership
+
+### Phase 5: Projekt-weite Anwendung (Sprint 17) **NEU!**
+- ✅ Economy mit UiActionTarget
+- ✅ Items mit UiActionTarget
+- ✅ NPCs mit UiActionTarget
+- ✅ Storage mit UiActionTarget
+
+### Phase 6: Event-System-Integration (Sprint 17-18)
+- ✅ PlotEvent-Hierarchie
+- ✅ UiEvent-Hierarchie
+- ✅ Action-Events (ActionExecutedEvent, etc.)
+
+---
+
+## 🎯 Zusammenfassung (aktualisiert)
+
+**Kernverbesserungen:**
+1. **Plot als Interface** - Trait-Komposition statt Vererbung
+2. **ChildUI-Pattern** - Navigation mit Back-Buttons
+3. **UiActionTarget-Pattern** - Self-Constructing UIs **[NEU!]**
+4. **NpcContainer-Abstraktion** - Wiederverwendbar für Plot & Player
+5. **Type-Safe Events** - Compiler-geprüfte Event-Handler
+6. **Konsistenz projekt-weit** - Alle Systeme nutzen gleiche Patterns **[NEU!]**
+
+**Migration:** Phasenweise über 4-5 Sprints, nicht-breaking wo möglich
+
+**Ergebnis:**
+- Type-Safe, erweiterbar, wartbar, DRY-konform
+- **Self-Documenting** (Objekte kennen ihre Operations) **[NEU!]**
+- **Konsistent** (Plot, Economy, Items, NPCs - alle gleich) **[NEU!]**
+
+---
+
 **Fragen/Anmerkungen:** Bitte als GitHub Issues oder in CLAUDE.md eintragen
 
 ---
 
 **Autoren:** FallenStar Team + Claude AI
 **Datum:** 2025-11-18
-**Version:** 2.0 (Design-Phase)
+**Version:** 2.1 (Design-Phase - Extended mit UiActionTarget)
