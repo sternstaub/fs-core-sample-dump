@@ -239,7 +239,8 @@ public class PlotPriceCommand {
                 var sortedPrices = new java.util.ArrayList<>(vanillaPrices);
                 sortedPrices.sort((a, b) -> {
                     try {
-                        var getMaterial = a.getClass().getMethod("getMaterial");
+                        // VanillaItemPrice ist ein Record - Accessor heißt material(), nicht getMaterial()!
+                        var getMaterial = a.getClass().getMethod("material");
                         Material matA = (Material) getMaterial.invoke(a);
                         Material matB = (Material) getMaterial.invoke(b);
                         return matA.name().compareTo(matB.name());
@@ -251,7 +252,8 @@ public class PlotPriceCommand {
                 // Zeige Preise an
                 for (Object priceObj : sortedPrices) {
                     try {
-                        var getMaterial = priceObj.getClass().getMethod("getMaterial");
+                        // VanillaItemPrice ist ein Record - Accessor heißt material(), nicht getMaterial()!
+                        var getMaterial = priceObj.getClass().getMethod("material");
                         var getPrice = priceObj.getClass().getMethod("getPrice");
 
                         Material material = (Material) getMaterial.invoke(priceObj);
@@ -263,7 +265,9 @@ public class PlotPriceCommand {
 
                         player.sendMessage("§e  " + materialName + " §7- §6" + price + " Sterne");
                     } catch (Exception e) {
-                        player.sendMessage("§c  Fehler beim Lesen eines Preises");
+                        player.sendMessage("§c  Fehler beim Lesen eines Preises: " + e.getMessage());
+                        logger.warning("Fehler beim Lesen eines Preises: " + e.getMessage());
+                        e.printStackTrace();
                     }
                 }
             }
