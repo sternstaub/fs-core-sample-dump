@@ -41,12 +41,13 @@ public class StorageManager {
      * @param logger Der Logger für Ausgaben
      * @param plotProvider Der PlotProvider
      * @param storageProvider Der PlotStorageProvider
+     * @param scanService Der ChestScanService (wird geteilt mit PlotStorageProvider)
      */
-    public StorageManager(Logger logger, PlotProvider plotProvider, PlotStorageProvider storageProvider) {
+    public StorageManager(Logger logger, PlotProvider plotProvider, PlotStorageProvider storageProvider, ChestScanService scanService) {
         this.logger = logger;
         this.plotProvider = plotProvider;
         this.storageProvider = storageProvider;
-        this.scanService = new ChestScanService(logger, plotProvider);
+        this.scanService = scanService;
     }
 
     /**

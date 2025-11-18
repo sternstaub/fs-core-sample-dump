@@ -4,6 +4,7 @@ import de.fallenstar.core.provider.Plot;
 import de.fallenstar.core.provider.PlotProvider;
 import de.fallenstar.core.exception.ProviderFunctionalityNotFoundException;
 import de.fallenstar.plot.storage.model.ChestData;
+import de.fallenstar.plot.storage.model.ChestType;
 import de.fallenstar.plot.storage.model.PlotStorage;
 import de.fallenstar.plot.storage.model.StoredMaterial;
 import org.bukkit.Chunk;
@@ -197,4 +198,47 @@ public class ChestScanService {
         logger.info("Scan abgeschlossen: " + totalChests + " Truhen auf " + plots.size() + " Plots");
         return totalChests;
     }
+
+    /**
+     * Scannt ein einzelnes Plot und gibt detaillierte Scan-Ergebnisse zurück.
+     *
+     * Diese Methode wird von `/plot storage scan` verwendet.
+     *
+     * @param plot Das zu scannende Plot
+     * @return ScanResult mit Kisten-Statistiken
+     */
+    public ScanResult scanPlotChests(Plot plot, PlotStorage plotStorage) {
+        // Leere vorherige Daten
+        plotStorage.clear();
+
+        // Scan durchführen
+        scanPlot(plot, plotStorage);
+
+        // Zähle Kisten nach Typ
+        int inputChests = 0;
+        int outputChests = 0;
+        int receiverChests = 0;
+
+        for (ChestData chest : plotStorage.getAllChests()) {
+            ChestType type = chest.getChestType();
+            if (type == ChestType.INPUT) {
+                inputChests++;
+            } else if (type == ChestType.OUTPUT) {
+                outputChests++;
+            } else if (chest.isReceiverChest()) {
+                receiverChests++;
+            }
+        }
+
+        return new ScanResult(inputChests, outputChests, receiverChests);
+    }
+
+    /**
+     * Ergebnis eines Plot-Scans mit Kisten-Statistiken.
+     *
+     * @param inputChests Anzahl Input-Kisten
+     * @param outputChests Anzahl Output-Kisten
+     * @param receiverChests Anzahl Receiver-Kisten
+     */
+    public record ScanResult(int inputChests, int outputChests, int receiverChests) {}
 }

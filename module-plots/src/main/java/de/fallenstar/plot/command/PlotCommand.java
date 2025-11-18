@@ -293,8 +293,17 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
             player.sendMessage("§7Scanne Kisten auf Plot §e" + plot.getIdentifier() + "§7...");
             player.sendMessage("");
 
+            // Hole oder erstelle PlotStorage
+            var storageProvider = plugin.getStorageProvider();
+            if (storageProvider == null) {
+                player.sendMessage("§cStorageProvider nicht verfügbar!");
+                return true;
+            }
+
+            var plotStorage = storageProvider.getPlotStorage(plot);
+
             // Scan durchführen
-            var result = scanService.scanPlotChests(plot);
+            var result = scanService.scanPlotChests(plot, plotStorage);
 
             player.sendMessage("§a§l✓ Scan abgeschlossen!");
             player.sendMessage("");

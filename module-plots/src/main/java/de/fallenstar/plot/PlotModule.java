@@ -416,12 +416,18 @@ public class PlotModule extends JavaPlugin implements Listener {
 
         if (plotProvider.isAvailable()) {
             try {
-                // Erstelle Storage-Provider und Manager
-                this.storageProvider = new PlotStorageProvider();
+                // Erstelle ChestScanService zuerst (benötigt von PlotStorageProvider und StorageManager)
+                ChestScanService scanService = new ChestScanService(getLogger(), plotProvider);
+
+                // Erstelle Storage-Provider mit ScanService für Auto-Scans
+                this.storageProvider = new PlotStorageProvider(scanService, getLogger());
+
+                // Erstelle StorageManager mit geteiltem ScanService
                 this.storageManager = new StorageManager(
                     getLogger(),
                     plotProvider,
-                    storageProvider
+                    storageProvider,
+                    scanService
                 );
 
                 // Registriere Storage-Listener
@@ -434,7 +440,7 @@ public class PlotModule extends JavaPlugin implements Listener {
                 getServer().getPluginManager().registerEvents(chestListener, this);
 
                 storageSystemEnabled = true;
-                getLogger().info("✓ Storage-System aktiviert");
+                getLogger().info("✓ Storage-System aktiviert (mit Auto-Scan)");
 
             } catch (Exception e) {
                 storageSystemEnabled = false;
