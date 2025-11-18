@@ -359,6 +359,7 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
                     slotManager,
                     plugin.getStorageProvider(),
                     plugin.getStorageManager(),
+                    providers,  // ProviderRegistry für NPC-Verwaltung
                     isOwner
             );
 

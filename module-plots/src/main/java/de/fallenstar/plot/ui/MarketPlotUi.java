@@ -1,6 +1,7 @@
 package de.fallenstar.plot.ui;
 
 import de.fallenstar.core.provider.Plot;
+import de.fallenstar.core.registry.ProviderRegistry;
 import de.fallenstar.core.ui.container.BasicGsUi;
 import de.fallenstar.plot.action.*;
 import de.fallenstar.plot.slot.MarketPlot;
@@ -47,6 +48,7 @@ public class MarketPlotUi extends BasicGsUi {
     private final PlotSlotManager slotManager;
     private final PlotStorageProvider storageProvider;
     private final StorageManager storageManager;
+    private final ProviderRegistry providers;
     private final boolean isOwner;
 
     /**
@@ -58,6 +60,7 @@ public class MarketPlotUi extends BasicGsUi {
      * @param slotManager PlotSlotManager
      * @param storageProvider PlotStorageProvider
      * @param storageManager StorageManager
+     * @param providers ProviderRegistry für Owner-Checks und NPC-Verwaltung
      * @param isOwner Ob der öffnende Spieler der Besitzer ist
      */
     public MarketPlotUi(
@@ -67,6 +70,7 @@ public class MarketPlotUi extends BasicGsUi {
             PlotSlotManager slotManager,
             PlotStorageProvider storageProvider,
             StorageManager storageManager,
+            ProviderRegistry providers,
             boolean isOwner
     ) {
         super(isOwner ? "§6§lMarkt - Verwaltung" : "§e§lMarkt - Übersicht");
@@ -76,6 +80,7 @@ public class MarketPlotUi extends BasicGsUi {
         this.slotManager = slotManager;
         this.storageProvider = storageProvider;
         this.storageManager = storageManager;
+        this.providers = providers;
         this.isOwner = isOwner;
 
         buildUi();
@@ -184,7 +189,7 @@ public class MarketPlotUi extends BasicGsUi {
             );
         }
 
-        // NPCs verwalten (Placeholder)
+        // NPCs verwalten
         addFunctionButton(
                 Material.VILLAGER_SPAWN_EGG,
                 "§6§lNPCs verwalten",
@@ -192,9 +197,9 @@ public class MarketPlotUi extends BasicGsUi {
                         "§7Verwalte Händler-NPCs",
                         "§7auf diesem Marktplatz",
                         "§7",
-                        "§c§lRoadmap: Sprint 13-14"
+                        "§a§lKlicke zum Öffnen"
                 ),
-                new ManageNpcsAction(plot)  // Type-Safe Placeholder!
+                new ManageNpcsAction(plot, providers)  // Type-Safe Action!
         );
 
         // Storage verwalten

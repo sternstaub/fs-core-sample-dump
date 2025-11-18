@@ -90,7 +90,7 @@ public class PlayerNpcManagementUi extends GenericUiLargeChest implements PageNa
      */
     private void initializeRows() {
         // Row 0: Control-Row (Close, Info, Slot kaufen)
-        BasicUiRowForControl controlRow = new BasicUiRowForControl(this);
+        BasicUiRowForControl controlRow = new BasicUiRowForControl();
         setRow(0, controlRow);
 
         // Row 1-4: Content-Rows für eigene NPCs
@@ -99,7 +99,7 @@ public class PlayerNpcManagementUi extends GenericUiLargeChest implements PageNa
         }
 
         // Row 5: Pagination-Row
-        BasicUiRow paginationRow = new BasicUiRow();
+        BasicUiRowForContent paginationRow = new BasicUiRowForContent();
         setRow(5, paginationRow);
 
         // Befülle Rows
@@ -338,56 +338,68 @@ public class PlayerNpcManagementUi extends GenericUiLargeChest implements PageNa
     // PageNavigable Implementation
 
     @Override
-    public void nextPage() {
-        if (hasNextPage()) {
-            currentPage++;
-            populatePlayerNpcList();
-            populatePaginationRow();
-            build();
-        }
+    public void nextPage(Player player) {
+        currentPage++;
+        populatePlayerNpcList();
+        populatePaginationRow();
+        build();
+        open(player);
     }
 
     @Override
-    public void previousPage() {
-        if (hasPreviousPage()) {
-            currentPage--;
-            populatePlayerNpcList();
-            populatePaginationRow();
-            build();
-        }
+    public void previousPage(Player player) {
+        currentPage--;
+        populatePlayerNpcList();
+        populatePaginationRow();
+        build();
+        open(player);
     }
 
     @Override
-    public void gotoPage(int page) {
+    public void firstPage(Player player) {
+        currentPage = 0;
+        populatePlayerNpcList();
+        populatePaginationRow();
+        build();
+        open(player);
+    }
+
+    @Override
+    public void lastPage(Player player) {
+        currentPage = getTotalPages() - 1;
+        populatePlayerNpcList();
+        populatePaginationRow();
+        build();
+        open(player);
+    }
+
+    @Override
+    public void goToPage(Player player, int page) {
         int totalPages = getTotalPages();
         if (page >= 0 && page < totalPages) {
             currentPage = page;
             populatePlayerNpcList();
             populatePaginationRow();
             build();
+            open(player);
         }
     }
 
-    @Override
-    public int getCurrentPage() {
-        return currentPage;
-    }
-
-    @Override
-    public int getTotalPages() {
+    /**
+     * Hilfsmethoden für Page-Checks.
+     */
+    private int getTotalPages() {
         if (playerNpcs.isEmpty()) {
             return 1;
         }
         return (int) Math.ceil((double) playerNpcs.size() / NPCS_PER_PAGE);
     }
 
-    @Override
-    public boolean hasNextPage() {
+    private boolean hasNextPage() {
         return currentPage < getTotalPages() - 1;
     }
 
-    @Override
-    public boolean hasPreviousPage() {
+    private boolean hasPreviousPage() {
         return currentPage > 0;
     }
 
