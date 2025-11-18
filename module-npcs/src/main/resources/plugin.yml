@@ -6,5 +6,5 @@ authors: [FallenStar]
 description: NPC management system with specialized NPCs
 
 # Abhängigkeiten
-depend: [FallenStar-Core]
+depend: [FallenStar-Core, FallenStar-Economy]
 softdepend: [Towny, Citizens, Vault]
