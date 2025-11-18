@@ -127,14 +127,15 @@ public abstract class GenericUiSmallChest extends SmallChestUi implements UiPare
                 row.getElement(currentPos).ifPresent(uiElement -> {
                     int slot = currentRow * BasicUiRow.DEFAULT_ROW_SIZE + currentPos;
 
-                    // Setze Item in BaseUi
-                    setItem(slot, uiElement.getItemStack());
-
-                    // Wenn klickbar: Setze Click-Handler
+                    // Unterscheide zwischen klickbaren und statischen Elementen
                     if (uiElement instanceof ClickableUiElement<?> clickable) {
+                        // Klickbares Element: Setze Item MIT Handler
                         setItem(slot, uiElement.getItemStack(), player -> {
                             clickable.getAction().execute(player);
                         });
+                    } else {
+                        // Statisches Element: Setze Item OHNE Handler
+                        setItem(slot, uiElement.getItemStack());
                     }
                 });
             }
