@@ -10,10 +10,10 @@
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/action/OpenShopAction.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/ui/StoragePriceUi.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/storage/provider/PlotStorageProvider.java
-/home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/npc/model/NPCType.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/ui/PlotNameInputUi.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/npc/model/PlotNPC.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/ui/PlayerNpcManagementUi.java
+/home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/npc/model/PlotNPCType.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/slot/PlotSlot.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/action/ManageNpcsAction.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/ui/TraderSelectionUi.java

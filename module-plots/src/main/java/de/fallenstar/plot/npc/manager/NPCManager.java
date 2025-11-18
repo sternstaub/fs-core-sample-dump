@@ -203,7 +203,7 @@ public class NPCManager {
      * @return Der erstellte NPC
      */
     public PlotNPC createNPC(
-            NPCType type,
+            PlotNPCType type,
             UUID hostPlotId,
             UUID sourcePlotId,
             Location location,
@@ -289,7 +289,7 @@ public class NPCManager {
      * @param type NPC-Typ
      * @return Liste aller NPCs dieses Typs
      */
-    public List<PlotNPC> getNPCsByType(NPCType type) {
+    public List<PlotNPC> getNPCsByType(PlotNPCType type) {
         return npcMap.values().stream()
                 .filter(npc -> npc.getType() == type)
                 .collect(Collectors.toList());
