@@ -1,10 +1,10 @@
 package de.fallenstar.plot.ui;
 
 import de.fallenstar.core.provider.Plot;
-import de.fallenstar.core.ui.container.GenericUiMediumChest;
+import de.fallenstar.core.ui.container.GenericUiSmallChest;
 import de.fallenstar.core.ui.element.ClickableUiElement;
 import de.fallenstar.core.ui.element.StaticUiElement;
-import de.fallenstar.core.ui.element.navigation.BackButton;
+import de.fallenstar.core.ui.element.UiAction;
 import de.fallenstar.core.ui.element.navigation.CloseButton;
 import de.fallenstar.core.ui.row.BasicUiRowForContent;
 import de.fallenstar.core.ui.row.BasicUiRowForControl;
@@ -47,7 +47,7 @@ import java.util.UUID;
  * @author FallenStar
  * @version 1.0
  */
-public class NpcConfigUi extends GenericUiMediumChest {
+public class NpcConfigUi extends GenericUiSmallChest {
 
     private final Plot plot;
     private final UUID npcId;
@@ -132,8 +132,10 @@ public class NpcConfigUi extends GenericUiMediumChest {
     private void populateNavigationRow() {
         var navigationRow = getRow(2);
 
-        // Slot 4: Back-Button
-        navigationRow.setElement(4, BackButton.create(this, this::openManagementUi));
+        // Slot 4: Back-Button (manuell erstellt)
+        ItemStack backItem = createBackButton();
+        BackAction backAction = new BackAction(plot, plotModule);
+        navigationRow.setElement(4, new ClickableUiElement.CustomButton<>(backItem, backAction));
     }
 
     /**
@@ -192,6 +194,25 @@ public class NpcConfigUi extends GenericUiMediumChest {
     }
 
     /**
+     * Erstellt den Back-Button.
+     */
+    private ItemStack createBackButton() {
+        ItemStack item = new ItemStack(Material.ARROW);
+        ItemMeta meta = item.getItemMeta();
+
+        meta.displayName(Component.text("§7§lZurück")
+                .decoration(TextDecoration.ITALIC, false));
+
+        List<Component> lore = new ArrayList<>();
+        lore.add(Component.text("§7Zurück zur NPC-Verwaltung")
+                .decoration(TextDecoration.ITALIC, false));
+
+        meta.lore(lore);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    /**
      * Gibt den Anzeigenamen für einen NPC-Typ zurück.
      */
     private String getNpcTypeName(String type) {
@@ -207,10 +228,28 @@ public class NpcConfigUi extends GenericUiMediumChest {
     }
 
     /**
-     * Öffnet die NPC-Verwaltungs-UI (zurück).
+     * Action zum Zurückkehren zur NPC-Verwaltung.
      */
-    private void openManagementUi(Player player) {
-        NpcManagementUi managementUi = new NpcManagementUi(plot, plotModule);
-        managementUi.open(player);
+    private static class BackAction implements UiAction {
+
+        private final Plot plot;
+        private final PlotModule plotModule;
+
+        public BackAction(Plot plot, PlotModule plotModule) {
+            this.plot = plot;
+            this.plotModule = plotModule;
+        }
+
+        @Override
+        public void execute(Player player) {
+            player.closeInventory();
+            NpcManagementUi managementUi = new NpcManagementUi(plot, plotModule);
+            managementUi.open(player);
+        }
+
+        @Override
+        public String getActionName() {
+            return "BackToNpcManagement";
+        }
     }
 }

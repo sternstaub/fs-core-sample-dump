@@ -2,6 +2,7 @@
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/command/PlotPriceCommand.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/npc/NPCSkinPool.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/registry/PlotRegistry.java
+/home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/action/npc/DespawnNpcAction.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/trader/VirtualTraderInventory.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/provider/TownyPlotProvider.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/action/npc/ConfirmSpawnNpcAction.java
@@ -27,6 +28,7 @@
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/manager/PlotPriceManager.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/storage/model/StoredMaterial.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/ui/SlotManagementUi.java
+/home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/ui/NpcConfigUi.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/storage/listener/ChestInteractListener.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/command/PlotInfoCommand.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/action/OpenTraderSelectionAction.java
@@ -60,6 +62,7 @@
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/action/RemoveTraderFromSlotAction.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/action/SetPriceAction.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/slot/SlottedPlot.java
+/home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/action/npc/ConfigureNpcAction.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/storage/command/StorageSetReceiverCommand.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/action/OpenStorageUiAction.java
 /home/jonas/git/fs-core-sample-dump/module-plots/src/main/java/de/fallenstar/plot/action/ViewAvailableGoodsAction.java
