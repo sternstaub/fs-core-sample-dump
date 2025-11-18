@@ -54,15 +54,6 @@ public abstract class LargeChestUi extends BaseUi implements Listener {
         Inventory currentInventory = player.getOpenInventory().getTopInventory();
         boolean isRebuild = activeUIs.get(player.getUniqueId()) == this;
 
-        // DEBUG
-        if (getPlugin() != null) {
-            getPlugin().getLogger().info("[DEBUG] LargeChestUi.open() - Klasse: " + this.getClass().getSimpleName());
-            getPlugin().getLogger().info("[DEBUG] isRebuild: " + isRebuild);
-            getPlugin().getLogger().info("[DEBUG] clickHandlers.size(): " + clickHandlers.size());
-        } else {
-            System.out.println("[DEBUG] LargeChestUi.open() - getPlugin() ist NULL!");
-        }
-
         // Deregistriere alte Listener NUR wenn es KEIN Rebuild ist
         // (beim Rebuild sind die Listener bereits registriert!)
         if (!isRebuild) {
@@ -72,7 +63,6 @@ public abstract class LargeChestUi extends BaseUi implements Listener {
         // Event-Listener registrieren (benötigt BaseUi.setPlugin() beim Server-Start!)
         if (!isRebuild && getPlugin() != null) {
             Bukkit.getPluginManager().registerEvents(this, getPlugin());
-            getPlugin().getLogger().info("[DEBUG] Event-Handler registriert für " + this.getClass().getSimpleName());
         }
 
         Inventory inventory;
@@ -130,21 +120,12 @@ public abstract class LargeChestUi extends BaseUi implements Listener {
             return;  // Nicht mein Inventory - ignorieren!
         }
 
-        // DEBUG
-        if (getPlugin() != null) {
-            getPlugin().getLogger().info("[DEBUG] onInventoryClick() FÜR KORREKTES INVENTORY!");
-            getPlugin().getLogger().info("[DEBUG] this.getClass(): " + this.getClass().getSimpleName());
-        }
-
         // IMMER canceln - verhindert Item-Bewegung
         event.setCancelled(true);
 
         // Click-Handler ausführen
         int slot = event.getRawSlot();
         if (slot >= 0 && slot < SIZE) {
-            if (getPlugin() != null) {
-                getPlugin().getLogger().info("[DEBUG] handleClick() für Slot " + slot);
-            }
             handleClick(player, slot);
         }
         // Clicks außerhalb des UI-Inventars (z.B. Spieler-Inventar) werden auch gecancelt!
