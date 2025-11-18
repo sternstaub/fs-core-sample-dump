@@ -38,11 +38,11 @@ mvn clean package
 
 | Modul | Status | Beschreibung |
 |-------|--------|--------------|
-| [Core](core/) | ✅ Abgeschlossen | Provider-Interfaces, NoOp-Implementierungen, UI-Framework (inkl. TradeUI) |
-| [FallenStar Plots](module-plots/) | ✅ Abgeschlossen | Plot-System + Storage + Slot-System + TownyPlotProvider |
+| [Core](core/) | ✅ Abgeschlossen | Provider-Interfaces, NoOp-Implementierungen, UI-Framework, Interaction System, Distributor Pattern |
+| [FallenStar Plots](module-plots/) | ✅ Abgeschlossen | Plot-System + Storage + Slot-System + TradeguildPlot + DataStore-Persistenz |
 | [FallenStar Items](module-items/) | ✅ Abgeschlossen | Vanilla Currency Items + Optional MMOItems |
 | [FallenStar Economy](module-economy/) | ✅ Abgeschlossen | Weltwirtschaft + VaultEconomyProvider + Währungssystem + TradeSet-System |
-| [FallenStar NPCs](module-npcs/) | 🔨 In Arbeit | NPC-System + CitizensNPCProvider + Händler-NPCs (GuildTrader, PlayerTrader) |
+| [FallenStar NPCs](module-npcs/) | ✅ Abgeschlossen | NPC-System + CitizensNPCProvider + GuildTraderNpcEntity (DistributableNpc + QuestContainer) |
 
 ---
 
@@ -72,7 +72,29 @@ mvn clean package
 - ✅ UIRegistry für zentrale UI-Verwaltung
 - ✅ Guest/Owner View Pattern für Plot-UIs
 - ✅ TradeUI (Vanilla Merchant Interface)
+- ✅ GenericInteractionMenuUi (Self-Constructing UIs aus UiActionInfo)
 - ✅ Testbefehle: `/fscore admin gui <ui-id>`
+
+**Interaction System:**
+- ✅ Interactable Interface (Click-Handler für Entities/Plots)
+- ✅ UiTarget Interface (Self-Constructing UIs)
+- ✅ InteractionRegistry + InteractionHandler (Event-Routing)
+- ✅ Click-to-UI: Spieler klickt → UI öffnet automatisch
+- ✅ Kontextabhängige Aktionen (Owner/Guest, Permissions)
+
+**Distributor Pattern:**
+- ✅ Distributor<T> + Distributable (Generisches Verteilungssystem)
+- ✅ NpcDistributor (Automatische NPC-Slot-Zuweisung)
+- ✅ QuestDistributor (Automatische Quest-NPC-Zuweisung)
+- ✅ TradeguildPlot implements NpcDistributor + QuestDistributor
+- ✅ DistributableNpc + QuestContainer Traits
+
+**DataStore-Persistenz:**
+- ✅ DataStore-Interface (SQLite/MySQL-Backend)
+- ✅ Async + Sync Save/Load
+- ✅ TradeguildPlotData (Serialisierbares POJO)
+- ✅ Lazy Loading (Auto-Load beim ersten Zugriff)
+- ✅ Auto-Save beim Server-Shutdown
 
 **Economy-System:**
 - ✅ Währungssystem (Basiswährung "Sterne")
