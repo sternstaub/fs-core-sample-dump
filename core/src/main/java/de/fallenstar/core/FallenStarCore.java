@@ -162,7 +162,7 @@ public class FallenStarCore extends JavaPlugin {
      */
     private void registerTestUIs() {
         // ConfirmationUI registrieren
-        uiRegistry.registerTestUI(
+        uiRegistry.registerUI(
                 "confirm",
                 "Bestätigungs-Dialog (Ja/Nein)",
                 "Generisches Ja/Nein Confirmation UI",
@@ -176,7 +176,7 @@ public class FallenStarCore extends JavaPlugin {
         getLogger().info("✓ ConfirmationUI registered (ID: confirm)");
 
         // SimpleTradeUI registrieren
-        uiRegistry.registerTestUI(
+        uiRegistry.registerUI(
                 "trade",
                 "Händler-Demo (Vanilla Items)",
                 "Test-Händler mit Vanilla Merchant-Interface",

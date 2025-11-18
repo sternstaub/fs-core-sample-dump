@@ -315,12 +315,11 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
      */
     private void openHandelsgildeUI(Player player, de.fallenstar.core.provider.Plot plot, boolean isOwner) {
         try {
-            // Öffne HandelsgildeUI (mit Guest/Owner View)
-            de.fallenstar.plot.ui.HandelsgildeUI ui = new de.fallenstar.plot.ui.HandelsgildeUI(
-                    plugin,
-                    providers,
-                    priceCommand,
+            // Öffne HandelsgildeUi (Type-Safe, mit Guest/Owner View)
+            de.fallenstar.plot.ui.HandelsgildeUi ui = new de.fallenstar.plot.ui.HandelsgildeUi(
                     plot,
+                    plugin.getStorageProvider(),
+                    plugin.getStorageManager(),
                     isOwner
             );
 
@@ -351,13 +350,14 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
             de.fallenstar.plot.slot.PlotSlotManager slotManager = plugin.getPlotSlotManager();
             de.fallenstar.plot.slot.MarketPlot marketPlot = slotManager.getOrCreateMarketPlot(plot);
 
-            // Öffne MarketPlotUI
-            de.fallenstar.plot.ui.MarketPlotUI ui = new de.fallenstar.plot.ui.MarketPlotUI(
+            // Öffne MarketPlotUi (Type-Safe)
+            de.fallenstar.plot.ui.MarketPlotUi ui = new de.fallenstar.plot.ui.MarketPlotUi(
                     plugin,
-                    providers,
-                    slotManager,
                     plot,
                     marketPlot,
+                    slotManager,
+                    plugin.getStorageProvider(),
+                    plugin.getStorageManager(),
                     isOwner
             );
 

@@ -42,7 +42,7 @@ import java.util.List;
  * @author FallenStar
  * @version 1.0
  */
-public class SlotManagementUI extends LargeChestUI {
+class SlotManagementUI extends LargeChestUI {
 
     private final PlotModule plotModule;
     private final SlottedPlot plot;
@@ -86,7 +86,7 @@ public class SlotManagementUI extends LargeChestUI {
                 List.of("§7Zurück zum Hauptmenü")
         );
         setItem(0, backButton, player -> {
-            // TODO: Öffne HandelsgildeUI
+            // TODO: Öffne HandelsgildeUi
             player.closeInventory();
         });
 

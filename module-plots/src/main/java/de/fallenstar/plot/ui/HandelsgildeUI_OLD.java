@@ -46,7 +46,7 @@ import java.util.List;
  * @author FallenStar
  * @version 1.0
  */
-public class HandelsgildeUI extends SmallChestUI {
+class HandelsgildeUI extends SmallChestUI {
 
     private final Plugin plugin;
     private final ProviderRegistry providers;

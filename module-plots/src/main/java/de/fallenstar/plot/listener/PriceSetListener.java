@@ -4,7 +4,7 @@ import de.fallenstar.core.provider.UIProvider;
 import de.fallenstar.core.registry.ProviderRegistry;
 import de.fallenstar.plot.command.PlotPriceCommand;
 import de.fallenstar.plot.gui.PriceEditorContext;
-import de.fallenstar.ui.ui.PriceEditorUI;
+// import de.fallenstar.ui.ui.PriceEditorUI;  // TODO: Migriere PriceEditorUI zu Type-Safe
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -111,6 +111,14 @@ public class PriceSetListener implements Listener {
             return;
         }
 
+        // TODO: Migriere PriceEditorUI zu Type-Safe UI-System
+        // Placeholder bis PriceEditorUI migriert ist
+        player.sendMessage("§c§lPreis-Editor noch nicht migriert!");
+        player.sendMessage("§7PriceEditorUI wird in nächster Migration-Phase umgesetzt");
+        player.sendMessage("§7Item: " + getItemDisplayName(item));
+        player.sendMessage("§7Aktueller Preis: " + initialPrice + " Sterne");
+
+        /*
         // Erstelle Callback-Implementierung
         PriceEditorUI.PriceCallback callback = new PriceEditorUI.PriceCallback() {
             @Override
@@ -174,6 +182,7 @@ public class PriceSetListener implements Listener {
         player.sendMessage("§a§lPreis-Editor geöffnet!");
         player.sendMessage("§7Item: §e" + getItemDisplayName(item));
         player.sendMessage("§7Ursprünglicher Preis: §e" + initialPrice + " Sterne");
+        */
     }
 
     /**

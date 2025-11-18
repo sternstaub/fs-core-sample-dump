@@ -41,7 +41,7 @@ import java.util.List;
  * @author FallenStar
  * @version 1.0
  */
-public class MarketPlotUI extends SmallChestUI {
+class MarketPlotUI extends SmallChestUI {
 
     private final Plugin plugin;
     private final ProviderRegistry providers;
@@ -372,7 +372,7 @@ public class MarketPlotUI extends SmallChestUI {
     }
 
     /**
-     * Öffnet die PlotStorageUI für den Spieler.
+     * Öffnet die PlotStorageUi für den Spieler.
      *
      * @param player Der Spieler
      */
@@ -392,8 +392,8 @@ public class MarketPlotUI extends SmallChestUI {
         // Hole PlotStorage für aktuellen Plot
         de.fallenstar.plot.storage.model.PlotStorage plotStorage = storageProvider.getPlotStorage(plot);
 
-        // Öffne PlotStorageUI
-        PlotStorageUI storageUI = new PlotStorageUI(
+        // Öffne PlotStorageUi
+        PlotStorageUi storageUI = new PlotStorageUi(
                 plot,
                 plotStorage,
                 storageProvider,
