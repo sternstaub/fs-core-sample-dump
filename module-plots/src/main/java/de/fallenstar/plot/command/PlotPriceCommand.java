@@ -244,17 +244,35 @@ public class PlotPriceCommand {
                 // Zeige Preise an
                 for (Material material : sortedMaterials) {
                     try {
-                        // Hole Sell-Preis (Spieler kauft von Gilde)
+                        // Hole Ankaufs- und Verkaufspreis
+                        Optional<BigDecimal> buyPriceOpt = economyProvider.getBuyPrice(material);
                         Optional<BigDecimal> sellPriceOpt = economyProvider.getSellPrice(material);
 
-                        if (sellPriceOpt.isPresent()) {
-                            BigDecimal sellPrice = sellPriceOpt.get();
-
+                        // Nur anzeigen wenn mindestens ein Preis gesetzt ist
+                        if (buyPriceOpt.isPresent() || sellPriceOpt.isPresent()) {
                             // Formatiere Material-Name schöner
                             String materialName = material.name().replace("_", " ").toLowerCase();
                             materialName = capitalizeWords(materialName);
 
-                            player.sendMessage("§e  " + materialName + " §7- §6" + sellPrice + " Sterne");
+                            player.sendMessage("§e  " + materialName);
+
+                            // Ankaufspreis (was der Händler vom Spieler kauft)
+                            if (buyPriceOpt.isPresent()) {
+                                BigDecimal buyPrice = buyPriceOpt.get();
+                                player.sendMessage("§7    Ankauf: §a" + buyPrice + " Sterne §7(Händler kauft)");
+                            } else {
+                                player.sendMessage("§7    Ankauf: §8-§7 (nicht gesetzt)");
+                            }
+
+                            // Verkaufspreis (was der Händler an den Spieler verkauft)
+                            if (sellPriceOpt.isPresent()) {
+                                BigDecimal sellPrice = sellPriceOpt.get();
+                                player.sendMessage("§7    Verkauf: §6" + sellPrice + " Sterne §7(Spieler kauft)");
+                            } else {
+                                player.sendMessage("§7    Verkauf: §8-§7 (nicht gesetzt)");
+                            }
+
+                            player.sendMessage(""); // Leerzeile zwischen Items
                         }
                     } catch (Exception e) {
                         player.sendMessage("§c  Fehler beim Lesen eines Preises: " + e.getMessage());
