@@ -39,6 +39,7 @@ public class VaultEconomyProvider implements EconomyProvider {
     private Economy vaultEconomy;
     private boolean available;
     private ItemBasePriceProvider priceProvider; // Setter-injected
+    private de.fallenstar.economy.EconomyModule plugin; // Setter-injected (für Config-Speicherung)
 
     /**
      * Konstruktor für VaultEconomyProvider.
@@ -58,6 +59,16 @@ public class VaultEconomyProvider implements EconomyProvider {
     public void setPriceProvider(ItemBasePriceProvider priceProvider) {
         this.priceProvider = priceProvider;
         logger.fine("ItemBasePriceProvider injected into VaultEconomyProvider");
+    }
+
+    /**
+     * Setzt das Plugin (Setter-Injection für Config-Speicherung).
+     *
+     * @param plugin EconomyModule-Instanz
+     */
+    public void setPlugin(de.fallenstar.economy.EconomyModule plugin) {
+        this.plugin = plugin;
+        logger.fine("EconomyModule injected into VaultEconomyProvider");
     }
 
     /**
@@ -320,6 +331,15 @@ public class VaultEconomyProvider implements EconomyProvider {
 
         // Delegiere an ItemBasePriceProvider
         priceProvider.registerVanillaPrice(material, buyPrice, sellPrice);
+
+        // Speichere Config automatisch (eliminiert Reflection in PlotPriceCommand!)
+        if (plugin != null) {
+            plugin.saveConfiguration();
+            logger.fine("Config automatisch nach setItemPrice() gespeichert");
+        } else {
+            logger.warning("Plugin nicht verfügbar - Config nicht gespeichert!");
+        }
+
         return true;
     }
 

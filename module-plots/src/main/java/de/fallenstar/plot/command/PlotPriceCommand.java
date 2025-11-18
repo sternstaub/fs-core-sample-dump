@@ -620,18 +620,8 @@ public class PlotPriceCommand {
                 return false;
             }
 
-            // TODO: Config-Speicherung sollte automatisch in economyProvider.setItemPrice() erfolgen!
-            // Für jetzt verwenden wir noch Reflection für saveConfiguration()
-            var plugin = Bukkit.getPluginManager().getPlugin("FallenStar-Economy");
-            if (plugin != null) {
-                try {
-                    var saveConfigMethod = plugin.getClass().getMethod("saveConfiguration");
-                    saveConfigMethod.invoke(plugin);
-                } catch (Exception e) {
-                    logger.warning("Fehler beim Speichern der Config: " + e.getMessage());
-                    // Nicht kritisch - Preis ist bereits gesetzt
-                }
-            }
+            // Config-Speicherung erfolgt automatisch in economyProvider.setItemPrice()!
+            // Kein Reflection mehr nötig - VaultEconomyProvider hat Plugin-Injection
 
             return true;
 
