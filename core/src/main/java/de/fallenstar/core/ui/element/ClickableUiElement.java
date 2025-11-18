@@ -9,13 +9,12 @@ import java.util.Objects;
  *
  * **Type-Safety Pattern:**
  * - Generic &lt;T extends UiAction&gt; erzwingt, dass jedes klickbare Element eine Action hat
- * - Sealed class erzwingt, dass nur definierte Subtypen existieren können
  * - final field `action` verhindert nachträgliche Änderungen
  *
  * **Compiler-Garantien:**
  * - Kein ClickableUiElement ohne Action (Constructor erzwingt non-null)
  * - Action-Typ ist zur Compile-Time bekannt
- * - Alle Subtypen sind bekannt (sealed permits)
+ * - Type-Safety durch Generics
  *
  * Implementierungen:
  * - NavigateLeftButton extends ClickableUiElement&lt;PageNavigationAction&gt;
@@ -28,12 +27,8 @@ import java.util.Objects;
  * @author FallenStar
  * @version 2.0
  */
-public abstract sealed class ClickableUiElement<T extends UiAction>
-        implements UiElement
-        permits ClickableUiElement.CustomButton,
-                de.fallenstar.core.ui.element.navigation.NavigateLeftButton,
-                de.fallenstar.core.ui.element.navigation.NavigateRightButton,
-                de.fallenstar.core.ui.element.navigation.CloseButton {
+public abstract class ClickableUiElement<T extends UiAction>
+        implements UiElement {
 
     /**
      * Die Action die beim Click ausgeführt wird.
