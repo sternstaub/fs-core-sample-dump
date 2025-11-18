@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: de.fallenstar.core.registry.ProviderRegistryTest
 -------------------------------------------------------------------------------
-Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.995 s -- in de.fallenstar.core.registry.ProviderRegistryTest
+Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.042 s -- in de.fallenstar.core.registry.ProviderRegistryTest
