@@ -350,13 +350,14 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
             de.fallenstar.plot.slot.PlotSlotManager slotManager = plugin.getPlotSlotManager();
             de.fallenstar.plot.slot.MarketPlot marketPlot = slotManager.getOrCreateMarketPlot(plot);
 
-            // Öffne MarketPlotUI
-            de.fallenstar.plot.ui.MarketPlotUI ui = new de.fallenstar.plot.ui.MarketPlotUI(
+            // Öffne MarketPlotUi (Type-Safe)
+            de.fallenstar.plot.ui.MarketPlotUi ui = new de.fallenstar.plot.ui.MarketPlotUi(
                     plugin,
-                    providers,
-                    slotManager,
                     plot,
                     marketPlot,
+                    slotManager,
+                    plugin.getStorageProvider(),
+                    plugin.getStorageManager(),
                     isOwner
             );
 
