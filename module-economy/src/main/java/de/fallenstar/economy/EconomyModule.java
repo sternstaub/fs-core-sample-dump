@@ -9,7 +9,6 @@ import de.fallenstar.economy.manager.CurrencyManager;
 import de.fallenstar.economy.model.CurrencyItemSet;
 import de.fallenstar.economy.pricing.ItemBasePriceProvider;
 import de.fallenstar.economy.provider.VaultEconomyProvider;
-import de.fallenstar.items.manager.SpecialItemManager;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
