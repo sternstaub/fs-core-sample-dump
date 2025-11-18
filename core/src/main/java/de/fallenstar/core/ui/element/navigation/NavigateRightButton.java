@@ -14,7 +14,7 @@ import java.util.List;
  * - Extends ClickableUiElement&lt;PageNavigationAction&gt;
  * - Compiler erzwingt: Action MUSS vom Typ PageNavigationAction sein
  *
- * Standard-Slot-Position: 26 (untere rechte Ecke, SmallChestUI)
+ * Standard-Slot-Position: 26 (untere rechte Ecke, SmallChestUi)
  *
  * Verwendung:
  * ```java

@@ -1,6 +1,6 @@
 package de.fallenstar.core.ui.container;
 
-import de.fallenstar.core.ui.SmallChestUI;
+import de.fallenstar.core.ui.SmallChestUi;
 import de.fallenstar.core.ui.UiParent;
 import de.fallenstar.core.ui.element.ClickableUiElement;
 import de.fallenstar.core.ui.element.UiElement;
@@ -32,7 +32,7 @@ import java.util.List;
  * @author FallenStar
  * @version 2.0
  */
-public abstract class GenericUiSmallChest extends SmallChestUI implements UiParent {
+public abstract class GenericUiSmallChest extends SmallChestUi implements UiParent {
 
     /**
      * Anzahl der Rows in einem SmallChest (3 Zeilen).
@@ -106,14 +106,14 @@ public abstract class GenericUiSmallChest extends SmallChestUI implements UiPare
     }
 
     /**
-     * Baut das UI auf - konvertiert Rows → BaseUI Items.
+     * Baut das UI auf - konvertiert Rows → BaseUi Items.
      *
      * MUSS vor open() aufgerufen werden!
      */
     protected void build() {
         clearItems(); // Lösche alte Items
 
-        // Konvertiere alle Rows zu BaseUI Items
+        // Konvertiere alle Rows zu BaseUi Items
         for (int rowIndex = 0; rowIndex < ROW_COUNT; rowIndex++) {
             BasicUiRow row = rows.get(rowIndex);
             if (row == null) {
@@ -127,7 +127,7 @@ public abstract class GenericUiSmallChest extends SmallChestUI implements UiPare
                 row.getElement(currentPos).ifPresent(uiElement -> {
                     int slot = currentRow * BasicUiRow.DEFAULT_ROW_SIZE + currentPos;
 
-                    // Setze Item in BaseUI
+                    // Setze Item in BaseUi
                     setItem(slot, uiElement.getItemStack());
 
                     // Wenn klickbar: Setze Click-Handler

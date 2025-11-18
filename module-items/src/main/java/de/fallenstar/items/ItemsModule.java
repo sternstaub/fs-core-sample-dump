@@ -6,8 +6,8 @@ import de.fallenstar.core.registry.UIRegistry;
 import de.fallenstar.items.command.ItemsCommand;
 import de.fallenstar.items.manager.SpecialItemManager;
 import de.fallenstar.items.provider.MMOItemsItemProvider;
-import de.fallenstar.items.ui.ItemBrowserUI;
-import de.fallenstar.items.ui.TestTradeUI;
+import de.fallenstar.items.ui.ItemBrowserUi;
+import de.fallenstar.items.ui.TestTradeUi;
 import org.bukkit.Material;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -129,27 +129,27 @@ public class ItemsModule extends JavaPlugin implements Listener {
         // Nur MMOItems-basierte UIs registrieren wenn MMOItems verfügbar
         if (mmoItemsAvailable && itemProvider != null) {
             // Erstelle Singleton-Listener-Instanzen für Event-Handling
-            ItemBrowserUI browserListener = new ItemBrowserUI(itemProvider);
-            TestTradeUI tradeListener = new TestTradeUI(this, itemProvider, specialItemManager);
+            ItemBrowserUi browserListener = new ItemBrowserUi(itemProvider);
+            TestTradeUi tradeListener = new TestTradeUi(this, itemProvider, specialItemManager);
 
             // Registriere als Event-Listener
             getServer().getPluginManager().registerEvents(browserListener, this);
             getServer().getPluginManager().registerEvents(tradeListener, this);
 
-            // ItemBrowserUI registrieren
+            // ItemBrowserUi registrieren
             uiRegistry.registerUI(
                     "items-browser",
                     "Item Browser",
                     "Durchstöbere alle Custom-Items nach Kategorien",
-                    () -> new ItemBrowserUI(itemProvider)
+                    () -> new ItemBrowserUi(itemProvider)
             );
 
-            // TestTradeUI registrieren (mit MMOItems)
+            // TestTradeUi registrieren (mit MMOItems)
             uiRegistry.registerUI(
                     "items-trade-test",
                     "Trade Test UI (MMOItems)",
                     "Demo-Händler mit Custom-Items und Münz-System",
-                    () -> new TestTradeUI(this, itemProvider, specialItemManager)
+                    () -> new TestTradeUi(this, itemProvider, specialItemManager)
             );
 
             getLogger().info("✓ Test-UIs registered (items-browser, items-trade-test)");

@@ -8,18 +8,19 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.Plugin;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 /**
- * Large Chest UI - 54 Slots (6 Zeilen).
+ * Small Chest UI - 27 Slots (3 Zeilen).
  *
  * Verwendet für:
- * - Große Menüs mit vielen Optionen
- * - Item-Übersichten
- * - Händler-Interfaces (MarketTraderUI)
+ * - Einfache Menüs
+ * - Auswahl-Dialoge
+ * - Ambassador UI (Botschafts-Grundstücke)
  *
  * Items können als anklickbare Buttons mit Handler-Funktionen
  * konfiguriert werden. Die Handler können auf Provider-Funktionen
@@ -28,17 +29,17 @@ import java.util.UUID;
  * @author FallenStar
  * @version 1.0
  */
-public abstract class LargeChestUI extends BaseUI implements Listener {
+public abstract class SmallChestUi extends BaseUi implements Listener {
 
-    public static final int SIZE = 54; // 6 Zeilen
-    protected static final Map<UUID, LargeChestUI> activeUIs = new HashMap<>();
+    public static final int SIZE = 27; // 3 Zeilen
+    protected static final Map<UUID, SmallChestUi> activeUIs = new HashMap<>();
 
     /**
-     * Konstruktor für LargeChestUI.
+     * Konstruktor für SmallChestUi.
      *
      * @param title Titel des Chest-UI
      */
-    public LargeChestUI(String title) {
+    public SmallChestUi(String title) {
         super(title);
     }
 
@@ -48,7 +49,7 @@ public abstract class LargeChestUI extends BaseUI implements Listener {
         // (verhindert mehrfache Listener bei rebuild())
         org.bukkit.event.HandlerList.unregisterAll(this);
 
-        // Event-Listener registrieren (benötigt BaseUI.setPlugin() beim Server-Start!)
+        // Event-Listener registrieren (benötigt BaseUi.setPlugin() beim Server-Start!)
         if (getPlugin() != null) {
             Bukkit.getPluginManager().registerEvents(this, getPlugin());
         }
@@ -69,6 +70,29 @@ public abstract class LargeChestUI extends BaseUI implements Listener {
         player.openInventory(inventory);
     }
 
+    /**
+     * Aktualisiert das Inventory ohne es zu schließen.
+     * Verwendet wenn sich Items ändern aber das UI geöffnet bleiben soll.
+     *
+     * @param player Der Spieler
+     */
+    public void refresh(Player player) {
+        Inventory inventory = player.getOpenInventory().getTopInventory();
+        if (inventory.getSize() != SIZE) {
+            return; // Falsches Inventory
+        }
+
+        // Items aktualisieren
+        for (Map.Entry<Integer, ItemStack> entry : items.entrySet()) {
+            if (entry.getKey() >= 0 && entry.getKey() < SIZE) {
+                inventory.setItem(entry.getKey(), entry.getValue());
+            }
+        }
+
+        // Spieler-Inventory updaten (für visuelle Aktualisierung)
+        player.updateInventory();
+    }
+
     @Override
     public void close(Player player) {
         player.closeInventory();
@@ -87,7 +111,7 @@ public abstract class LargeChestUI extends BaseUI implements Listener {
             return;
         }
 
-        LargeChestUI ui = activeUIs.get(player.getUniqueId());
+        SmallChestUi ui = activeUIs.get(player.getUniqueId());
         if (ui == null) {
             return;  // Kein aktives UI für diesen Spieler
         }
@@ -112,7 +136,7 @@ public abstract class LargeChestUI extends BaseUI implements Listener {
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
         if (event.getPlayer() instanceof Player player) {
-            LargeChestUI ui = activeUIs.get(player.getUniqueId());
+            SmallChestUi ui = activeUIs.get(player.getUniqueId());
             if (ui == this) {
                 activeUIs.remove(player.getUniqueId());
 
@@ -126,9 +150,9 @@ public abstract class LargeChestUI extends BaseUI implements Listener {
      * Gibt die aktive UI für einen Spieler zurück.
      *
      * @param player Spieler
-     * @return Aktive LargeChestUI oder null
+     * @return Aktive SmallChestUi oder null
      */
-    public static LargeChestUI getActiveUI(Player player) {
+    public static SmallChestUi getActiveUI(Player player) {
         return activeUIs.get(player.getUniqueId());
     }
 }

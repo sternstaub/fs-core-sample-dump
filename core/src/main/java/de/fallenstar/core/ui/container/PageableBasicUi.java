@@ -120,7 +120,7 @@ public class PageableBasicUi extends BasicUi implements PageNavigationAction.Pag
         // Setup Navigation
         setupNavigation();
 
-        // Baue BaseUI auf
+        // Baue BaseUi auf
         super.build();
     }
 

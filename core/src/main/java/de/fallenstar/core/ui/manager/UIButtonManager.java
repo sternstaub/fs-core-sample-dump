@@ -22,7 +22,7 @@ import java.util.Optional;
  * - Info (Buch)
  * - Navigation (Pfeile)
  *
- * Diese Items werden in konkreten UIs verwendet (ConfirmationUI, etc.).
+ * Diese Items werden in konkreten UIs verwendet (ConfirmationUi, etc.).
  *
  * @author FallenStar
  * @version 1.0

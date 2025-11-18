@@ -23,17 +23,17 @@ import java.util.function.Consumer;
  * @author FallenStar
  * @version 1.0
  */
-public abstract class AnvilUI extends BaseUI {
+public abstract class AnvilUi extends BaseUi {
 
     protected ItemStack inputItem;
     protected Consumer<String> inputHandler;
 
     /**
-     * Konstruktor für AnvilUI.
+     * Konstruktor für AnvilUi.
      *
      * @param title Titel des Anvil-UI
      */
-    public AnvilUI(String title) {
+    public AnvilUi(String title) {
         super(title);
     }
 

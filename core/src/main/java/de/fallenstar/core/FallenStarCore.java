@@ -10,9 +10,9 @@ import de.fallenstar.core.registry.AdminCommandRegistry;
 import de.fallenstar.core.registry.PlotTypeRegistry;
 import de.fallenstar.core.registry.ProviderRegistry;
 import de.fallenstar.core.registry.UIRegistry;
-import de.fallenstar.core.ui.BaseUI;
-import de.fallenstar.core.ui.ConfirmationUI;
-import de.fallenstar.core.ui.SimpleTradeUI;
+import de.fallenstar.core.ui.BaseUi;
+import de.fallenstar.core.ui.ConfirmationUi;
+import de.fallenstar.core.ui.SimpleTradeUi;
 import de.fallenstar.core.ui.manager.UIButtonManager;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -54,7 +54,7 @@ public class FallenStarCore extends JavaPlugin {
         saveDefaultConfig();
 
         // UI-Framework initialisieren (Plugin-Instanz setzen)
-        BaseUI.setPlugin(this);
+        BaseUi.setPlugin(this);
         getLogger().info("✓ UI-Framework initialized");
 
         // DataStore initialisieren
@@ -161,28 +161,28 @@ public class FallenStarCore extends JavaPlugin {
      * Diese UIs sind für Testzwecke und Demos verfügbar.
      */
     private void registerTestUIs() {
-        // ConfirmationUI registrieren
+        // ConfirmationUi registrieren
         uiRegistry.registerUI(
                 "confirm",
                 "Bestätigungs-Dialog (Ja/Nein)",
                 "Generisches Ja/Nein Confirmation UI",
-                () -> ConfirmationUI.createSimple(
+                () -> ConfirmationUi.createSimple(
                         this,
                         uiButtonManager,
                         "Bist du sicher?",
                         player -> player.sendMessage("§a✓ Bestätigt!")
                 )
         );
-        getLogger().info("✓ ConfirmationUI registered (ID: confirm)");
+        getLogger().info("✓ ConfirmationUi registered (ID: confirm)");
 
-        // SimpleTradeUI registrieren
+        // SimpleTradeUi registrieren
         uiRegistry.registerUI(
                 "trade",
                 "Händler-Demo (Vanilla Items)",
                 "Test-Händler mit Vanilla Merchant-Interface",
-                () -> new SimpleTradeUI(uiButtonManager)
+                () -> new SimpleTradeUi(uiButtonManager)
         );
-        getLogger().info("✓ SimpleTradeUI registered (ID: trade)");
+        getLogger().info("✓ SimpleTradeUi registered (ID: trade)");
 
         getLogger().info("Alle Test-UIs registriert!");
         getLogger().info("Verwende: /fscore admin gui list");

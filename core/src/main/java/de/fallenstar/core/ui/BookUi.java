@@ -23,16 +23,16 @@ import java.util.List;
  * @author FallenStar
  * @version 1.0
  */
-public abstract class BookUI extends BaseUI {
+public abstract class BookUi extends BaseUi {
 
     protected List<Component> pages;
 
     /**
-     * Konstruktor für BookUI.
+     * Konstruktor für BookUi.
      *
      * @param title Titel des Buchs
      */
-    public BookUI(String title) {
+    public BookUi(String title) {
         super(title);
         this.pages = new ArrayList<>();
     }

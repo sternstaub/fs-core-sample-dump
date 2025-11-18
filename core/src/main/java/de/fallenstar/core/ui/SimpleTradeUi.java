@@ -37,16 +37,16 @@ import java.util.List;
  * @author FallenStar
  * @version 2.0 (Vanilla Merchant Interface)
  */
-public class SimpleTradeUI extends BaseUI {
+public class SimpleTradeUi extends BaseUi {
 
     private final UIButtonManager buttonManager;
 
     /**
-     * Konstruktor für SimpleTradeUI.
+     * Konstruktor für SimpleTradeUi.
      *
      * @param buttonManager UIButtonManager-Instanz (für zukünftige Erweiterungen)
      */
-    public SimpleTradeUI(UIButtonManager buttonManager) {
+    public SimpleTradeUi(UIButtonManager buttonManager) {
         super("§6§lTest-Händler");
         this.buttonManager = buttonManager;
     }

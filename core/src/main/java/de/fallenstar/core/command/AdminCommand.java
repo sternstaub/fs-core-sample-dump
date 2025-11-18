@@ -2,7 +2,7 @@ package de.fallenstar.core.command;
 
 import de.fallenstar.core.FallenStarCore;
 import de.fallenstar.core.registry.UIRegistry;
-import de.fallenstar.core.ui.BaseUI;
+import de.fallenstar.core.ui.BaseUi;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -165,7 +165,7 @@ public class AdminCommand {
             return;
         }
 
-        BaseUI ui = registry.createTestUI(uiId);
+        BaseUi ui = registry.createTestUI(uiId);
 
         if (ui == null) {
             player.sendMessage(Component.text("Fehler beim Erstellen des Test-UI!", NamedTextColor.RED));

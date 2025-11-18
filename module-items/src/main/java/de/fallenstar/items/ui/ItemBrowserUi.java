@@ -1,6 +1,6 @@
 package de.fallenstar.items.ui;
 
-import de.fallenstar.core.ui.LargeChestUI;
+import de.fallenstar.core.ui.LargeChestUi;
 import de.fallenstar.items.provider.MMOItemsItemProvider;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -23,14 +23,14 @@ import java.util.List;
  * @author FallenStar
  * @version 1.0
  */
-public class ItemBrowserUI extends LargeChestUI {
+public class ItemBrowserUi extends LargeChestUi {
 
     private final MMOItemsItemProvider itemProvider;
     private String currentCategory = null;
     private int currentPage = 0;
     private static final int ITEMS_PER_PAGE = 45; // 5 Zeilen à 9 Slots
 
-    public ItemBrowserUI(MMOItemsItemProvider itemProvider) {
+    public ItemBrowserUi(MMOItemsItemProvider itemProvider) {
         super("§6Custom Items Browser");
         this.itemProvider = itemProvider;
     }
