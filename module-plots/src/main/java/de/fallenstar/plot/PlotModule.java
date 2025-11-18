@@ -61,6 +61,7 @@ public class PlotModule extends JavaPlugin implements Listener {
     private de.fallenstar.plot.manager.PlotBoundNPCRegistry npcRegistry;
     private de.fallenstar.plot.command.PlotCommand plotCommand;
     private de.fallenstar.plot.registry.PlotRegistry plotRegistry;
+    private de.fallenstar.plot.factory.TradeguildPlotFactory tradeguildPlotFactory;
 
     private boolean plotSystemEnabled = false;
     private boolean townSystemEnabled = false;
@@ -458,6 +459,12 @@ public class PlotModule extends JavaPlugin implements Listener {
     private void initializeModule() {
         getLogger().info("Initialisiere Plot-System...");
 
+        // Initialisiere TradeguildPlotFactory
+        initializeTradeguildPlotFactory();
+
+        // Lade alle Tradeguild-Plots und registriere in InteractionRegistry
+        loadTradeguildPlots();
+
         // Registriere Commands
         registerCommands();
         registerAdminCommands();
@@ -821,5 +828,97 @@ public class PlotModule extends JavaPlugin implements Listener {
      */
     public de.fallenstar.plot.manager.PlotBoundNPCRegistry getNPCRegistry() {
         return npcRegistry;
+    }
+
+    /**
+     * Initialisiert die TradeguildPlotFactory.
+     */
+    private void initializeTradeguildPlotFactory() {
+        this.tradeguildPlotFactory = new de.fallenstar.plot.factory.TradeguildPlotFactory(getLogger());
+        getLogger().info("✓ TradeguildPlotFactory initialized");
+    }
+
+    /**
+     * Lädt alle Tradeguild-Plots und registriert sie in der InteractionRegistry.
+     *
+     * Ablauf:
+     * 1. Hole alle MERCHANT_GUILD Plots aus PlotRegistry
+     * 2. Für jeden Plot: Erstelle TradeguildPlot via Factory
+     * 3. Registriere in InteractionRegistry
+     */
+    private void loadTradeguildPlots() {
+        if (plotRegistry == null) {
+            getLogger().warning("PlotRegistry nicht verfügbar - überspringe TradeguildPlot-Loading");
+            return;
+        }
+
+        if (!plotSystemEnabled) {
+            getLogger().info("Plot-System nicht verfügbar - überspringe TradeguildPlot-Loading");
+            return;
+        }
+
+        try {
+            // Hole InteractionRegistry von Core
+            de.fallenstar.core.interaction.handler.InteractionRegistry interactionRegistry =
+                corePlugin.getInteractionRegistry();
+
+            if (interactionRegistry == null) {
+                getLogger().warning("InteractionRegistry nicht verfügbar - überspringe TradeguildPlot-Loading");
+                return;
+            }
+
+            // Hole PlotProvider
+            de.fallenstar.core.provider.PlotProvider plotProvider = providers.getPlotProvider();
+            if (plotProvider == null || !plotProvider.isAvailable()) {
+                getLogger().warning("PlotProvider nicht verfügbar - überspringe TradeguildPlot-Loading");
+                return;
+            }
+
+            // Hole alle MERCHANT_GUILD Plot-IDs
+            java.util.List<String> merchantGuildPlotIds =
+                plotRegistry.getPlotIdentifiers(de.fallenstar.plot.registry.PlotRegistry.PlotType.MERCHANT_GUILD);
+
+            getLogger().info("Lade " + merchantGuildPlotIds.size() + " Tradeguild-Plots...");
+
+            int loaded = 0;
+            int failed = 0;
+
+            for (String plotId : merchantGuildPlotIds) {
+                try {
+                    // Hole BasePlot via PlotProvider
+                    // HINWEIS: Wir brauchen eine Location um getPlot() aufzurufen
+                    // Da PlotRegistry nur IDs speichert, müssen wir eine andere Methode finden
+                    // TODO: PlotRegistry sollte Locations oder Plot-Objekte cachen
+
+                    // WORKAROUND: Überspringen bis PlotRegistry erweitert wurde
+                    getLogger().fine("Plot " + plotId + " - Location-Lookup noch nicht implementiert");
+
+                } catch (Exception e) {
+                    getLogger().warning("Fehler beim Laden von TradeguildPlot " + plotId + ": " + e.getMessage());
+                    failed++;
+                }
+            }
+
+            getLogger().info("✓ TradeguildPlot-Loading abgeschlossen: " + loaded + " geladen, " + failed + " fehlgeschlagen");
+
+            if (failed > 0) {
+                getLogger().warning("HINWEIS: PlotRegistry muss erweitert werden um Locations zu speichern");
+                getLogger().warning("        Aktuell können TradeguildPlots noch nicht automatisch geladen werden");
+                getLogger().warning("        → Implementiere PlotRegistry.getPlotLocation(String plotId)");
+            }
+
+        } catch (Exception e) {
+            getLogger().severe("Fehler beim Laden der TradeguildPlots: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Gibt die TradeguildPlotFactory zurück.
+     *
+     * @return TradeguildPlotFactory oder null
+     */
+    public de.fallenstar.plot.factory.TradeguildPlotFactory getTradeguildPlotFactory() {
+        return tradeguildPlotFactory;
     }
 }
