@@ -1,0 +1,11 @@
+/home/jonas/git/fs-core-sample-dump/module-economy/src/main/java/de/fallenstar/economy/provider/VaultEconomyProvider.java
+/home/jonas/git/fs-core-sample-dump/module-economy/src/main/java/de/fallenstar/economy/model/BankAccount.java
+/home/jonas/git/fs-core-sample-dump/module-economy/src/main/java/de/fallenstar/economy/pricing/ItemBasePriceProvider.java
+/home/jonas/git/fs-core-sample-dump/module-economy/src/main/java/de/fallenstar/economy/model/ItemBasePrice.java
+/home/jonas/git/fs-core-sample-dump/module-economy/src/main/java/de/fallenstar/economy/model/TradeSet.java
+/home/jonas/git/fs-core-sample-dump/module-economy/src/main/java/de/fallenstar/economy/manager/BankAccountHandler.java
+/home/jonas/git/fs-core-sample-dump/module-economy/src/main/java/de/fallenstar/coin/CoinModule.java
+/home/jonas/git/fs-core-sample-dump/module-economy/src/main/java/de/fallenstar/economy/model/CurrencyItemSet.java
+/home/jonas/git/fs-core-sample-dump/module-economy/src/main/java/de/fallenstar/economy/EconomyModule.java
+/home/jonas/git/fs-core-sample-dump/module-economy/src/main/java/de/fallenstar/economy/manager/CurrencyManager.java
+/home/jonas/git/fs-core-sample-dump/module-economy/src/main/java/de/fallenstar/economy/command/EconomyAdminHandler.java

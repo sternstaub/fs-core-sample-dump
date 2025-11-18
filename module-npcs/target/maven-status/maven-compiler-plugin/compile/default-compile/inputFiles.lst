@@ -1,0 +1,8 @@
+/home/jonas/git/fs-core-sample-dump/module-npcs/src/main/java/de/fallenstar/npc/manager/NPCManager.java
+/home/jonas/git/fs-core-sample-dump/module-npcs/src/main/java/de/fallenstar/npc/command/NPCAdminHandler.java
+/home/jonas/git/fs-core-sample-dump/module-npcs/src/main/java/de/fallenstar/npc/provider/CitizensNPCProvider.java
+/home/jonas/git/fs-core-sample-dump/module-npcs/src/main/java/de/fallenstar/npc/npctype/AmbassadorNPC.java
+/home/jonas/git/fs-core-sample-dump/module-npcs/src/main/java/de/fallenstar/npc/NPCModule.java
+/home/jonas/git/fs-core-sample-dump/module-npcs/src/main/java/de/fallenstar/npc/npctype/NPCType.java
+/home/jonas/git/fs-core-sample-dump/module-npcs/src/main/java/de/fallenstar/npc/npctype/GuildTraderNPC.java
+/home/jonas/git/fs-core-sample-dump/module-npcs/src/main/java/de/fallenstar/npc/manager/GuildTraderManager.java

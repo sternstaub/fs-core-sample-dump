@@ -1,0 +1,46 @@
+# FallenStar Items Module Configuration
+
+# Currency items configuration
+currency:
+  # Material-Typen für Währungs-Tiers
+  # WICHTIG: Materialien müssen in Minecraft 1.21.1 verfügbar sein!
+  # Defaults:
+  #   Bronze: COPPER_INGOT (Kupferbarren)
+  #   Silver: IRON_INGOT (Eisenbarren)
+  #   Gold: GOLD_INGOT (Goldbarren)
+  #
+  # Alternative Materialien (Beispiele):
+  #   - COPPER_NUGGET (erst ab 1.21.9)
+  #   - IRON_NUGGET
+  #   - GOLD_NUGGET
+  #   - Oder beliebige andere Items
+  bronze-tier-material: COPPER_INGOT
+  silver-tier-material: IRON_INGOT
+  gold-tier-material: GOLD_INGOT
+
+  # Legacy-Config (wird nicht mehr verwendet)
+  bronze:
+    item-id: BRONZE_COIN
+    type: MATERIAL
+    value: 1
+  silver:
+    item-id: SILVER_COIN
+    type: MATERIAL
+    value: 10
+  gold:
+    item-id: GOLD_COIN
+    type: MATERIAL
+    value: 100
+
+# UI button items configuration
+ui-buttons:
+  next: UI_BUTTON_NEXT
+  back: UI_BUTTON_BACK
+  confirm: UI_BUTTON_CONFIRM
+  cancel: UI_BUTTON_CANCEL
+  info: UI_BUTTON_INFO
+
+# UI icons configuration
+ui-icons:
+  embassy: UI_ICON_EMBASSY
+  trader: UI_ICON_TRADER

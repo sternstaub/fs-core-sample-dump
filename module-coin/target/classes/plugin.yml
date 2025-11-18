@@ -1,0 +1,10 @@
+name: FallenStar-Coin
+version: 1.0-SNAPSHOT
+main: de.fallenstar.coin.CoinModule
+api-version: 1.21
+authors: [FallenStar]
+description: Coin management system (placeholder)
+
+# Abhängigkeiten
+depend: [FallenStar-Core]
+softdepend: [Vault]

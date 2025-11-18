@@ -3,12 +3,15 @@ package de.fallenstar.plot.npc.model;
 /**
  * Typen von NPCs die auf Plots gespawnt werden können.
  *
+ * Diese Enum wird für die **Persistierung** (Config/YAML) verwendet.
+ * Für polymorphe NPC-Implementierungen siehe {@link de.fallenstar.npc.npctype.NPCType}.
+ *
  * Jeder Typ hat unterschiedliche Funktionalität und Requirements.
  *
  * @author FallenStar
  * @version 1.0
  */
-public enum NPCType {
+public enum PlotNPCType {
 
     /**
      * Gildenhändler (NPC auf Handelsgilde-Plot).
@@ -68,7 +71,7 @@ public enum NPCType {
 
     private final String displayName;
 
-    NPCType(String displayName) {
+    PlotNPCType(String displayName) {
         this.displayName = displayName;
     }
 

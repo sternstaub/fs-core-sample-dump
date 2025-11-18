@@ -1,0 +1,9 @@
+de/fallenstar/items/command/ItemsCommand.class
+de/fallenstar/items/model/SpecialItemDefinition$ItemType.class
+de/fallenstar/items/manager/SpecialItemManager.class
+de/fallenstar/items/model/SpecialItemDefinition.class
+de/fallenstar/items/ui/TestTradeUi.class
+de/fallenstar/items/ItemsModule.class
+de/fallenstar/items/ui/ItemBrowserUi.class
+de/fallenstar/items/provider/MMOItemsItemProvider.class
+de/fallenstar/items/manager/SpecialItemManager$1.class

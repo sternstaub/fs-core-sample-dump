@@ -1,0 +1,21 @@
+name: FallenStar-Economy
+version: 1.0-SNAPSHOT
+main: de.fallenstar.economy.EconomyModule
+api-version: 1.21
+authors: [FallenStar]
+description: Weltwirtschaft, Währungen, Münzsystem mit Vault-Integration
+
+# Abhängigkeiten (Hard Dependencies)
+depend: [FallenStar-Core, Vault]
+
+# Optionale Dependencies (Soft Dependencies)
+# Items-Modul für Münz-Features (graceful degradation via NoOpItemProvider)
+softdepend: [FallenStar-Items]
+
+# Commands
+commands:
+  fseconomy:
+    description: Economy Admin-Befehle
+    usage: /fseconomy <subcommand>
+    permission: fallenstar.economy.admin
+    aliases: [fsecon, economy]

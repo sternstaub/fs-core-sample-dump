@@ -1,0 +1,10 @@
+name: FallenStar-NPCs
+version: 1.0-SNAPSHOT
+main: de.fallenstar.npc.NPCModule
+api-version: 1.21
+authors: [FallenStar]
+description: NPC management system with specialized NPCs
+
+# Abhängigkeiten
+depend: [FallenStar-Core]
+softdepend: [Towny, Citizens, Vault]

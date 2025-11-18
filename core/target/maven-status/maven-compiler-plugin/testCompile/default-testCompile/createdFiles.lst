@@ -1,0 +1,8 @@
+de/fallenstar/core/database/impl/SQLiteDataStoreTest.class
+de/fallenstar/core/provider/impl/NoOpEconomyProviderTest.class
+de/fallenstar/core/provider/impl/NoOpNPCProviderTest.class
+de/fallenstar/core/provider/impl/NoOpItemProviderTest.class
+de/fallenstar/core/provider/impl/NoOpChatProviderTest.class
+de/fallenstar/core/provider/impl/NoOpPlotProviderTest.class
+de/fallenstar/core/database/impl/SQLiteDataStoreTest$TestData.class
+de/fallenstar/core/registry/ProviderRegistryTest.class

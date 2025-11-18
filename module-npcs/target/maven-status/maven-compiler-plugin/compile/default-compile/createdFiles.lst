@@ -1,0 +1,9 @@
+de/fallenstar/npc/npctype/NPCType.class
+de/fallenstar/npc/command/NPCAdminHandler.class
+de/fallenstar/npc/npctype/GuildTraderNPC$GuildTraderInstance.class
+de/fallenstar/npc/NPCModule.class
+de/fallenstar/npc/npctype/AmbassadorNPC.class
+de/fallenstar/npc/provider/CitizensNPCProvider.class
+de/fallenstar/npc/manager/NPCManager.class
+de/fallenstar/npc/npctype/GuildTraderNPC.class
+de/fallenstar/npc/manager/GuildTraderManager.class

@@ -1,0 +1,48 @@
+name: FallenStar-Core
+version: 1.0
+main: de.fallenstar.core.FallenStarCore
+api-version: 1.21
+author: FallenStar
+description: Core plugin providing provider system and APIs for FallenStar modules
+website: https://fallenstar.de
+
+# Soft-Dependencies (optional, aber empfohlen)
+softdepend:
+  - Towny
+  - Vault
+  - Citizens
+  - MMOItems
+  - PlaceholderAPI
+
+# Load Priority - removed STARTUP to allow other plugins to load first
+# Default is POSTWORLD which ensures all plugins are loaded before provider detection
+
+# Permissions
+permissions:
+  fallenstar.admin:
+    description: Full admin access to FallenStar system
+    default: op
+    children:
+      fallenstar.core.reload: true
+      fallenstar.core.debug: true
+      fallenstar.core.admin: true
+
+  fallenstar.core.reload:
+    description: Reload core configuration
+    default: op
+
+  fallenstar.core.debug:
+    description: Enable debug mode
+    default: op
+
+  fallenstar.core.admin:
+    description: Access to admin commands (GUI testing, etc.)
+    default: op
+
+# Commands
+commands:
+  fscore:
+    description: FallenStar Core main command
+    usage: /fscore <status|reload|debug|admin|plotstorage|help>
+    permission: fallenstar.admin
+    aliases: [fallenstar, fs]

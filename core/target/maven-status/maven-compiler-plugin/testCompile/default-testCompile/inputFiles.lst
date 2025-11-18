@@ -1,0 +1,7 @@
+/home/jonas/git/fs-core-sample-dump/core/src/test/java/de/fallenstar/core/provider/impl/NoOpChatProviderTest.java
+/home/jonas/git/fs-core-sample-dump/core/src/test/java/de/fallenstar/core/provider/impl/NoOpPlotProviderTest.java
+/home/jonas/git/fs-core-sample-dump/core/src/test/java/de/fallenstar/core/provider/impl/NoOpItemProviderTest.java
+/home/jonas/git/fs-core-sample-dump/core/src/test/java/de/fallenstar/core/registry/ProviderRegistryTest.java
+/home/jonas/git/fs-core-sample-dump/core/src/test/java/de/fallenstar/core/provider/impl/NoOpNPCProviderTest.java
+/home/jonas/git/fs-core-sample-dump/core/src/test/java/de/fallenstar/core/provider/impl/NoOpEconomyProviderTest.java
+/home/jonas/git/fs-core-sample-dump/core/src/test/java/de/fallenstar/core/database/impl/SQLiteDataStoreTest.java
