@@ -112,7 +112,7 @@ A **modular Minecraft plugin system** for Paper 1.21.1 with provider-based archi
 
 - **Version:** 1.0-SNAPSHOT
 - **Phase:** Aktive Entwicklung
-- **Completion:** ~50% (Core ✅ + Plots ✅ + UI-Framework ✅ + Items ✅ + UI-Modul ✅ + Economy ✅)
+- **Completion:** ~50% (Core ✅ (mit UI-Funktionalität) + Plots ✅ + Items ✅ + Economy ✅)
 - **Aktueller Sprint:** Sprint 11-12 🔨 IN ARBEIT (Trading-System, PlotRegistry, Händler-Inventar, NPC-Reisesystem)
 - **Nächster Sprint:** Sprint 13-14 - NPCs (Citizens-Integration, NPC-Typen)
 - **Wichtige Architektur:** Provider-Implementierungen in Modulen, Core nur Interfaces!
@@ -121,7 +121,7 @@ A **modular Minecraft plugin system** for Paper 1.21.1 with provider-based archi
 - **UI-Framework:** ✅ Basis-Klassen implementiert (BaseUI, SmallChestUI, etc.)
 - **ItemProvider:** ✅ Interface erweitert, MMOItems 6.10+ Integration abgeschlossen
 - **Items-Modul:** ✅ Vollständig implementiert mit Reflection-basiertem MMOItems-Zugriff
-- **UI-Modul:** ✅ Abgeschlossen (ConfirmationUI, SimpleTradeUI, UIButtonManager)
+- **UI-Funktionalität:** ✅ Im Core integriert (UIButtonManager, ConfirmationUI, SimpleTradeUI in core/ui/)
 - **Economy-Modul:** ✅ Abgeschlossen (CurrencyManager, Basiswährung "Sterne", VaultEconomyProvider, Withdraw-Funktionalität)
 - **Testbefehle:** ✅ Neue Struktur unter `/fscore admin [gui/items/plots/economy]`
 - **Architektur-Refactoring:** ✅ Reflection-Eliminierung (AdminCommandRegistry, Handler-Pattern)
@@ -219,19 +219,6 @@ fs-core-sample-dump/
 │   │       └── TestTradeUI.java               # ✅ MMOItems Trading Demo
 │   └── src/main/resources/
 │       ├── plugin.yml                         # Dependency: FallenStar-Core, MMOItems
-│       └── config.yml
-│
-├── module-ui/                       # FallenStar UI (Sprint 7-8) 🔨
-│   ├── pom.xml                      # Konkrete UIs: ConfirmationUI, SimpleTradeUI
-│   ├── src/main/java/de/fallenstar/ui/
-│   │   ├── UIModule.java                      # Main class (ProvidersReadyEvent)
-│   │   ├── manager/                           # UI-Manager
-│   │   │   └── UIButtonManager.java           # ✅ UI-Button Items (Confirm, Cancel, Close)
-│   │   └── ui/                                # Konkrete UI-Implementierungen
-│   │       ├── ConfirmationUI.java            # ✅ Ja/Nein Dialog
-│   │       └── SimpleTradeUI.java             # ✅ Vanilla Trading Demo
-│   └── src/main/resources/
-│       ├── plugin.yml                         # Dependency: FallenStar-Core
 │       └── config.yml
 │
 ├── module-economy/                  # FallenStar Economy (Sprint 9-10)
