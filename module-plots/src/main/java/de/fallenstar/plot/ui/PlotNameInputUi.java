@@ -1,7 +1,7 @@
 package de.fallenstar.plot.ui;
 
 import de.fallenstar.core.provider.Plot;
-import de.fallenstar.plot.model.PlotNameManager;
+import de.fallenstar.plot.manager.PlotNameManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.entity.Player;
