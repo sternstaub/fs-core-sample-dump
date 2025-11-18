@@ -92,4 +92,36 @@ public class NoOpPlotStorageProvider implements PlotStorageProvider {
                 PROVIDER_NAME, "setInputChest", REASON
         );
     }
+
+    @Override
+    public int getAllChestsCount(Plot plot)
+            throws ProviderFunctionalityNotFoundException {
+        throw new ProviderFunctionalityNotFoundException(
+                PROVIDER_NAME, "getAllChestsCount", REASON
+        );
+    }
+
+    @Override
+    public long getLastUpdateTime(Plot plot)
+            throws ProviderFunctionalityNotFoundException {
+        throw new ProviderFunctionalityNotFoundException(
+                PROVIDER_NAME, "getLastUpdateTime", REASON
+        );
+    }
+
+    @Override
+    public boolean hasReceiverChest(Plot plot)
+            throws ProviderFunctionalityNotFoundException {
+        throw new ProviderFunctionalityNotFoundException(
+                PROVIDER_NAME, "hasReceiverChest", REASON
+        );
+    }
+
+    @Override
+    public Location getReceiverChestLocation(Plot plot)
+            throws ProviderFunctionalityNotFoundException {
+        throw new ProviderFunctionalityNotFoundException(
+                PROVIDER_NAME, "getReceiverChestLocation", REASON
+        );
+    }
 }

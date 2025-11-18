@@ -115,4 +115,44 @@ public interface PlotStorageProvider {
      */
     boolean setInputChest(Plot plot, Location location)
             throws ProviderFunctionalityNotFoundException;
+
+    /**
+     * Gibt die Anzahl aller Storage-Chests zurück.
+     *
+     * @param plot Das Plot-Objekt
+     * @return Anzahl Chests
+     * @throws ProviderFunctionalityNotFoundException wenn nicht verfügbar
+     */
+    int getAllChestsCount(Plot plot)
+            throws ProviderFunctionalityNotFoundException;
+
+    /**
+     * Gibt den Zeitpunkt des letzten Storage-Updates zurück.
+     *
+     * @param plot Das Plot-Objekt
+     * @return Timestamp (System.currentTimeMillis())
+     * @throws ProviderFunctionalityNotFoundException wenn nicht verfügbar
+     */
+    long getLastUpdateTime(Plot plot)
+            throws ProviderFunctionalityNotFoundException;
+
+    /**
+     * Prüft ob eine Empfangskiste gesetzt ist.
+     *
+     * @param plot Das Plot-Objekt
+     * @return true wenn Empfangskiste existiert
+     * @throws ProviderFunctionalityNotFoundException wenn nicht verfügbar
+     */
+    boolean hasReceiverChest(Plot plot)
+            throws ProviderFunctionalityNotFoundException;
+
+    /**
+     * Gibt die Location der Empfangskiste zurück.
+     *
+     * @param plot Das Plot-Objekt
+     * @return Location oder null wenn keine gesetzt
+     * @throws ProviderFunctionalityNotFoundException wenn nicht verfügbar
+     */
+    Location getReceiverChestLocation(Plot plot)
+            throws ProviderFunctionalityNotFoundException;
 }

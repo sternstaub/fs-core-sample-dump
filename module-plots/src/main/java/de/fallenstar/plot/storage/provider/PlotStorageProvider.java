@@ -1,11 +1,13 @@
 package de.fallenstar.plot.storage.provider;
 
+import de.fallenstar.core.exception.ProviderFunctionalityNotFoundException;
 import de.fallenstar.core.provider.Plot;
 import de.fallenstar.plot.storage.model.ChestData;
 import de.fallenstar.plot.storage.model.PlotStorage;
 import de.fallenstar.plot.storage.model.StoredMaterial;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,10 +20,12 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * Thread-safe für asynchrone Operationen.
  *
+ * Implementiert Core PlotStorageProvider-Interface.
+ *
  * @author FallenStar
  * @version 1.0
  */
-public class PlotStorageProvider {
+public class PlotStorageProvider implements de.fallenstar.core.provider.PlotStorageProvider {
 
     private final Map<UUID, PlotStorage> plotStorageMap;
 
@@ -264,5 +268,158 @@ public class PlotStorageProvider {
 
         // Rückgabe: true wenn vollständig hinzugefügt, false wenn Teile übrig blieben
         return remainingItems.isEmpty();
+    }
+
+    // ========== Core PlotStorageProvider Interface-Implementierung ==========
+
+    @Override
+    public boolean isAvailable() {
+        return true;
+    }
+
+    @Override
+    public int getMaterialAmount(Plot plot, Material material) {
+        PlotStorage storage = plotStorageMap.get(plot.getUuid());
+        if (storage == null) {
+            return 0;
+        }
+        return storage.getTotalAmount(material);
+    }
+
+    @Override
+    public boolean removeMaterial(Plot plot, Material material, int amount) {
+        PlotStorage storage = plotStorageMap.get(plot.getUuid());
+        if (storage == null) {
+            return false;
+        }
+
+        int available = storage.getTotalAmount(material);
+        if (available < amount) {
+            return false;
+        }
+
+        // Entferne Material aus Truhen
+        int remaining = amount;
+        List<StoredMaterial> materialLocations = storage.getMaterialLocations(material);
+
+        for (StoredMaterial stored : materialLocations) {
+            if (remaining <= 0) break;
+
+            int toRemove = Math.min(remaining, stored.getAmount());
+            stored.removeAmount(toRemove);
+            remaining -= toRemove;
+
+            // Entferne Eintrag wenn leer
+            if (stored.getAmount() == 0) {
+                storage.removeMaterial(stored);
+            }
+        }
+
+        return remaining == 0;
+    }
+
+    @Override
+    public boolean addToInputChests(Plot plot, ItemStack item)
+            throws ProviderFunctionalityNotFoundException {
+        return addToInputChest(plot, item);
+    }
+
+    @Override
+    public Map<Material, Integer> getAllMaterials(Plot plot) {
+        PlotStorage storage = plotStorageMap.get(plot.getUuid());
+        if (storage == null) {
+            return Collections.emptyMap();
+        }
+
+        Map<Material, Integer> result = new HashMap<>();
+        for (Material mat : storage.getAllMaterials()) {
+            result.put(mat, storage.getTotalAmount(mat));
+        }
+        return result;
+    }
+
+    @Override
+    public void scanPlotStorage(Plot plot) {
+        // Triggere Neuberechnung durch getPlotStorage() Aufruf
+        PlotStorage storage = getPlotStorage(plot);
+        // PlotStorage aktualisiert sich automatisch beim Zugriff
+    }
+
+    @Override
+    public List<Location> getInputChestLocations(Plot plot) {
+        PlotStorage storage = plotStorageMap.get(plot.getUuid());
+        if (storage == null) {
+            return Collections.emptyList();
+        }
+
+        return storage.getInputChests().stream()
+                .map(ChestData::getLocation)
+                .toList();
+    }
+
+    @Override
+    public List<Location> getOutputChestLocations(Plot plot) {
+        PlotStorage storage = plotStorageMap.get(plot.getUuid());
+        if (storage == null) {
+            return Collections.emptyList();
+        }
+
+        return storage.getOutputChests().stream()
+                .map(ChestData::getLocation)
+                .toList();
+    }
+
+    @Override
+    public boolean setInputChest(Plot plot, Location location) {
+        PlotStorage storage = getPlotStorage(plot);
+
+        // Prüfe ob an dieser Location eine Truhe ist
+        if (!(location.getBlock().getState() instanceof org.bukkit.block.Chest)) {
+            return false;
+        }
+
+        // Erstelle ChestData für Empfangskiste
+        ChestData receiverChest = new ChestData(location);
+        storage.setReceiverChest(receiverChest);
+
+        return true;
+    }
+
+    @Override
+    public int getAllChestsCount(Plot plot) {
+        PlotStorage storage = plotStorageMap.get(plot.getUuid());
+        if (storage == null) {
+            return 0;
+        }
+        return storage.getAllChests().size();
+    }
+
+    @Override
+    public long getLastUpdateTime(Plot plot) {
+        PlotStorage storage = plotStorageMap.get(plot.getUuid());
+        if (storage == null) {
+            return 0;
+        }
+        return storage.getLastUpdate();
+    }
+
+    @Override
+    public boolean hasReceiverChest(Plot plot) {
+        PlotStorage storage = plotStorageMap.get(plot.getUuid());
+        if (storage == null) {
+            return false;
+        }
+        return storage.getReceiverChest() != null;
+    }
+
+    @Override
+    public Location getReceiverChestLocation(Plot plot) {
+        PlotStorage storage = plotStorageMap.get(plot.getUuid());
+        if (storage == null) {
+            return null;
+        }
+
+        ChestData receiverChest = storage.getReceiverChest();
+        return receiverChest != null ? receiverChest.getLocation() : null;
     }
 }
