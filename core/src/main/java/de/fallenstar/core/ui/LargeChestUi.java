@@ -48,6 +48,15 @@ public abstract class LargeChestUi extends BaseUi implements Listener {
         Inventory currentInventory = player.getOpenInventory().getTopInventory();
         boolean isRebuild = activeUIs.get(player.getUniqueId()) == this;
 
+        // DEBUG
+        if (getPlugin() != null) {
+            getPlugin().getLogger().info("[DEBUG] LargeChestUi.open() - Klasse: " + this.getClass().getSimpleName());
+            getPlugin().getLogger().info("[DEBUG] isRebuild: " + isRebuild);
+            getPlugin().getLogger().info("[DEBUG] clickHandlers.size(): " + clickHandlers.size());
+        } else {
+            System.out.println("[DEBUG] LargeChestUi.open() - getPlugin() ist NULL!");
+        }
+
         // Deregistriere alte Listener NUR wenn es KEIN Rebuild ist
         // (beim Rebuild sind die Listener bereits registriert!)
         if (!isRebuild) {
@@ -57,6 +66,7 @@ public abstract class LargeChestUi extends BaseUi implements Listener {
         // Event-Listener registrieren (benötigt BaseUi.setPlugin() beim Server-Start!)
         if (!isRebuild && getPlugin() != null) {
             Bukkit.getPluginManager().registerEvents(this, getPlugin());
+            getPlugin().getLogger().info("[DEBUG] Event-Handler registriert für " + this.getClass().getSimpleName());
         }
 
         Inventory inventory;
@@ -105,6 +115,15 @@ public abstract class LargeChestUi extends BaseUi implements Listener {
         }
 
         LargeChestUi ui = activeUIs.get(player.getUniqueId());
+
+        // DEBUG
+        if (getPlugin() != null) {
+            getPlugin().getLogger().info("[DEBUG] onInventoryClick() aufgerufen!");
+            getPlugin().getLogger().info("[DEBUG] this.getClass(): " + this.getClass().getSimpleName());
+            getPlugin().getLogger().info("[DEBUG] ui: " + (ui != null ? ui.getClass().getSimpleName() : "null"));
+            getPlugin().getLogger().info("[DEBUG] ui == this: " + (ui == this));
+        }
+
         if (ui == null) {
             return;  // Kein aktives UI für diesen Spieler
         }
@@ -117,6 +136,9 @@ public abstract class LargeChestUi extends BaseUi implements Listener {
         if (ui == this) {
             int slot = event.getRawSlot();
             if (slot >= 0 && slot < SIZE) {
+                if (getPlugin() != null) {
+                    getPlugin().getLogger().info("[DEBUG] handleClick() für Slot " + slot);
+                }
                 handleClick(player, slot);
             }
         }
