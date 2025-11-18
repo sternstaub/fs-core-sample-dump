@@ -45,16 +45,30 @@ public abstract class SmallChestUi extends BaseUi implements Listener {
 
     @Override
     public void open(Player player) {
-        // Deregistriere alte Listener BEVOR wir einen neuen registrieren
-        // (verhindert mehrfache Listener bei rebuild())
-        org.bukkit.event.HandlerList.unregisterAll(this);
+        // Prüfe ob Spieler bereits ein Inventory offen hat (Rebuild-Fall)
+        Inventory currentInventory = player.getOpenInventory().getTopInventory();
+        boolean isRebuild = activeUIs.get(player.getUniqueId()) == this;
+
+        // Deregistriere alte Listener NUR wenn es KEIN Rebuild ist
+        // (beim Rebuild sind die Listener bereits registriert!)
+        if (!isRebuild) {
+            org.bukkit.event.HandlerList.unregisterAll(this);
+        }
 
         // Event-Listener registrieren (benötigt BaseUi.setPlugin() beim Server-Start!)
-        if (getPlugin() != null) {
+        if (!isRebuild && getPlugin() != null) {
             Bukkit.getPluginManager().registerEvents(this, getPlugin());
         }
 
-        Inventory inventory = Bukkit.createInventory(null, SIZE, title);
+        Inventory inventory;
+        if (isRebuild && currentInventory.getSize() == SIZE) {
+            // Rebuild: Update existierendes Inventory statt neues zu erstellen
+            inventory = currentInventory;
+            inventory.clear(); // Lösche alte Items
+        } else {
+            // Erstes Öffnen: Erstelle neues Inventory
+            inventory = Bukkit.createInventory(null, SIZE, title);
+        }
 
         // Items in Inventory laden
         for (Map.Entry<Integer, ItemStack> entry : items.entrySet()) {
@@ -66,8 +80,11 @@ public abstract class SmallChestUi extends BaseUi implements Listener {
         // UI für Spieler speichern
         activeUIs.put(player.getUniqueId(), this);
 
-        // Inventory öffnen
-        player.openInventory(inventory);
+        // Inventory öffnen (nur wenn nicht bereits offen)
+        if (!isRebuild) {
+            player.openInventory(inventory);
+        }
+        // Sonst ist das Inventory bereits offen und wurde nur updated
     }
 
     /**
