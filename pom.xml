@@ -18,7 +18,6 @@
     <modules>
         <module>core</module>
         <module>module-economy</module>
-        <module>module-ui</module>
         <module>module-plots</module>
         <module>module-items</module>
         <module>module-npcs</module>

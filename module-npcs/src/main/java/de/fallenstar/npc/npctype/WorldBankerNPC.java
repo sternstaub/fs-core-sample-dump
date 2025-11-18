@@ -3,8 +3,8 @@ package de.fallenstar.npc.npctype;
 import de.fallenstar.core.provider.EconomyProvider;
 import de.fallenstar.core.provider.TradingEntity;
 import de.fallenstar.core.registry.ProviderRegistry;
+import de.fallenstar.core.ui.TradeUI;
 import de.fallenstar.economy.model.TradeSet;
-import de.fallenstar.ui.ui.TradeUI;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 
