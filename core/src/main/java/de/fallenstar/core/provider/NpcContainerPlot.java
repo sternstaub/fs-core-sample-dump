@@ -1,5 +1,9 @@
 package de.fallenstar.core.provider;
 
+import de.fallenstar.core.interaction.action.UiActionInfo;
+import org.bukkit.Material;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -115,5 +119,35 @@ public interface NpcContainerPlot extends Plot {
      */
     default void setNpcType(UUID npcId, String type) {
         // Default: Keine Implementierung
+    }
+
+    /**
+     * Gibt die Standard-Actions für NpcContainerPlot zurück.
+     *
+     * Diese Methode liefert alle NPC-bezogenen Actions für das UI.
+     * Die tatsächliche Filterung (Owner vs Guest) erfolgt in der
+     * Implementierung (z.B. TradeguildPlot.getAvailableActions()).
+     *
+     * @return Liste von UI-Actions
+     */
+    default List<UiActionInfo> getNpcActions() {
+        List<UiActionInfo> actions = new ArrayList<>();
+
+        // NPCs verwalten (Owner-Action)
+        actions.add(UiActionInfo.builder()
+                .id("manage_npcs")
+                .displayName("§bNPCs verwalten")
+                .lore(List.of(
+                        "§7Verwalte Gildenhändler und",
+                        "§7Spielerhändler auf diesem Plot",
+                        "§7",
+                        "§7Klicke zum Öffnen",
+                        "§7(Nur Owner)"
+                ))
+                .icon(Material.VILLAGER_SPAWN_EGG)
+                .requiredPermission("fallenstar.plot.npc.manage")
+                .build());
+
+        return actions;
     }
 }

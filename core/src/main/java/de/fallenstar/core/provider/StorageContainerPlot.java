@@ -1,9 +1,12 @@
 package de.fallenstar.core.provider;
 
+import de.fallenstar.core.interaction.action.UiActionInfo;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -137,4 +140,62 @@ public interface StorageContainerPlot extends Plot {
      * @return Map von Material zu Preis
      */
     Map<Material, BigDecimal> getAllSellPrices();
+
+    /**
+     * Gibt die Standard-Actions für StorageContainerPlot zurück.
+     *
+     * Diese Methode liefert alle Lager-bezogenen Actions für das UI.
+     * Die tatsächliche Filterung (Owner vs Guest) erfolgt in der
+     * Implementierung (z.B. TradeguildPlot.getAvailableActions()).
+     *
+     * @return Liste von UI-Actions
+     */
+    default List<UiActionInfo> getStorageActions() {
+        List<UiActionInfo> actions = new ArrayList<>();
+
+        // Lager verwalten (Owner-Action)
+        actions.add(UiActionInfo.builder()
+                .id("manage_storage")
+                .displayName("§aLager verwalten")
+                .lore(List.of(
+                        "§7Verwalte das Plot-Storage",
+                        "§7für Handelswaren",
+                        "§7",
+                        "§7Klicke um das Lager zu öffnen",
+                        "§7(Nur Owner)"
+                ))
+                .icon(Material.CHEST)
+                .requiredPermission("fallenstar.plot.storage.manage")
+                .build());
+
+        // Preise verwalten (Owner-Action)
+        actions.add(UiActionInfo.builder()
+                .id("manage_prices")
+                .displayName("§ePreise verwalten")
+                .lore(List.of(
+                        "§7Setze Ankauf- und Verkaufspreise",
+                        "§7für Items in diesem Plot",
+                        "§7",
+                        "§7Klicke um Preise zu setzen",
+                        "§7(Nur Owner)"
+                ))
+                .icon(Material.GOLD_INGOT)
+                .requiredPermission("fallenstar.plot.prices.manage")
+                .build());
+
+        // Preisliste anzeigen (Guest-Action)
+        actions.add(UiActionInfo.builder()
+                .id("view_prices")
+                .displayName("§ePreisliste anzeigen")
+                .lore(List.of(
+                        "§7Zeigt alle verfügbaren Items",
+                        "§7und deren Preise an",
+                        "§7",
+                        "§7Klicke zum Öffnen"
+                ))
+                .icon(Material.BOOK)
+                .build());
+
+        return actions;
+    }
 }

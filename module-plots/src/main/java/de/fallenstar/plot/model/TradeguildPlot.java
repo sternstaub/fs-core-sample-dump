@@ -316,53 +316,36 @@ public class TradeguildPlot extends BasePlot implements
     private List<UiActionInfo> getMainMenuActions(Player player) {
         List<UiActionInfo> actions = new ArrayList<>();
 
-        // Lager-Verwaltung
-        actions.add(UiActionInfo.builder()
-                .id("manage_storage")
-                .displayName("§aLager verwalten")
-                .lore(List.of("§7Klicke um das Lager zu öffnen"))
-                .icon(Material.CHEST)
-                .slot(10)
-                .build());
+        boolean isOwner = isOwner(player);
 
-        // NPC-Verwaltung (nur Owner)
-        if (isOwner(player)) {
-            actions.add(UiActionInfo.builder()
-                    .id("manage_npcs")
-                    .displayName("§bNPCs verwalten")
-                    .lore(List.of("§7Klicke um NPCs zu verwalten"))
-                    .icon(Material.VILLAGER_SPAWN_EGG)
-                    .requiredPermission("fallenstar.plot.npc")
-                    .slot(12)
-                    .build());
+        // Kombiniere Actions aus allen Traits (Trait-Komposition!)
+        // 1. NamedPlot Actions
+        actions.addAll(getNameActions());
+
+        // 2. StorageContainerPlot Actions
+        actions.addAll(getStorageActions());
+
+        // 3. NpcContainerPlot Actions
+        actions.addAll(getNpcActions());
+
+        // 4. Filtere Actions basierend auf Owner-Status
+        // Actions mit Permissions werden automatisch gefiltert (siehe GenericInteractionMenuUi)
+        // Hier nur explizite Owner-Filterung für Actions ohne Permission-Check
+        List<UiActionInfo> filteredActions = new ArrayList<>();
+        for (UiActionInfo action : actions) {
+            // Owner-exklusive Actions haben requiredPermission
+            if (action.requiredPermission().isPresent()) {
+                // Prüfe ob Owner oder Permission vorhanden
+                if (isOwner || player.hasPermission(action.requiredPermission().get())) {
+                    filteredActions.add(action);
+                }
+            } else {
+                // Guest-Actions (keine Permission erforderlich)
+                filteredActions.add(action);
+            }
         }
 
-        // Preis-Verwaltung (nur Owner)
-        if (isOwner(player)) {
-            actions.add(UiActionInfo.builder()
-                    .id("manage_prices")
-                    .displayName("§ePreise verwalten")
-                    .lore(List.of("§7Klicke um Preise zu setzen"))
-                    .icon(Material.GOLD_INGOT)
-                    .slot(14)
-                    .build());
-        }
-
-        // Plot-Name setzen (nur Owner)
-        if (isOwner(player)) {
-            actions.add(UiActionInfo.builder()
-                    .id("set_name")
-                    .displayName("§dPlot-Name setzen")
-                    .lore(List.of(
-                            "§7Aktuell: " + getDisplayName(),
-                            "§7Klicke um Namen zu ändern"
-                    ))
-                    .icon(Material.NAME_TAG)
-                    .slot(16)
-                    .build());
-        }
-
-        return actions;
+        return filteredActions;
     }
 
     private List<UiActionInfo> getStorageMenuActions(Player player) {

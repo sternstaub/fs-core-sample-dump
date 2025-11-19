@@ -7,12 +7,20 @@ import de.fallenstar.core.ui.element.UiAction;
 import de.fallenstar.plot.PlotModule;
 import de.fallenstar.plot.ui.NpcManagementUi;
 import de.fallenstar.plot.ui.PlayerNpcManagementUi;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
  * Action zum Verwalten von NPCs auf einem Grundstück.
+ *
+ * **Command Pattern:**
+ * - Erweitert PlotAction (Plot-Referenz + canExecute)
+ * - Berechtigungen: Keine Owner-Requirement (auch Gäste sehen UI)
+ * - Owner-View vs Spieler-View wird in execute() unterschieden
  *
  * **Status:** Basis-Implementierung (Sprint 11-12)
  *
@@ -40,7 +48,7 @@ import java.util.Objects;
  *
  * **Type-Safety:**
  * - Compiler erzwingt Plot-Referenz
- * - Provider-basierte Owner-Checks
+ * - Provider-basierte Owner-Checks via PlotAction.isOwner()
  *
  * **Verwendung:**
  * ```java
@@ -48,17 +56,15 @@ import java.util.Objects;
  *     Material.VILLAGER_SPAWN_EGG,
  *     "§6§lNPCs verwalten",
  *     List.of("§7Verwalte NPCs auf diesem Plot"),
- *     new ManageNpcsAction(plot, providers)  // Type-Safe!
+ *     new ManageNpcsAction(plot, providers, plotModule)  // Type-Safe!
  * );
  * ```
  *
  * @author FallenStar
- * @version 3.0
+ * @version 4.0
  */
-public final class ManageNpcsAction implements UiAction {
+public final class ManageNpcsAction extends de.fallenstar.core.ui.element.PlotAction {
 
-    private final Plot plot;
-    private final ProviderRegistry providers;
     private final PlotModule plotModule;
 
     /**
@@ -69,19 +75,21 @@ public final class ManageNpcsAction implements UiAction {
      * @param plotModule Das PlotModule für NPC-Manager-Zugriff
      */
     public ManageNpcsAction(Plot plot, ProviderRegistry providers, PlotModule plotModule) {
-        this.plot = Objects.requireNonNull(plot, "Plot darf nicht null sein");
-        this.providers = Objects.requireNonNull(providers, "ProviderRegistry darf nicht null sein");
+        super(plot, providers); // PlotAction-Konstruktor
         this.plotModule = Objects.requireNonNull(plotModule, "PlotModule darf nicht null sein");
     }
 
     @Override
-    public void execute(Player player) {
+    protected boolean requiresOwnership() {
+        return false; // Auch Gäste dürfen NPCs sehen (Spieler-View)
+    }
+
+    @Override
+    protected void executeAction(Player player) {
         player.closeInventory();
 
-        // Prüfe ob Spieler Owner ist
-        boolean isOwner = isPlotOwner(player);
-
-        if (isOwner) {
+        // Prüfe ob Spieler Owner ist (via PlotAction.isOwner()!)
+        if (isOwner(player)) {
             // Owner-Ansicht: Alle NPCs auf dem Plot
             NpcManagementUi ownerUi = new NpcManagementUi(plot, plotModule);
             ownerUi.open(player);
@@ -92,42 +100,36 @@ public final class ManageNpcsAction implements UiAction {
         }
     }
 
+    /**
+     * Gibt das PlotModule zurück.
+     *
+     * @return Das PlotModule
+     */
+    public PlotModule getPlotModule() {
+        return plotModule;
+    }
+
+    // ========== GuiRenderable Implementation ==========
+
     @Override
-    public String getActionName() {
-        return "ManageNpcs[" + plot.getIdentifier() + "]";
+    protected Material getIcon() {
+        return Material.VILLAGER_SPAWN_EGG;
     }
 
-    /**
-     * Prüft ob ein Spieler der Besitzer des Plots ist.
-     *
-     * @param player Der Spieler
-     * @return true wenn Besitzer, sonst false
-     */
-    private boolean isPlotOwner(Player player) {
-        PlotProvider plotProvider = providers.getPlotProvider();
-        try {
-            return plotProvider.isOwner(plot, player);
-        } catch (Exception e) {
-            // Bei Fehler: kein Owner
-            return false;
-        }
+    @Override
+    protected String getDisplayName() {
+        return "§bNPCs verwalten";
     }
 
-    /**
-     * Gibt den Plot zurück.
-     *
-     * @return Der Plot
-     */
-    public Plot getPlot() {
-        return plot;
-    }
+    @Override
+    protected List<String> getLore() {
+        List<String> lore = new ArrayList<>();
 
-    /**
-     * Gibt die ProviderRegistry zurück.
-     *
-     * @return Die ProviderRegistry
-     */
-    public ProviderRegistry getProviders() {
-        return providers;
+        lore.add("§7Verwalte Gildenhändler und");
+        lore.add("§7Spielerhändler auf diesem Plot");
+        lore.add("");
+        lore.add("§7Klicke zum Öffnen");
+
+        return lore;
     }
 }

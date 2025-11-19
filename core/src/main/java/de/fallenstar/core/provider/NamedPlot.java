@@ -1,5 +1,10 @@
 package de.fallenstar.core.provider;
 
+import de.fallenstar.core.interaction.action.UiActionInfo;
+import org.bukkit.Material;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -104,5 +109,34 @@ public interface NamedPlot extends Plot {
 
         // Keine Sonderzeichen außer Leerzeichen, -, _
         return name.matches("[a-zA-Z0-9äöüÄÖÜß \\-_]+");
+    }
+
+    /**
+     * Gibt die Standard-Actions für NamedPlot zurück.
+     *
+     * Diese Methode liefert alle Namen-bezogenen Actions für das UI.
+     * Die tatsächliche Filterung (Owner vs Guest) erfolgt in der
+     * Implementierung (z.B. TradeguildPlot.getAvailableActions()).
+     *
+     * @return Liste von UI-Actions
+     */
+    default List<UiActionInfo> getNameActions() {
+        List<UiActionInfo> actions = new ArrayList<>();
+
+        // Plot-Name setzen/ändern (Owner-Action)
+        actions.add(UiActionInfo.builder()
+                .id("set_name")
+                .displayName("§dPlot-Name setzen")
+                .lore(List.of(
+                        "§7Aktueller Name: §e" + getDisplayName(),
+                        "§7",
+                        "§7Klicke um den Namen zu ändern",
+                        "§7(Nur Owner)"
+                ))
+                .icon(Material.NAME_TAG)
+                .requiredPermission("fallenstar.plot.name.set")
+                .build());
+
+        return actions;
     }
 }

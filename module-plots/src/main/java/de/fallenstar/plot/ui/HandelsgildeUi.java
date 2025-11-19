@@ -14,29 +14,44 @@ import java.util.List;
 /**
  * Type-Safe Handelsgilde-UI mit Guest/Owner Ansichten.
  *
- * **Migration:** Ersetzt alte HandelsgildeUI (639 Zeilen) durch
- * type-safe BasicGsUi-basierte Implementierung (~150 Zeilen).
+ * **⚠️ DEPRECATED:**
+ * Diese Klasse wurde durch das UiTarget-Pattern ersetzt!
+ * TradeguildPlot implementiert jetzt UiTarget und erstellt
+ * automatisch GenericInteractionMenuUi aus verfügbaren Actions.
  *
- * **Guest-Ansicht (Besucher):**
- * - Preisliste anzeigen
- * - Shop öffnen (Placeholder)
- * - Grundstücks-Info
+ * **Migration:**
+ * Statt:
+ * <pre>
+ * HandelsgildeUi ui = new HandelsgildeUi(plot, ...);
+ * ui.open(player);
+ * </pre>
  *
- * **Owner-Ansicht (Besitzer):**
- * - Preise anzeigen/setzen
- * - Storage verwalten
- * - NPCs verwalten (Placeholder)
- * - Händler-Slots (Placeholder)
- * - Grundstücks-Info
+ * Verwende:
+ * <pre>
+ * if (plot instanceof UiTarget uiTarget) {
+ *     uiTarget.createUi(player, context).ifPresent(ui -> ui.open(player));
+ * }
+ * </pre>
  *
- * **Type-Safety:**
- * - Alle Buttons haben Actions (Compiler-erzwungen)
- * - Keine Inline-Lambdas
- * - Wiederverwendbare Action-Klassen
+ * **Vorteile des neuen Systems:**
+ * - Trait-Komposition: Actions aus NamedPlot, StorageContainerPlot, NpcContainerPlot
+ * - Automatische Owner/Guest-Filterung
+ * - DRY: Keine Duplikation von Action-Definitionen
+ * - Self-Constructing UIs
+ *
+ * **Legacy-Dokumentation:**
+ * - Ersetzt alte HandelsgildeUI (639 Zeilen) durch type-safe BasicGsUi (~150 Zeilen)
+ * - Guest-Ansicht: Preisliste, Shop, Grundstücks-Info
+ * - Owner-Ansicht: Preise, Storage, NPCs, Händler-Slots, Info
  *
  * @author FallenStar
  * @version 2.0
+ * @deprecated Ersetzt durch TradeguildPlot.createUi() → GenericInteractionMenuUi
+ * @see de.fallenstar.core.interaction.UiTarget
+ * @see de.fallenstar.core.ui.GenericInteractionMenuUi
+ * @see de.fallenstar.plot.model.TradeguildPlot#createUi
  */
+@Deprecated(since = "Sprint 17", forRemoval = true)
 public class HandelsgildeUi extends BasicGsUi {
 
     private final Plot plot;
