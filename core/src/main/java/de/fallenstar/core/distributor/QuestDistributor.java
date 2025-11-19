@@ -87,7 +87,7 @@ public interface QuestDistributor {
      */
     default int getCapacity() {
         return getQuestContainers().stream()
-            .mapToInt(QuestContainer::getMaxQuestCapacity)
+            .mapToInt(QuestContainer::getMaxQuests)
             .sum();
     }
 

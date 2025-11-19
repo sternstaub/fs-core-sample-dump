@@ -18,14 +18,18 @@ import java.util.UUID;
  * <pre>
  * class MyNpc implements DistributableNpc {
  *     {@literal @}Override
- *     public void onDistributed(Distributor<?> distributor) {
+ *     public void onDistributed(Object distributor) {
  *         logger.info("NPC wurde auf " + distributor + " verteilt");
  *     }
  * }
  * </pre>
  *
+ * **HINWEIS:** onDistributed() akzeptiert Object statt Distributor<?> um Kompatibilität
+ * mit spezifischen Distributor-Interfaces (NpcDistributor, QuestDistributor) zu ermöglichen,
+ * die nicht mehr von Distributor<T> erben (Generics Erasure Problem).
+ *
  * @author FallenStar
- * @version 1.0
+ * @version 2.0 - Refactored: onDistributed() akzeptiert Object statt Distributor<?>
  */
 public interface Distributable {
 
@@ -49,9 +53,12 @@ public interface Distributable {
      * Optional: Override für custom Logic
      * (z.B. Logging, Event-Firing, State-Updates)
      *
-     * @param distributor Der Distributor der das Objekt aufgenommen hat
+     * HINWEIS: Parameter ist Object statt Distributor<?> um Kompatibilität mit
+     * spezifischen Distributor-Interfaces zu ermöglichen (NpcDistributor, QuestDistributor).
+     *
+     * @param distributor Der Distributor der das Objekt aufgenommen hat (kann NpcDistributor, QuestDistributor, oder Distributor<?> sein)
      */
-    default void onDistributed(Distributor<?> distributor) {
+    default void onDistributed(Object distributor) {
         // Default: Keine Aktion
     }
 

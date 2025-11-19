@@ -21,14 +21,14 @@ import java.util.Optional;
  *     }
  *
  *     {@literal @}Override
- *     public void onDistributed(Distributor<?> distributor) {
+ *     public void onDistributed(Object distributor) {
  *         logger.info("Quest '" + getTitle() + "' wurde verteilt");
  *     }
  * }
  * </pre>
  *
  * @author FallenStar
- * @version 1.0
+ * @version 2.0 - Refactored: onDistributed() akzeptiert Object statt Distributor<?>
  */
 public interface DistributableQuest extends Distributable {
 
