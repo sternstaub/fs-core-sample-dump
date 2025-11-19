@@ -85,7 +85,7 @@ public final class PlotActionManageStorage extends PlotAction {
 
         // Öffne PlotStorageUi (Owner-Check automatisch via PlotAction.isOwner()!)
         PlotStorageUi storageUI = new PlotStorageUi(
-                plot,
+                plot, // Plot ist bereits korrekt (PlotAction.plot ist vom Typ Plot)
                 plotStorage,
                 storageProvider,
                 storageManager,
