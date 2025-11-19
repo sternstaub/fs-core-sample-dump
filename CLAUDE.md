@@ -238,10 +238,61 @@ de.fallenstar.<module>/
 ```
 
 ### Naming
-- Klassen: `PascalCase`
-- Methoden: `camelCase`
-- Konstanten: `UPPER_SNAKE_CASE`
+
+#### Klassen
+- **PascalCase**
 - **Akronyme:** Im Code als `camelCase` (UI → Ui, NPC → Npc, GS → Gs)
+  ```java
+  UiAction          // ✅ RICHTIG
+  UIAction          // ❌ FALSCH
+  NpcManager        // ✅ RICHTIG
+  NPCManager        // ❌ FALSCH
+  ```
+
+#### Vererbungshierarchie erkennbar machen
+
+**WICHTIG:** Die Vererbungshierarchie MUSS aus dem Klassennamen erkennbar sein,
+wenn Klassen alphabetisch sortiert werden!
+
+**Regel: Prefix-basierte Benennung**
+
+```java
+// ✅ RICHTIG: Hierarchie alphabetisch erkennbar
+PlotAction.java                     // Abstract base class
+PlotActionManageNpcs.java          // extends PlotAction
+PlotActionSetName.java             // extends PlotAction
+PlotActionSetPrice.java            // extends PlotAction
+
+UiAction.java                       // Interface
+UiElement.java                      // Abstract base
+UiElementButton.java               // extends UiElement
+UiElementContainer.java            // extends UiElement
+
+// ❌ FALSCH: Hierarchie nicht erkennbar
+ManageNpcsAction.java              // Erweitert PlotAction? Unklar!
+PlotAction.java                    // Basis? Unklar!
+SetNameAction.java                 // Erweitert PlotAction? Unklar!
+```
+
+**Begründung:**
+- Bei alphabetischer Sortierung steht die Basisklasse VOR den Subklassen
+- Verwandte Klassen sind gruppiert
+- Vererbung ist auf einen Blick erkennbar
+- Keine IDE nötig um Hierarchie zu verstehen
+
+**Ausnahmen:**
+- Interfaces: Kein "I" Prefix (Java Convention)
+  ```java
+  UiAction          // ✅ Interface
+  IUiAction         // ❌ FALSCH (C# Convention)
+  ```
+- Sehr spezifische, einmalige Klassen ohne Hierarchie
+- Standard Java Klassen (z.B. `ArrayList`, `HashMap`)
+
+#### Methoden & Variablen
+- Methoden: `camelCase`
+- Variablen: `camelCase`
+- Konstanten: `UPPER_SNAKE_CASE`
 
 ### Javadoc (Deutsch!)
 ```java
@@ -351,6 +402,30 @@ public void setAction(UiAction action) { ... }
 private final UiAction action;
 public ClickableUiElement(UiAction action) { ... }
 ```
+
+### ❌ Vererbungshierarchie nicht erkennbar
+
+**Problem:** Klassennamen zeigen nicht die Hierarchie, schwer wartbar
+
+```java
+// ❌ FALSCH: Alphabetisch sortiert - Hierarchie unklar
+ManageNpcsAction.java          // extends PlotAction? Unklar!
+PlotAction.java                // Basis-Klasse
+SetNameAction.java             // extends PlotAction? Unklar!
+ViewPricesAction.java          // extends UiAction? PlotAction? Unklar!
+
+// ✅ RICHTIG: Alphabetisch sortiert - Hierarchie klar
+PlotAction.java                // Basis-Klasse (zuerst!)
+PlotActionManageNpcs.java      // extends PlotAction ✓
+PlotActionSetName.java         // extends PlotAction ✓
+UiAction.java                  // Interface
+UiActionViewPrices.java        // extends UiAction ✓
+```
+
+**Begründung:**
+- Code-Reviews: Schnelles Verständnis
+- Refactoring: Leichter zu finden welche Klassen betroffen sind
+- Onboarding: Neue Entwickler verstehen Struktur sofort
 
 ---
 
@@ -609,6 +684,7 @@ git push -u origin <branch>
 5. ✅ **Owner-Checks** vor Plot-Verwaltung
 6. ✅ **Type-Safety** (final fields, Objects.requireNonNull)
 7. ✅ **Kein Reflection** (Handler-Pattern stattdessen)
+8. ✅ **Vererbungshierarchie** im Klassennamen erkennbar (Prefix-basiert)
 
 **Architektur-Mantra:**
 > "Core = Interfaces, Module = Implementierungen, Kommunikation = Provider"
