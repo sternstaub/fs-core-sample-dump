@@ -310,6 +310,6 @@ public class GuildTraderNpcEntity implements UiTarget, DistributableNpc, QuestCo
      * @return TradingEntity
      */
     public TradingEntity getTradingEntity() {
-        return guildTraderType.new GuildTraderInstance(npcId);
+        return guildTraderType.new GuildTraderInstance(entityId);
     }
 }
