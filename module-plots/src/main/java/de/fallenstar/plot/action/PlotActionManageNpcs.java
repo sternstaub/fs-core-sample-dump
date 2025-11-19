@@ -1,9 +1,7 @@
 package de.fallenstar.plot.action;
 
 import de.fallenstar.core.provider.Plot;
-import de.fallenstar.core.provider.PlotProvider;
 import de.fallenstar.core.registry.ProviderRegistry;
-import de.fallenstar.core.ui.element.UiAction;
 import de.fallenstar.plot.PlotModule;
 import de.fallenstar.plot.ui.NpcManagementUi;
 import de.fallenstar.plot.ui.PlayerNpcManagementUi;
@@ -17,17 +15,16 @@ import java.util.Objects;
 /**
  * Action zum Verwalten von NPCs auf einem Grundstück.
  *
+ * **Naming Convention:** PlotAction* Prefix für alphabetische Hierarchie-Erkennung
+ *
  * **Command Pattern:**
  * - Erweitert PlotAction (Plot-Referenz + canExecute)
  * - Berechtigungen: Keine Owner-Requirement (auch Gäste sehen UI)
  * - Owner-View vs Spieler-View wird in execute() unterschieden
  *
- * **Status:** Basis-Implementierung (Sprint 11-12)
- *
- * **Aktuelle Funktionalität:**
- * - Öffnet Owner-View (NpcManagementUi) für Plot-Besitzer
- * - Öffnet Spieler-View (PlayerNpcManagementUi) für andere Spieler
- * - Automatische Ansichts-Auswahl basierend auf Owner-Status
+ * **GuiRenderable:**
+ * - Self-Rendering via getDisplayItem()
+ * - Automatische Permission-Lore bei !canExecute()
  *
  * **Zwei Ansichten:**
  * 1. **Owner-View (NpcManagementUi):**
@@ -40,41 +37,30 @@ import java.util.Objects;
  *    - NPC-Slot kaufen
  *    - Eigene Händler-Inventare verwalten
  *
- * **Geplante Features (Sprint 13-14):**
- * - Citizens-Integration (echte NPC-Entities)
- * - NPC-Konfiguration (Inventar, Preise, Skins)
- * - Slot-System-Integration
- * - NPC-Reisesystem
- *
  * **Type-Safety:**
  * - Compiler erzwingt Plot-Referenz
  * - Provider-basierte Owner-Checks via PlotAction.isOwner()
  *
  * **Verwendung:**
  * ```java
- * addFunctionButton(
- *     Material.VILLAGER_SPAWN_EGG,
- *     "§6§lNPCs verwalten",
- *     List.of("§7Verwalte NPCs auf diesem Plot"),
- *     new ManageNpcsAction(plot, providers, plotModule)  // Type-Safe!
- * );
+ * new PlotActionManageNpcs(plot, providers, plotModule)
  * ```
  *
  * @author FallenStar
- * @version 4.0
+ * @version 5.0 (Sprint 19 - Naming Convention)
  */
-public final class ManageNpcsAction extends de.fallenstar.core.ui.element.PlotAction {
+public final class PlotActionManageNpcs extends de.fallenstar.core.ui.element.PlotAction {
 
     private final PlotModule plotModule;
 
     /**
-     * Konstruktor für ManageNpcsAction.
+     * Konstruktor für PlotActionManageNpcs.
      *
      * @param plot Der Plot dessen NPCs verwaltet werden sollen
      * @param providers Die ProviderRegistry für Owner-Checks
      * @param plotModule Das PlotModule für NPC-Manager-Zugriff
      */
-    public ManageNpcsAction(Plot plot, ProviderRegistry providers, PlotModule plotModule) {
+    public PlotActionManageNpcs(Plot plot, ProviderRegistry providers, PlotModule plotModule) {
         super(plot, providers); // PlotAction-Konstruktor
         this.plotModule = Objects.requireNonNull(plotModule, "PlotModule darf nicht null sein");
     }

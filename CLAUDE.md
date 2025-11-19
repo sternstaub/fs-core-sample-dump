@@ -703,7 +703,7 @@ var button = new ClickableUiElement.CustomButton<>(item, action);
 - ✅ **SOLID:** Single Responsibility, Open/Closed, Dependency Inversion
 - ✅ **Erweiterbar:** Neue PlotAction → automatisch im GUI
 
-### Sprint 19: Vollständige UI-Migration + SOLID-Refactoring (📋 Geplant)
+### Sprint 19: Vollständige UI-Migration + SOLID-Refactoring (🔄 IN ARBEIT)
 
 **Hauptziel:** Übertrage das Universal GUI-Pattern auf ALLE Bereiche des Plugins.
 
@@ -712,64 +712,154 @@ var button = new ClickableUiElement.CustomButton<>(item, action);
 2. **Universalität:** Code soll für ALLE Typen funktionieren (nicht nur einen)
 3. **Self-Rendering:** Objekte kennen ihre Darstellung
 4. **Keine manuellen UI-Konstruktionen:** GuiBuilder für alles
-5. **Vererbungshierarchie erkennbar:** Prefix-basierte Namen
+5. **Vererbungshierarchie erkennbar:** Prefix-basierte Namen (PlotAction*)
 
-**UI-Migration Tasks:**
-1. 📋 Weitere PlotActions erstellen
-   - PlotActionManageStorage (Storage-Verwaltung)
-   - PlotActionManagePrices (Preis-Verwaltung)
-   - PlotActionViewPrices (Preisliste)
-   - PlotActionTeleport (Teleport-Action)
-   - PlotActionInfo (Plot-Info anzeigen)
+---
 
-2. 📋 TradeguildPlot.getAvailablePlotActions()
-   - Kombiniert alle Trait-PlotActions
-   - Owner/Guest-Filterung via canExecute()
-   - Ersetzt getMainMenuActions()
+#### **IST-Zustand (Sprint 19 Start):**
 
-3. 📋 PlotCommand/InteractionHandler refactoren
-   - Nutzt GuiBuilder statt HandelsgildeUi
-   - Universal für alle Plot-Typen
+**✅ Vollständig migriert (PlotAction + GuiRenderable):**
+- `SetNameAction` (Naming: ❌ muss → PlotActionSetName)
+- `ManageNpcsAction` (Naming: ❌ muss → PlotActionManageNpcs)
 
-4. 📋 HandelsgildeUi vollständig entfernen
-   - Deprecated → Removal
-   - Migration-Guide für andere UIs
+**❌ Noch alte Struktur (implements UiAction, kein GuiRenderable):**
+- `ViewPricesAction`, `SetPriceAction`, `OpenStorageUiAction`
+- `ScanStorageAction`, `ViewPlotInfoAction`, `ViewMarketStatsAction`
+- `ManageSlotsAction`, `ManageTraderSlotsAction`, `FindTradersAction`
+- Weitere 15+ Actions in `/action/` und `/action/npc/`
 
-**SOLID-Refactoring (Identifizierte Schwachstellen):**
+**🔄 TradeguildPlot:**
+- Nutzt noch UiActionInfo (altes System)
+- `getMainMenuActions()` statt `getAvailablePlotActions()`
+- `executeAction()` mit Switch-Statement (obsolet)
 
-1. 📋 **Münzen-System (Items-Modul)**
-   - **Problem:** Nicht erweiterbar, hart-kodiert
-   - **Lösung:** CurrencyItem Interface + Registry
-   - **Ziel:** Neue Währungen ohne Code-Änderung
+---
 
-2. 📋 **Price-Management (Plots-Modul)**
-   - **Problem:** Preise nur für StorageContainerPlot
-   - **Lösung:** Priceable Interface + Universal PriceManager
-   - **Ziel:** Preise für beliebige Items/Services
+#### **Phase 1: Core PlotActions Migration** ✅ ABGESCHLOSSEN
 
-3. 📋 **NPC-Actions (NPCs-Modul)**
-   - **Problem:** NPC-Verwaltung noch mit manuellen UIs
-   - **Lösung:** NpcAction extends PlotAction
-   - **Ziel:** GuiBuilder für NPC-Konfiguration
+**Ziel:** Wichtigste Plot-Actions nach PlotAction-Pattern migrieren
 
-4. 📋 **Trade-System (Economy-Modul)**
-   - **Problem:** TradeUI nicht GuiRenderable-kompatibel
-   - **Lösung:** TradeAction mit Self-Rendering
-   - **Ziel:** Konsistente UI-Erstellung
+**1A. Naming Convention (Umbenennen):**
+- ✅ `SetNameAction` → `PlotActionSetName`
+- ✅ `ManageNpcsAction` → `PlotActionManageNpcs`
+- ✅ Referenzen in `HandelsgildeUi.java` und `MarketPlotUi.java` aktualisiert
 
-**Design-Patterns übertragen auf:**
-- Münzen: Self-Describing (wie GuiRenderable)
-- Preise: Provider-Pattern (wie PlotProvider)
-- NPCs: Command-Pattern (wie PlotAction)
-- Quests: Self-Rendering (wie GuiRenderable)
+**1B. Migration zu PlotAction (extends + GuiRenderable):**
+- ✅ `ViewPricesAction` → `PlotActionViewPrices` (zeigt Anzahl Preise in Lore)
+- ✅ `SetPriceAction` → `PlotActionManagePrices` (Owner-only, Permission-Check)
+- ✅ `OpenStorageUiAction` → `PlotActionManageStorage` (isOwner via PlotAction)
+- ✅ `ViewPlotInfoAction` → `PlotActionInfo` (zeigt Custom-Name in Lore)
 
-**Dokumentation:**
-5. 📋 SOLID-Prinzipien Sektion in CLAUDE.md
-6. 📋 Universal-Patterns Dokumentation
-7. 📋 Anti-Patterns erweitern (was NICHT tun)
-8. 📋 Migration-Guide für bestehende UIs
+**1C. Neue Actions erstellen:**
+- ✅ `PlotActionTeleport` (Teleport zum Plot, Owner-only, zeigt Koordinaten)
 
-**Sprint 20+: Neue Features**
+**Ergebnis:** 7 vollständige PlotActions mit Self-Rendering
+- Alle implementieren GuiRenderable vollständig
+- Automatische Permission-Lore bei !canExecute()
+- Context-aware Lore (Preise, Storage, Koordinaten)
+- Naming Convention eingehalten (PlotAction* Prefix)
+- **Unit Tests:** PlotActionTest.java (19 Tests)
+  - Icon-Validierung für alle Actions
+  - Berechtigungs-Tests (requiresOwnership, requiredPermission)
+  - Naming Convention Tests
+  - Null-Safety Tests
+
+---
+
+#### **Phase 2: TradeguildPlot Refactoring** ✅ ABGESCHLOSSEN
+
+**Ziel:** TradeguildPlot nutzt neues PlotAction-System
+
+**2A. getAvailablePlotActions() implementiert:**
+- ✅ 7 PlotActions verfügbar (mit Null-Safety)
+- ✅ Defensive Programmierung: Leere Liste wenn ProviderRegistry fehlt
+- ✅ Automatische Owner-Filterung via PlotAction.canExecute()
+
+**2B. executeAction() als @Deprecated markiert:**
+- ✅ `@Deprecated(since = "Sprint 19", forRemoval = true)`
+- ✅ Verweis auf `getAvailablePlotActions()`
+- ✅ getMainMenuActions() auch deprecated
+
+**2C. Dependency Injection hinzugefügt:**
+- ✅ `setProviderRegistry()` - Für Owner-Checks
+- ✅ `setPlotModule()` - Für NPC-Actions
+- ✅ `setStorageManager()` + `setPlotStorageProvider()` - Für Storage-Actions
+
+**Ergebnis:** TradeguildPlot vollständig refactored
+- **Unit Tests:** TradeguildPlotTest.java (16 Tests)
+  - Dependency Injection Tests
+  - Action-Type Tests (alle 7 Actions getestet)
+  - Null-Safety Tests
+  - Integration Tests (Plot-Referenz, PlotAction-Instanzen)
+
+---
+
+#### **Phase 3: InteractionHandler & Commands** 📋 Geplant
+
+**Ziel:** GUI-Erstellung über GuiBuilder
+
+**3A. InteractionHandler refactoren:**
+```java
+// ALT (HandelsgildeUi):
+HandelsgildeUi ui = new HandelsgildeUi(plot, player, providers);
+ui.open(player);
+
+// NEU (GuiBuilder):
+List<PlotAction> actions = plot.getAvailablePlotActions(player);
+PageableGui gui = GuiBuilder.buildFrom(player, plot.getDisplayName(), actions);
+gui.open(player);
+```
+
+**3B. PlotCommand refactoren** (analog)
+
+**3C. HandelsgildeUi deprecated markieren**
+
+**Ergebnis:** Universales GUI-System für alle Plots
+
+---
+
+#### **Phase 4: HandelsgildeUi Removal** 📋 Geplant
+
+**Ziel:** Alte UI vollständig entfernen
+
+- Alle Referenzen entfernen
+- `HandelsgildeUi.java` löschen
+- Migration abgeschlossen
+
+**Ergebnis:** Cleanup abgeschlossen
+
+---
+
+#### **Phase 5: SOLID-Refactoring (Andere Module)** 📋 Geplant
+
+**Ziel:** GuiRenderable-Pattern auf andere Module übertragen
+
+**5A. Items-Modul:**
+- **Problem:** Nicht erweiterbar, hart-kodiert
+- **Lösung:** `CurrencyItem` Interface (Self-Describing)
+- **Ziel:** Neue Währungen ohne Code-Änderung
+
+**5B. Economy-Modul:**
+- **Problem:** TradeUI nicht GuiRenderable-kompatibel
+- **Lösung:** `TradeAction` mit Self-Rendering
+- **Ziel:** Konsistente UI-Erstellung
+
+**5C. NPCs-Modul:**
+- **Problem:** NPC-Verwaltung mit manuellen UIs
+- **Lösung:** `NpcAction extends PlotAction`
+- **Ziel:** GuiBuilder für NPC-Konfiguration
+
+**5D. Price-Management:**
+- **Problem:** Preise nur für StorageContainerPlot
+- **Lösung:** `Priceable` Interface + Universal PriceManager
+- **Ziel:** Preise für beliebige Items/Services
+
+**Ergebnis:** SOLID-konformes Design im gesamten Plugin
+
+---
+
+### Sprint 20+: Neue Features (📋 Geplant)
+
 - Quest-System (GuiBuilder-basiert)
 - Chat-System (Provider-Pattern)
 - Auth-System (Provider-Pattern)

@@ -4,7 +4,10 @@ import de.fallenstar.core.provider.Plot;
 import de.fallenstar.core.registry.ProviderRegistry;
 import de.fallenstar.core.ui.container.BasicGsUi;
 import de.fallenstar.plot.PlotModule;
-import de.fallenstar.plot.action.*;
+import de.fallenstar.plot.action.PlotActionManageNpcs;
+import de.fallenstar.plot.action.OpenStorageUiAction;
+import de.fallenstar.plot.action.SetPriceAction;
+import de.fallenstar.plot.action.ViewPricesAction;
 import de.fallenstar.plot.storage.manager.StorageManager;
 import de.fallenstar.plot.storage.provider.PlotStorageProvider;
 import org.bukkit.Material;
@@ -193,7 +196,7 @@ public class HandelsgildeUi extends BasicGsUi {
                         "§7",
                         "§a§lKlicke zum Öffnen"
                 ),
-                new ManageNpcsAction(plot, providers, plotModule)  // Type-Safe Action!
+                new PlotActionManageNpcs(plot, providers, plotModule)  // Type-Safe Action!
         );
 
         // Händler-Slots (Placeholder)

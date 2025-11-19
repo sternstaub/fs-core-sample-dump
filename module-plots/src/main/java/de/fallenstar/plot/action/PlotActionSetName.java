@@ -13,6 +13,8 @@ import java.util.List;
 /**
  * Action zum Setzen des Plot-Namens.
  *
+ * **Naming Convention:** PlotAction* Prefix für alphabetische Hierarchie-Erkennung
+ *
  * **Berechtigungen:**
  * - Nur Plot-Owner dürfen Namen setzen
  * - Optional: Permission "fallenstar.plot.name.set"
@@ -22,26 +24,30 @@ import java.util.List;
  * - Prüft canExecute() → isOwner()
  * - Führt execute() aus → Öffnet Name-Input-UI
  *
+ * **GuiRenderable:**
+ * - Self-Rendering via getDisplayItem()
+ * - Automatische Permission-Lore bei !canExecute()
+ *
  * **Verwendung:**
  * <pre>
  * // In NamedPlot-Trait:
  * default List&lt;PlotAction&gt; getNameActions(ProviderRegistry providers) {
- *     return List.of(new SetNameAction(this, providers));
+ *     return List.of(new PlotActionSetName(this, providers));
  * }
  * </pre>
  *
  * @author FallenStar
- * @version 1.0
+ * @version 2.0 (Sprint 19 - Naming Convention)
  */
-public class SetNameAction extends PlotAction {
+public class PlotActionSetName extends PlotAction {
 
     /**
-     * Erstellt eine neue SetNameAction.
+     * Erstellt eine neue PlotActionSetName.
      *
      * @param plot Der Plot dessen Name gesetzt werden soll
      * @param providers ProviderRegistry für Owner-Checks
      */
-    public SetNameAction(Plot plot, ProviderRegistry providers) {
+    public PlotActionSetName(Plot plot, ProviderRegistry providers) {
         super(plot, providers);
     }
 
