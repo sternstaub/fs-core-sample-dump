@@ -80,7 +80,9 @@ public final class PlotActionTeleport extends PlotAction {
         player.teleport(teleportLoc);
 
         // Feedback
-        String plotName = plot.getDisplayName();
+        String plotName = plot instanceof de.fallenstar.core.provider.NamedPlot namedPlot
+                ? namedPlot.getDisplayName()
+                : plot.getIdentifier();
         player.sendMessage("§a✓ Teleportiert zu: §e" + plotName);
     }
 

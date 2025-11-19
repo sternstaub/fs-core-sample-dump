@@ -3,10 +3,7 @@ package de.fallenstar.plot.ui;
 import de.fallenstar.core.provider.Plot;
 import de.fallenstar.core.registry.ProviderRegistry;
 import de.fallenstar.core.ui.container.BasicGsUi;
-import de.fallenstar.plot.action.PlotActionManageNpcs;
-import de.fallenstar.plot.action.ManageTraderSlotsAction;
-import de.fallenstar.plot.action.ViewAvailableGoodsAction;
-import de.fallenstar.plot.action.ViewMarketStatsAction;
+import de.fallenstar.plot.action.*;
 import de.fallenstar.plot.slot.MarketPlot;
 import de.fallenstar.plot.slot.PlotSlotManager;
 import de.fallenstar.plot.storage.manager.StorageManager;
@@ -215,7 +212,7 @@ public class MarketPlotUi extends BasicGsUi {
                         "§7",
                         "§a§lKlicke zum Öffnen"
                 ),
-                new OpenStorageUiAction(plot, storageProvider, storageManager, isOwner)  // Type-Safe!
+                new PlotActionManageStorage(plot, providers, storageProvider, storageManager)  // Type-Safe!
         );
 
         // Plot-Info
@@ -227,7 +224,7 @@ public class MarketPlotUi extends BasicGsUi {
                         "§7",
                         "§a§lKlicke zum Öffnen"
                 ),
-                new ViewPlotInfoAction(plot)  // Type-Safe!
+                new PlotActionInfo(plot, providers)  // Type-Safe!
         );
 
         // Markt-Statistiken (Placeholder)
@@ -283,7 +280,7 @@ public class MarketPlotUi extends BasicGsUi {
                         "§7",
                         "§a§lKlicke zum Öffnen"
                 ),
-                new ViewPlotInfoAction(plot)  // Type-Safe!
+                new PlotActionInfo(plot, providers)  // Type-Safe!
         );
     }
 }
