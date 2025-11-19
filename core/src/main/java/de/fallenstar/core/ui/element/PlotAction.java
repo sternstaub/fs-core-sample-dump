@@ -3,8 +3,13 @@ package de.fallenstar.core.ui.element;
 import de.fallenstar.core.provider.Plot;
 import de.fallenstar.core.provider.PlotProvider;
 import de.fallenstar.core.registry.ProviderRegistry;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -15,6 +20,32 @@ import java.util.Objects;
  * - canExecute() prüft Berechtigungen (z.B. isOwner)
  * - execute() führt Logik aus ODER öffnet Untermenü
  * - Wiederverwendbar und testbar
+ *
+ * **GuiRenderable-Integration (Sprint 18):**
+ * Actions können sich selbst als ItemStack rendern:
+ * <pre>
+ * public class PlotActionSetName extends PlotAction {
+ *     {@literal @}Override
+ *     protected Material getIcon() {
+ *         return Material.NAME_TAG;
+ *     }
+ *
+ *     {@literal @}Override
+ *     protected String getDisplayName() {
+ *         return "§dPlot-Name setzen";
+ *     }
+ *
+ *     {@literal @}Override
+ *     protected List&lt;String&gt; getLore() {
+ *         return List.of(
+ *             "§7Aktueller Name: §e" + plot.getDisplayName(),
+ *             "§7Klicke um den Namen zu ändern"
+ *         );
+ *     }
+ *
+ *     // getDisplayItem() automatisch generiert!
+ * }
+ * </pre>
  *
  * **MenuAction-Integration:**
  * Actions können hierarchische Untermenüs haben:
@@ -60,9 +91,9 @@ import java.util.Objects;
  * </pre>
  *
  * @author FallenStar
- * @version 2.0
+ * @version 3.0
  */
-public abstract class PlotAction implements UiAction, MenuAction {
+public abstract class PlotAction implements UiAction, MenuAction, GuiRenderable {
 
     protected final Plot plot;
     protected final ProviderRegistry providers;
@@ -245,5 +276,136 @@ public abstract class PlotAction implements UiAction, MenuAction {
     @Override
     public String getActionName() {
         return this.getClass().getSimpleName() + "[" + plot.getIdentifier() + "]";
+    }
+
+    // ========== GuiRenderable Implementation ==========
+
+    /**
+     * Gibt das Icon-Material für diese Action zurück.
+     *
+     * Subklassen MÜSSEN diese Methode überschreiben um ihr Icon zu definieren.
+     *
+     * **Beispiele:**
+     * - SetNameAction: Material.NAME_TAG
+     * - ManageNpcsAction: Material.VILLAGER_SPAWN_EGG
+     * - ManageStorageAction: Material.CHEST
+     *
+     * @return Icon-Material
+     */
+    protected abstract Material getIcon();
+
+    /**
+     * Gibt den Anzeige-Namen für diese Action zurück.
+     *
+     * Subklassen MÜSSEN diese Methode überschreiben.
+     *
+     * **Format:** Color-Code + Titel (z.B. "§dPlot-Name setzen")
+     *
+     * @return Anzeige-Name
+     */
+    protected abstract String getDisplayName();
+
+    /**
+     * Gibt die Lore-Zeilen für diese Action zurück.
+     *
+     * Subklassen MÜSSEN diese Methode überschreiben.
+     *
+     * **WICHTIG:** Permission-Lore wird automatisch hinzugefügt!
+     * - Wenn canExecute() → keine Extra-Lore
+     * - Wenn !canExecute() → "§c§l✗ Keine Berechtigung" wird angehängt
+     *
+     * **Format:**
+     * - Beschreibung in §7 (grau)
+     * - Werte in §e (gelb) oder §a (grün)
+     * - Aktionen in §6 (gold)
+     *
+     * @return Lore-Zeilen (ohne Permission-Lore!)
+     */
+    protected abstract List<String> getLore();
+
+    /**
+     * Erstellt das Display-Item für diese Action.
+     *
+     * Diese Methode kombiniert:
+     * 1. Icon (getIcon())
+     * 2. DisplayName (getDisplayName())
+     * 3. Lore (getLore())
+     * 4. Permission-Lore (automatisch wenn !canExecute())
+     *
+     * Subklassen sollten getIcon/DisplayName/Lore überschreiben,
+     * NICHT diese Methode!
+     *
+     * @param viewer Der betrachtende Spieler
+     * @return ItemStack für GUI-Darstellung
+     */
+    @Override
+    public ItemStack getDisplayItem(Player viewer) {
+        ItemStack item = new ItemStack(getIcon());
+        ItemMeta meta = item.getItemMeta();
+
+        if (meta == null) {
+            // Fallback wenn ItemMeta fehlt (sollte nie passieren)
+            return item;
+        }
+
+        // DisplayName setzen
+        meta.setDisplayName(getDisplayName());
+
+        // Lore zusammenbauen
+        List<String> lore = new ArrayList<>(getLore());
+
+        // Permission-Lore automatisch hinzufügen
+        if (!canExecute(viewer)) {
+            lore.add(""); // Leerzeile
+            lore.add("§c§l✗ Keine Berechtigung");
+
+            // Owner-Requirement anzeigen wenn zutreffend
+            if (requiresOwnership() && !isOwner(viewer)) {
+                lore.add("§7Nur für Plot-Owner");
+            }
+
+            // Permission-Requirement anzeigen wenn zutreffend
+            String permission = requiredPermission();
+            if (permission != null && !viewer.hasPermission(permission)) {
+                lore.add("§7Benötigt: §e" + permission);
+            }
+        }
+
+        meta.setLore(lore);
+        item.setItemMeta(meta);
+
+        return item;
+    }
+
+    /**
+     * Prüft ob diese Action für einen Spieler sichtbar sein soll.
+     *
+     * **Default:** Immer sichtbar
+     *
+     * Subklassen können überschreiben für:
+     * - Context-basierte Sichtbarkeit (z.B. "NPC-Actions nur wenn NPCs vorhanden")
+     * - Permission-basierte Filterung (Admin-Actions komplett ausblenden)
+     * - Status-basierte Filterung (Upgrade nur wenn Bedingungen erfüllt)
+     *
+     * **WICHTIG:**
+     * - isVisible() filtert Elemente aus dem GUI
+     * - canExecute() zeigt Elemente grau/mit Fehler-Lore
+     *
+     * @param viewer Der betrachtende Spieler
+     * @return true wenn sichtbar
+     */
+    @Override
+    public boolean isVisible(Player viewer) {
+        return true; // Default: Immer sichtbar
+    }
+
+    /**
+     * Gibt einen Debug-Namen für diese Action zurück.
+     *
+     * @return Debug-Name
+     */
+    @Override
+    public String getRenderableName() {
+        return getActionName();
     }
 }
