@@ -69,18 +69,24 @@ public interface NpcDistributor extends Distributor<DistributableNpc> {
     Optional<Integer> getSlotForNpc(UUID npcId);
 
     /**
-     * Gibt den NPC in einem Slot zurück.
+     * Gibt den DistributableNpc in einem Slot zurück.
+     *
+     * HINWEIS: Umbenennung von getNpcInSlot() um Konflikt mit SlottablePlot zu vermeiden.
+     * SlottablePlot.getNpcInSlot() gibt UUID zurück, diese Methode gibt DistributableNpc zurück.
      *
      * @param slot Slot-Nummer (0-basiert)
      * @return Optional mit DistributableNpc
      */
-    Optional<DistributableNpc> getNpcInSlot(int slot);
+    Optional<DistributableNpc> getDistributableNpcInSlot(int slot);
 
     /**
-     * Entfernt einen NPC aus einem Slot.
+     * Entfernt einen NPC aus einem Slot (Distributor-Methode).
+     *
+     * HINWEIS: Umbenennung von removeNpcFromSlot() um Konflikt mit SlottablePlot zu vermeiden.
+     * SlottablePlot.removeNpcFromSlot() gibt Optional<UUID> zurück, diese Methode gibt boolean zurück.
      *
      * @param slot Slot-Nummer
      * @return true wenn erfolgreich
      */
-    boolean removeNpcFromSlot(int slot);
+    boolean undistributeNpcFromSlot(int slot);
 }

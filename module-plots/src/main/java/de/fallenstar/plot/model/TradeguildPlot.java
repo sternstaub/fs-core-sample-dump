@@ -530,14 +530,23 @@ public class TradeguildPlot extends BasePlot implements
             .findFirst();
     }
 
+    /**
+     * NpcDistributor-Methode: Gibt den DistributableNpc in einem Slot zurück.
+     * (Umbenennung um Konflikt mit SlottablePlot.getNpcInSlot() zu vermeiden)
+     */
+    @Override
     public Optional<DistributableNpc> getDistributableNpcInSlot(int slot) {
-        return super.getNpcInSlot(slot)
+        return this.getNpcInSlot(slot) // SlottablePlot-Methode (gibt UUID zurück)
             .flatMap(npcId -> Optional.ofNullable(npcCache.get(npcId)));
     }
 
+    /**
+     * NpcDistributor-Methode: Entfernt einen NPC aus einem Slot (Distributor-Kontext).
+     * (Umbenennung um Konflikt mit SlottablePlot.removeNpcFromSlot() zu vermeiden)
+     */
     @Override
-    public boolean removeNpcFromSlot(int slot) {
-        Optional<UUID> npcIdOpt = super.getNpcInSlot(slot);
+    public boolean undistributeNpcFromSlot(int slot) {
+        Optional<UUID> npcIdOpt = this.getNpcInSlot(slot); // SlottablePlot-Methode
         if (npcIdOpt.isEmpty()) {
             return false;
         }
@@ -549,7 +558,7 @@ public class TradeguildPlot extends BasePlot implements
             undistribute(npc);
         } else {
             // Fallback: Entferne manuell
-            removeNpcFromSlot(slot);
+            this.removeNpcFromSlot(slot); // SlottablePlot-Methode (gibt Optional<UUID> zurück)
             unregisterNpc(npcId);
         }
 
