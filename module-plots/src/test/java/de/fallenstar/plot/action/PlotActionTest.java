@@ -37,7 +37,7 @@ class PlotActionTest {
         mockPlot = Mockito.mock(Plot.class);
         when(mockPlot.getUuid()).thenReturn(UUID.randomUUID());
         when(mockPlot.getIdentifier()).thenReturn("test-plot");
-        when(mockPlot.getDisplayName()).thenReturn("§aTest Plot");
+        // Note: getDisplayName() existiert nur in NamedPlot, nicht in Plot
 
         // Mock ProviderRegistry
         mockProviders = Mockito.mock(ProviderRegistry.class);
