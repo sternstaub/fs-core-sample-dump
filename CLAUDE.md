@@ -334,8 +334,8 @@ git push -u origin <branch-name>
 
 ### Sprint-Übersicht
 
-| Sprint | Modul | Status |
-|--------|-------|--------|
+| Sprint | Modul/Feature | Status |
+|--------|---------------|--------|
 | 1-2 | Core + UI Framework | ✅ |
 | 3-4 | Plots (inkl. Storage) | ✅ |
 | 5-6 | Items (Vanilla Coins + MMOItems) | ✅ |
@@ -345,7 +345,9 @@ git push -u origin <branch-name>
 | 13-14 | NPCs (Citizens + Händler-NPCs) | ✅ |
 | 15 | Interaction System + Distributor Pattern | ✅ |
 | 16 | DataStore-Integration + Persistenz | ✅ |
-| 17+ | Quest-System, Chat, Auth, WebHooks | 📋 |
+| 17 | Trait-Actions + Command Pattern + Naming Convention | ✅ |
+| 18 | GuiRenderable + Universal GuiBuilder | 📋 In Arbeit |
+| 19+ | Quest-System, Chat, Auth, WebHooks | 📋 Geplant |
 
 ### Testbefehle
 
@@ -429,6 +431,141 @@ UiActionViewPrices.java        // extends UiAction ✓
 
 ---
 
+## Design Evolution (UI-System)
+
+Das UI-System hat eine bedeutende Architektur-Evolution durchlaufen. Dieser Abschnitt dokumentiert die Design-Änderungen für AI-Verständlichkeit.
+
+### Phase 1: UiActionInfo (Sprint 15)
+
+**Konzept:** Actions als Metadaten
+
+```java
+UiActionInfo action = UiActionInfo.builder()
+    .id("manage_npcs")
+    .displayName("§bNPCs verwalten")
+    .icon(Material.VILLAGER_SPAWN_EGG)
+    .requiredPermission("fallenstar.plot.npc.manage")
+    .build();
+
+// Ausführung:
+@Override
+public boolean executeAction(Player player, String actionId) {
+    return switch (actionId) {
+        case "manage_npcs" -> { /* Logik hier */ yield true; }
+        default -> false;
+    };
+}
+```
+
+**Probleme:**
+- ❌ Action kennt nur Display, nicht Logik
+- ❌ Switch-Statement wird riesig
+- ❌ Logik verstreut in executeAction()
+- ❌ Schwer testbar
+
+### Phase 2: PlotAction mit Command Pattern (Sprint 17)
+
+**Konzept:** Actions kapseln Logik + Berechtigungen
+
+```java
+public abstract class PlotAction implements UiAction {
+    protected final Plot plot;
+
+    // Berechtigungsprüfung IN der Action!
+    @Override
+    public boolean canExecute(Player player) {
+        if (requiresOwnership() && !isOwner(player)) return false;
+        if (requiredPermission() != null && !hasPermission(...)) return false;
+        return true;
+    }
+
+    // Logik IN der Action!
+    @Override
+    public abstract void execute(Player player);
+}
+
+// Verwendung:
+PlotAction action = new PlotActionManageNpcs(plot, providers, plotModule);
+if (action.canExecute(player)) {
+    action.execute(player); // Action führt sich selbst aus!
+}
+```
+
+**Verbesserungen:**
+- ✅ Action kennt Logik + Berechtigungen
+- ✅ Kein Switch-Statement mehr
+- ✅ Wiederverwendbar und testbar
+- ✅ Type-Safe durch Compiler
+
+**Offen:**
+- ⚠️ Display-Logik noch in UiActionInfo
+- ⚠️ Duplikation: Icon/DisplayName in UiActionInfo UND PlotAction
+
+### Phase 3: GuiRenderable (Sprint 18) 📋 In Arbeit
+
+**Konzept:** Actions rendern sich selbst
+
+```java
+public abstract class PlotAction implements UiAction, GuiRenderable {
+
+    // Action kennt ihr Display!
+    @Override
+    public ItemStack getDisplayItem(Player viewer) {
+        ItemStack item = new ItemStack(getIcon());
+        ItemMeta meta = item.getItemMeta();
+        meta.setDisplayName(getDisplayName());
+
+        List<String> lore = new ArrayList<>(getLore());
+        if (!canExecute(viewer)) {
+            lore.add("§c§l✗ Keine Berechtigung");
+        }
+        meta.setLore(lore);
+
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    protected abstract Material getIcon();
+    protected abstract String getDisplayName();
+    protected abstract List<String> getLore();
+}
+
+// Universal GuiBuilder:
+PageableGui gui = GuiBuilder.buildFrom(
+    player,
+    "§6Plot-Verwaltung",
+    plot.getAvailablePlotActions(player) // List<PlotAction>
+);
+gui.open(player);
+```
+
+**Vorteile:**
+- ✅ **Vollständige Kapselung:** Display + Logik + Berechtigungen
+- ✅ **Universal:** Ein GuiBuilder für ALLE Plots
+- ✅ **DRY:** Keine Duplikation mehr
+- ✅ **Automatisch:** Permission-Checks → Lore-Updates
+- ✅ **Erweiterbar:** Neue Action → automatisch im GUI
+
+**Architektur-Vergleich:**
+
+| Aspekt | UiActionInfo | PlotAction | GuiRenderable |
+|--------|--------------|------------|---------------|
+| Display-Logik | ✅ | ❌ | ✅ |
+| Ausführungs-Logik | ❌ | ✅ | ✅ |
+| Berechtigungen | Partial | ✅ | ✅ |
+| Wiederverwendbar | ❌ | ✅ | ✅ |
+| Type-Safe | ❌ | ✅ | ✅ |
+| Self-Rendering | ❌ | ❌ | ✅ |
+
+**Migration-Pfad:**
+
+1. **Aktuell:** `UiActionInfo` + `switch(actionId)` in executeAction()
+2. **Sprint 17:** `PlotAction` mit canExecute() + execute()
+3. **Sprint 18:** `PlotAction implements GuiRenderable` + GuiBuilder
+4. **Zukunft:** `HandelsgildeUi` entfernen → GuiBuilder universal
+
+---
+
 ## Important Patterns
 
 ### Owner-Berechtigungen
@@ -509,22 +646,99 @@ var button = new ClickableUiElement.CustomButton<>(item, action);
 4. ✅ Lazy Loading (Auto-Load beim ersten Zugriff)
 5. ✅ Auto-Save beim Server-Shutdown
 
-### Aktuell in Arbeit (Sprint 17+)
+**Sprint 17: Trait-basierte UI-Actions + Command Pattern** ✅
+1. ✅ NamedPlot.getNameActions() - Actions in Traits definiert
+2. ✅ StorageContainerPlot.getStorageActions() - Trait-Komposition
+3. ✅ NpcContainerPlot.getNpcActions() - DRY für Actions
+4. ✅ TradeguildPlot refactored - Kombiniert Trait-Actions
+5. ✅ UiAction.canExecute() - Berechtigungsprüfung in Actions
+6. ✅ PlotAction abstrakte Basisklasse - Command Pattern mit Objekt-Referenz
+7. ✅ PlotActionSetName - Konkrete Implementierung
+8. ✅ PlotActionManageNpcs refactored - Nutzt PlotAction-Basis
+9. ✅ HandelsgildeUi deprecated - Ersetzt durch GenericInteractionMenuUi
+10. ✅ Naming Convention - Vererbungshierarchie erkennbar (Prefix-basiert)
 
-**Quest-System:**
-- 📋 Quest-UI (GenericInteractionMenuUi-basiert)
+### Aktuell in Arbeit (Sprint 18: Universal GUI-Rendering)
+
+**Design-Evolution: Von UiActionInfo zu GuiRenderable**
+
+Das UI-System durchläuft eine Architektur-Evolution:
+
+```
+Sprint 15: UiActionInfo (Metadaten)
+  └─> Action-ID + Icon + Lore → switch(actionId) in executeAction()
+
+Sprint 17: PlotAction (Command Pattern)
+  └─> Action kennt Logik + Permissions → canExecute() + execute()
+
+Sprint 18: GuiRenderable (Self-Rendering Actions)
+  └─> Action kennt Logik + Permissions + Display → getDisplayItem()
+```
+
+**Ziel:** Actions können sich selbst im GUI rendern → Universal GuiBuilder für alle Plots!
+
+**Sprint 18 Tasks:**
+1. 📋 GuiRenderable Interface (Core)
+   - `ItemStack getDisplayItem(Player viewer)` - Action erstellt eigenes Display-Item
+   - `boolean isVisible(Player viewer)` - Sichtbarkeits-Check
+
+2. 📋 PlotAction erweitern: implements GuiRenderable
+   - Abstrakte Methoden: `getIcon()`, `getDisplayName()`, `getLore()`
+   - Automatisches Display-Item mit Permission-Lore
+   - `showWhenNoPermission()` für Info-Actions
+
+3. 📋 GuiBuilder - Universal für alle Action-Listen
+   - `buildFrom(Player, String title, List<GuiRenderable>)` → PageableGui
+   - Automatische Filterung (isVisible)
+   - Automatische Pagination (45 Items pro Seite)
+   - Click-Handler für UiAction-Implementierungen
+
+4. 📋 PageableGui implementieren (Core)
+   - Pagination mit Vor/Zurück-Buttons
+   - Auto-Navigation zwischen Seiten
+   - Integration mit GuiBuilder
+
+5. 📋 Trait-Actions zu PlotAction migrieren
+   - NamedPlot.getNameActions() → `List<PlotAction>`
+   - StorageContainerPlot.getStorageActions() → `List<PlotAction>`
+   - NpcContainerPlot.getNpcActions() → `List<PlotAction>`
+   - Alle Actions implementieren getIcon/DisplayName/Lore
+
+6. 📋 TradeguildPlot.getAvailablePlotActions()
+   - Neue Methode: `List<PlotAction> getAvailablePlotActions(Player)`
+   - Kombiniert alle Trait-PlotActions
+   - Owner/Guest-Filterung via canExecute()
+
+7. 📋 PlotCommand/InteractionHandler refactoren
+   - Nutzt GuiBuilder statt HandelsgildeUi
+   - `GuiBuilder.buildFrom(player, title, plot.getAvailablePlotActions(player))`
+   - Universell für alle Plot-Typen!
+
+8. 📋 HandelsgildeUi entfernen
+   - Vollständig obsolet durch GuiBuilder
+   - Migration-Guide für andere UIs
+
+**Architektur-Vorteile:**
+- ✅ **Universal:** Ein GuiBuilder für ALLE Plot-Typen
+- ✅ **DRY:** Action kennt Display + Logik + Permissions
+- ✅ **Type-Safe:** GuiRenderable erzwingt getDisplayItem()
+- ✅ **Automatisch:** Permission-Checks → Lore-Updates
+- ✅ **Erweiterbar:** Neue PlotAction → automatisch im GUI
+
+**Quest-System:** (Sprint 19+)
+- 📋 Quest-UI (GuiBuilder-basiert)
 - 📋 Quest-Manager
 - 📋 Quest-Persistierung
 
-**Chat-System:**
+**Chat-System:** (Sprint 20+)
 - 📋 Chat-Provider Interface
 - 📋 Channel-System
 
-**Auth-System:**
+**Auth-System:** (Sprint 21+)
 - 📋 Authentication-Provider
 - 📋 Session-Management
 
-**WebHooks:**
+**WebHooks:** (Sprint 22+)
 - 📋 Event-Streaming zu externen Services
 
 ---
@@ -694,9 +908,9 @@ git push -u origin <branch>
 
 ---
 
-**Last Updated:** 2025-11-18
+**Last Updated:** 2025-11-19
 **Version:** 1.0-SNAPSHOT
-**Sprint:** 15-17 (Interaction System + Distributor Pattern ✅, DataStore-Integration ✅)
+**Sprint:** 17-18 (Trait-Actions + Command Pattern ✅, GuiRenderable + Universal GuiBuilder 📋)
 **Branch:** claude/fix-storage-price-loop-012sXDfqzLyyPSPX8QC8egq7
 
 **Hinweis:** module-merchants und module-adminshops wurden entfernt (obsolet - Funktionalität in NPCs-Modul)
