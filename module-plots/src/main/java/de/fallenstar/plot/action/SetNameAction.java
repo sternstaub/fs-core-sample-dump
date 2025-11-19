@@ -52,7 +52,7 @@ public class SetNameAction extends PlotAction {
     }
 
     @Override
-    public void execute(Player player) {
+    protected void executeAction(Player player) {
         player.closeInventory();
 
         // Prüfe ob Plot NamedPlot ist

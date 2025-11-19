@@ -13,10 +13,24 @@ import java.util.Objects;
  * **Command Pattern mit Objekt-Referenz:**
  * - Actions haben Plot-Referenz im Konstruktor
  * - canExecute() prüft Berechtigungen (z.B. isOwner)
- * - execute() führt Logik aus
+ * - execute() führt Logik aus ODER öffnet Untermenü
  * - Wiederverwendbar und testbar
  *
- * **Beispiel:**
+ * **MenuAction-Integration:**
+ * Actions können hierarchische Untermenüs haben:
+ * <pre>
+ * public class ManageNpcsAction extends PlotAction {
+ *     {@literal @}Override
+ *     public List&lt;PlotAction&gt; getSubActions(Player player) {
+ *         // Dynamisches Untermenü
+ *         return plot.getNpcIds().stream()
+ *             .map(npcId -> new ConfigureNpcAction(plot, npcId))
+ *             .toList();
+ *     }
+ * }
+ * </pre>
+ *
+ * **Beispiel (Simple Action):**
  * <pre>
  * public class SetNameAction extends PlotAction {
  *     public SetNameAction(Plot plot, ProviderRegistry providers) {
@@ -29,7 +43,7 @@ import java.util.Objects;
  *     }
  *
  *     {@literal @}Override
- *     public void execute(Player player) {
+ *     protected void executeAction(Player player) {
  *         // Öffne Name-Input-UI
  *         openNameInputUI(player);
  *     }
@@ -46,9 +60,9 @@ import java.util.Objects;
  * </pre>
  *
  * @author FallenStar
- * @version 1.0
+ * @version 2.0
  */
-public abstract class PlotAction implements UiAction {
+public abstract class PlotAction implements UiAction, MenuAction {
 
     protected final Plot plot;
     protected final ProviderRegistry providers;
@@ -165,6 +179,67 @@ public abstract class PlotAction implements UiAction {
      */
     public ProviderRegistry getProviders() {
         return providers;
+    }
+
+    // ========== UiAction Implementation ==========
+
+    /**
+     * Führt die Action aus.
+     *
+     * Diese Methode ist final und entscheidet automatisch:
+     * - Wenn hasSubMenu() → Öffne Untermenü via openSubMenu()
+     * - Sonst → Führe executeAction() aus
+     *
+     * Subklassen sollten executeAction() überschreiben, nicht execute()!
+     *
+     * @param player Der Spieler
+     */
+    @Override
+    public final void execute(Player player) {
+        if (hasSubMenu(player)) {
+            // Öffne Untermenü
+            openSubMenu(player);
+        } else {
+            // Führe normale Action aus
+            executeAction(player);
+        }
+    }
+
+    /**
+     * Öffnet das Untermenü für diese Action.
+     *
+     * Wird automatisch von execute() aufgerufen wenn hasSubMenu() == true.
+     *
+     * TODO: Implementierung mit GuiBuilder (Sprint 18)
+     * Aktuell: Placeholder mit Nachricht
+     *
+     * @param player Der Spieler
+     */
+    private void openSubMenu(Player player) {
+        // TODO: Ersetzen durch GuiBuilder sobald implementiert
+        // List<? extends GuiRenderable> subActions = getSubActions(player);
+        // PageableGui gui = GuiBuilder.buildFrom(player, getSubMenuTitle(), subActions);
+        // gui.open(player);
+
+        // Placeholder:
+        player.sendMessage("§e[Untermenü] §f" + getSubMenuTitle());
+        player.sendMessage("§7TODO: GuiBuilder implementieren (Sprint 18)");
+    }
+
+    /**
+     * Führt die Action-Logik aus (für normale Actions ohne Untermenü).
+     *
+     * Überschreibe diese Methode in Subklassen für normale Actions.
+     * Wenn die Action ein Untermenü hat (getSubActions() nicht leer),
+     * wird diese Methode NICHT aufgerufen!
+     *
+     * **Default:** Nichts tun
+     *
+     * @param player Der Spieler
+     */
+    protected void executeAction(Player player) {
+        // Default: Nichts tun
+        // Subklassen überschreiben diese Methode
     }
 
     @Override

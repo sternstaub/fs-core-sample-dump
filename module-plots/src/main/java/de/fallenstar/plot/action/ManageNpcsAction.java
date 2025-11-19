@@ -82,7 +82,7 @@ public final class ManageNpcsAction extends de.fallenstar.core.ui.element.PlotAc
     }
 
     @Override
-    public void execute(Player player) {
+    protected void executeAction(Player player) {
         player.closeInventory();
 
         // Prüfe ob Spieler Owner ist (via PlotAction.isOwner()!)
