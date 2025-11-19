@@ -77,8 +77,15 @@ public class CoinProviderImpl implements CoinProvider {
             amount = price.divide(BigDecimal.valueOf(100));
         }
 
-        // Prüfe Stack-Size
+        // Prüfe Stack-Size und runde AUF (mindestens 1 Münze bei Preisen > 0)
         int coinAmount = amount.intValue();
+
+        // Wenn Preis > 0 aber coinAmount = 0 (wegen Rundung), setze auf 1
+        if (price.compareTo(BigDecimal.ZERO) > 0 && coinAmount == 0) {
+            coinAmount = 1; // Mindestens 1 Münze
+            logger.fine("Preis " + price + " zu klein für Tier " + tier + " - verwende 1 Münze");
+        }
+
         if (coinAmount > maxStackSize) {
             logger.warning("Coin amount " + coinAmount + " exceeds max stack size " + maxStackSize);
             coinAmount = maxStackSize;
