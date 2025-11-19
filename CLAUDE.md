@@ -56,16 +56,17 @@ private void initializeProviders() {
 ### Status
 
 - **Version:** 1.0-SNAPSHOT
-- **Phase:** Aktive Entwicklung (~85%)
+- **Phase:** Aktive Entwicklung (~88%)
 - **Abgeschlossen:**
-  - Core ✅ (Provider, UI-Framework, Interaction System, Distributor Pattern)
+  - Core ✅ (Provider, UI-Framework, Interaction System, Distributor Pattern, GuiRenderable, GuiBuilder)
   - Plots ✅ (TradeguildPlot, DataStore-Persistenz, InteractionRegistry)
   - Items ✅ (Vanilla Coins, MMOItems-Support)
   - Economy ✅ (Vault-Integration, TradeSet-System)
   - Trading-System ✅ (TradeUI, TradingEntity)
   - NPCs ✅ (GuildTraderNpcEntity, DistributableNpc, QuestContainer)
-- **Aktuell:** Sprint 15+ (Quest-System, Chat, Auth, WebHooks 📋)
-- **Nächster:** Production-Deployment
+  - Universal GUI-System ✅ (GuiRenderable + GuiBuilder - Sprint 18)
+- **Aktuell:** Sprint 19 (Vollständige UI-Migration, SOLID-Refactoring) 📋
+- **Nächster:** Sprint 20+ (Quest-System, Chat, Auth, WebHooks)
 
 ---
 
@@ -346,8 +347,9 @@ git push -u origin <branch-name>
 | 15 | Interaction System + Distributor Pattern | ✅ |
 | 16 | DataStore-Integration + Persistenz | ✅ |
 | 17 | Trait-Actions + Command Pattern + Naming Convention | ✅ |
-| 18 | GuiRenderable + Universal GuiBuilder | 📋 In Arbeit |
-| 19+ | Quest-System, Chat, Auth, WebHooks | 📋 Geplant |
+| 18 | GuiRenderable + Universal GuiBuilder | ✅ |
+| 19 | Vollständige UI-Migration + SOLID-Refactoring | 📋 Geplant |
+| 20+ | Quest-System, Chat, Auth, WebHooks | 📋 Geplant |
 
 ### Testbefehle
 
@@ -501,7 +503,7 @@ if (action.canExecute(player)) {
 - ⚠️ Display-Logik noch in UiActionInfo
 - ⚠️ Duplikation: Icon/DisplayName in UiActionInfo UND PlotAction
 
-### Phase 3: GuiRenderable (Sprint 18) 📋 In Arbeit
+### Phase 3: GuiRenderable (Sprint 18) ✅ Abgeschlossen
 
 **Konzept:** Actions rendern sich selbst
 
@@ -619,9 +621,9 @@ var button = new ClickableUiElement.CustomButton<>(item, action);
 
 ---
 
-## Current Sprint (15-17)
+## Sprint-Details
 
-### Abgeschlossen (Sprint 13-16)
+### Abgeschlossen (Sprint 13-18)
 
 **Sprint 13-14: NPCs-Modul - Citizens-Integration + Gildenhändler**
 1. ✅ CitizensNPCProvider (NPCProvider-Implementierung)
@@ -658,88 +660,286 @@ var button = new ClickableUiElement.CustomButton<>(item, action);
 9. ✅ HandelsgildeUi deprecated - Ersetzt durch GenericInteractionMenuUi
 10. ✅ Naming Convention - Vererbungshierarchie erkennbar (Prefix-basiert)
 
-### Aktuell in Arbeit (Sprint 18: Universal GUI-Rendering)
+**Sprint 18: Universal GUI-System (GuiRenderable + GuiBuilder)** ✅
+1. ✅ GuiRenderable Interface (Core)
+   - `ItemStack getDisplayItem(Player viewer)` - Self-Rendering
+   - `boolean isVisible(Player viewer)` - Sichtbarkeits-Filter
+   - Vollständige Javadoc mit Architektur-Evolution
 
-**Design-Evolution: Von UiActionInfo zu GuiRenderable**
-
-Das UI-System durchläuft eine Architektur-Evolution:
-
-```
-Sprint 15: UiActionInfo (Metadaten)
-  └─> Action-ID + Icon + Lore → switch(actionId) in executeAction()
-
-Sprint 17: PlotAction (Command Pattern)
-  └─> Action kennt Logik + Permissions → canExecute() + execute()
-
-Sprint 18: GuiRenderable (Self-Rendering Actions)
-  └─> Action kennt Logik + Permissions + Display → getDisplayItem()
-```
-
-**Ziel:** Actions können sich selbst im GUI rendern → Universal GuiBuilder für alle Plots!
-
-**Sprint 18 Tasks:**
-1. 📋 GuiRenderable Interface (Core)
-   - `ItemStack getDisplayItem(Player viewer)` - Action erstellt eigenes Display-Item
-   - `boolean isVisible(Player viewer)` - Sichtbarkeits-Check
-
-2. 📋 PlotAction erweitern: implements GuiRenderable
+2. ✅ PlotAction implements GuiRenderable
    - Abstrakte Methoden: `getIcon()`, `getDisplayName()`, `getLore()`
    - Automatisches Display-Item mit Permission-Lore
-   - `showWhenNoPermission()` für Info-Actions
+   - Owner-Requirements → "Nur für Plot-Owner" Anzeige
 
-3. 📋 GuiBuilder - Universal für alle Action-Listen
-   - `buildFrom(Player, String title, List<GuiRenderable>)` → PageableGui
-   - Automatische Filterung (isVisible)
-   - Automatische Pagination (45 Items pro Seite)
-   - Click-Handler für UiAction-Implementierungen
+3. ✅ SetNameAction - Display-Logik implementiert
+   - Material.NAME_TAG Icon
+   - Zeigt aktuellen Plot-Namen in Lore
+   - Vollständig GuiRenderable
 
-4. 📋 PageableGui implementieren (Core)
-   - Pagination mit Vor/Zurück-Buttons
-   - Auto-Navigation zwischen Seiten
-   - Integration mit GuiBuilder
+4. ✅ ManageNpcsAction - Display-Logik implementiert
+   - Material.VILLAGER_SPAWN_EGG Icon
+   - Beschreibung der NPC-Verwaltung
+   - Vollständig GuiRenderable
 
-5. 📋 Trait-Actions zu PlotAction migrieren
-   - NamedPlot.getNameActions() → `List<PlotAction>`
-   - StorageContainerPlot.getStorageActions() → `List<PlotAction>`
-   - NpcContainerPlot.getNpcActions() → `List<PlotAction>`
-   - Alle Actions implementieren getIcon/DisplayName/Lore
+5. ✅ GuiBuilder (Core)
+   - `buildFrom()` mit Intersection Type `T extends GuiRenderable & UiAction`
+   - Automatische Konvertierung zu PageableBasicUi
+   - Universal für ALLE Plot-Typen
 
-6. 📋 TradeguildPlot.getAvailablePlotActions()
-   - Neue Methode: `List<PlotAction> getAvailablePlotActions(Player)`
-   - Kombiniert alle Trait-PlotActions
-   - Owner/Guest-Filterung via canExecute()
+6. ✅ PlotAction.openSubMenu() mit GuiBuilder
+   - Ersetzt Placeholder durch echtes GUI
+   - Automatische Untermenü-Erstellung
+   - Runtime-Checks für UiAction-Kompatibilität
 
-7. 📋 PlotCommand/InteractionHandler refactoren
-   - Nutzt GuiBuilder statt HandelsgildeUi
-   - `GuiBuilder.buildFrom(player, title, plot.getAvailablePlotActions(player))`
-   - Universell für alle Plot-Typen!
+7. ✅ MenuAction-Interface dokumentiert
+   - **WICHTIG:** MenuAction ist INTERFACE, KEINE Klasse!
+   - PlotAction implements MenuAction (KANN Untermenü haben, MUSS NICHT)
+   - Hierarchische Submenus via getSubActions()
 
-8. 📋 HandelsgildeUi entfernen
-   - Vollständig obsolet durch GuiBuilder
-   - Migration-Guide für andere UIs
-
-**Architektur-Vorteile:**
+**Architektur-Erkenntnisse:**
 - ✅ **Universal:** Ein GuiBuilder für ALLE Plot-Typen
 - ✅ **DRY:** Action kennt Display + Logik + Permissions
-- ✅ **Type-Safe:** GuiRenderable erzwingt getDisplayItem()
-- ✅ **Automatisch:** Permission-Checks → Lore-Updates
+- ✅ **Type-Safe:** Intersection Types garantieren Kompatibilität
+- ✅ **SOLID:** Single Responsibility, Open/Closed, Dependency Inversion
 - ✅ **Erweiterbar:** Neue PlotAction → automatisch im GUI
 
-**Quest-System:** (Sprint 19+)
-- 📋 Quest-UI (GuiBuilder-basiert)
-- 📋 Quest-Manager
-- 📋 Quest-Persistierung
+### Sprint 19: Vollständige UI-Migration + SOLID-Refactoring (📋 Geplant)
 
-**Chat-System:** (Sprint 20+)
-- 📋 Chat-Provider Interface
-- 📋 Channel-System
+**Hauptziel:** Übertrage das Universal GUI-Pattern auf ALLE Bereiche des Plugins.
 
-**Auth-System:** (Sprint 21+)
-- 📋 Authentication-Provider
-- 📋 Session-Management
+**Kritische Prinzipien (aus Sprint 18 gelernt):**
+1. **SOLID über alles:** Jede Klasse eine Verantwortung
+2. **Universalität:** Code soll für ALLE Typen funktionieren (nicht nur einen)
+3. **Self-Rendering:** Objekte kennen ihre Darstellung
+4. **Keine manuellen UI-Konstruktionen:** GuiBuilder für alles
+5. **Vererbungshierarchie erkennbar:** Prefix-basierte Namen
 
-**WebHooks:** (Sprint 22+)
-- 📋 Event-Streaming zu externen Services
+**UI-Migration Tasks:**
+1. 📋 Weitere PlotActions erstellen
+   - PlotActionManageStorage (Storage-Verwaltung)
+   - PlotActionManagePrices (Preis-Verwaltung)
+   - PlotActionViewPrices (Preisliste)
+   - PlotActionTeleport (Teleport-Action)
+   - PlotActionInfo (Plot-Info anzeigen)
+
+2. 📋 TradeguildPlot.getAvailablePlotActions()
+   - Kombiniert alle Trait-PlotActions
+   - Owner/Guest-Filterung via canExecute()
+   - Ersetzt getMainMenuActions()
+
+3. 📋 PlotCommand/InteractionHandler refactoren
+   - Nutzt GuiBuilder statt HandelsgildeUi
+   - Universal für alle Plot-Typen
+
+4. 📋 HandelsgildeUi vollständig entfernen
+   - Deprecated → Removal
+   - Migration-Guide für andere UIs
+
+**SOLID-Refactoring (Identifizierte Schwachstellen):**
+
+1. 📋 **Münzen-System (Items-Modul)**
+   - **Problem:** Nicht erweiterbar, hart-kodiert
+   - **Lösung:** CurrencyItem Interface + Registry
+   - **Ziel:** Neue Währungen ohne Code-Änderung
+
+2. 📋 **Price-Management (Plots-Modul)**
+   - **Problem:** Preise nur für StorageContainerPlot
+   - **Lösung:** Priceable Interface + Universal PriceManager
+   - **Ziel:** Preise für beliebige Items/Services
+
+3. 📋 **NPC-Actions (NPCs-Modul)**
+   - **Problem:** NPC-Verwaltung noch mit manuellen UIs
+   - **Lösung:** NpcAction extends PlotAction
+   - **Ziel:** GuiBuilder für NPC-Konfiguration
+
+4. 📋 **Trade-System (Economy-Modul)**
+   - **Problem:** TradeUI nicht GuiRenderable-kompatibel
+   - **Lösung:** TradeAction mit Self-Rendering
+   - **Ziel:** Konsistente UI-Erstellung
+
+**Design-Patterns übertragen auf:**
+- Münzen: Self-Describing (wie GuiRenderable)
+- Preise: Provider-Pattern (wie PlotProvider)
+- NPCs: Command-Pattern (wie PlotAction)
+- Quests: Self-Rendering (wie GuiRenderable)
+
+**Dokumentation:**
+5. 📋 SOLID-Prinzipien Sektion in CLAUDE.md
+6. 📋 Universal-Patterns Dokumentation
+7. 📋 Anti-Patterns erweitern (was NICHT tun)
+8. 📋 Migration-Guide für bestehende UIs
+
+**Sprint 20+: Neue Features**
+- Quest-System (GuiBuilder-basiert)
+- Chat-System (Provider-Pattern)
+- Auth-System (Provider-Pattern)
+- WebHooks (Event-Streaming)
+
+---
+
+## SOLID-Prinzipien & Universal Patterns
+
+**Erkenntnisse aus Sprint 18: Code muss SOLID und universal sein!**
+
+### Kern-Prinzipien
+
+1. **Single Responsibility Principle (SRP)**
+   - PlotAction: Kennt Display + Logik + Permissions (alles für EINE Action)
+   - GuiBuilder: Nur GUI-Erstellung aus GuiRenderable-Listen
+   - GuiRenderable: Nur Self-Rendering-Interface
+
+2. **Open/Closed Principle (OCP)**
+   - **Offen für Erweiterung:** Neue PlotAction → automatisch im GUI
+   - **Geschlossen für Änderung:** GuiBuilder ändert sich nicht bei neuen Actions
+   - Beispiel: SetNameAction hinzufügen ohne GuiBuilder zu ändern
+
+3. **Liskov Substitution Principle (LSP)**
+   - Alle PlotActions sind austauschbar (gleiches Interface)
+   - GuiBuilder funktioniert mit JEDER GuiRenderable-Implementierung
+   - TradeguildPlot, MarketPlot, etc. alle nutzbar mit GuiBuilder
+
+4. **Interface Segregation Principle (ISP)**
+   - UiAction: Nur execute() + canExecute()
+   - GuiRenderable: Nur getDisplayItem() + isVisible()
+   - MenuAction: Nur getSubActions() + hasSubMenu()
+   - PlotAction implementiert alle 3 separat
+
+5. **Dependency Inversion Principle (DIP)**
+   - GuiBuilder hängt von Interface ab (GuiRenderable + UiAction)
+   - NICHT von Implementierung (PlotAction)
+   - Intersection Type: `T extends GuiRenderable & UiAction`
+
+### Universal Patterns (aus Sprint 18)
+
+**Pattern 1: Self-Rendering Objects**
+```java
+// ❌ FALSCH: Manuelle UI-Konstruktion
+public class PlotUi {
+    public void buildButton(Plot plot) {
+        ItemStack item = new ItemStack(Material.NAME_TAG);
+        item.setDisplayName("...");
+        // ... manuell für jeden Plot-Typ
+    }
+}
+
+// ✅ RICHTIG: Self-Rendering
+public class PlotActionSetName implements GuiRenderable {
+    @Override
+    public ItemStack getDisplayItem(Player viewer) {
+        // Action kennt ihre Darstellung!
+        return buildItem(getIcon(), getDisplayName(), getLore());
+    }
+}
+
+// Universal verwendbar:
+GuiBuilder.buildFrom(player, title, plot.getAvailablePlotActions(player));
+```
+
+**Pattern 2: Intersection Types für Constraints**
+```java
+// ❌ FALSCH: Lose Typisierung
+public PageableGui buildFrom(List<Object> actions) {
+    // Was wenn Object kein GuiRenderable ist?
+}
+
+// ✅ RICHTIG: Intersection Type
+public <T extends GuiRenderable & UiAction> PageableGui buildFrom(
+    Player viewer,
+    String title,
+    List<T> actions
+) {
+    // Compiler garantiert: T IST GuiRenderable UND UiAction!
+}
+```
+
+**Pattern 3: Composition over Inheritance**
+```java
+// ❌ FALSCH: Tiefe Vererbungshierarchien
+class Action {}
+class PlotAction extends Action {}
+class NameAction extends PlotAction {}
+class SetNameAction extends NameAction {}
+
+// ✅ RICHTIG: Interface-Komposition
+interface UiAction { }
+interface GuiRenderable { }
+interface MenuAction { }
+
+class PlotAction implements UiAction, GuiRenderable, MenuAction {
+    // Kombiniert Capabilities ohne tiefe Hierarchie
+}
+```
+
+**Pattern 4: No Manual Type-Checking**
+```java
+// ❌ FALSCH: Manuelle Type-Checks
+public void openUI(Plot plot) {
+    if (plot instanceof TradeguildPlot) {
+        openTradeguildUI();
+    } else if (plot instanceof MarketPlot) {
+        openMarketUI();
+    }
+    // Neue Plot-Typen = Code-Änderung!
+}
+
+// ✅ RICHTIG: Polymorphismus
+public void openUI(Plot plot, Player player) {
+    // ALLE Plot-Typen funktionieren!
+    List<PlotAction> actions = plot.getAvailablePlotActions(player);
+    PageableGui gui = GuiBuilder.buildFrom(player, plot.getDisplayName(), actions);
+    gui.open(player);
+}
+```
+
+### Identifizierte Schwachstellen (Sprint 19 TO-DO)
+
+1. **Münzen-System (Items-Modul)**
+   - **Problem:** CoinProvider hart-kodiert für Vanilla Coins
+   - **SOLID-Verstoß:** OCP (nicht erweiterbar ohne Code-Änderung)
+   - **Lösung:** CurrencyItem Interface + Registry Pattern
+
+2. **Price-Management (Plots-Modul)**
+   - **Problem:** Nur StorageContainerPlot hat Preise
+   - **SOLID-Verstoß:** SRP (Plot + Preis-Logik vermischt)
+   - **Lösung:** Priceable Interface + Universal PriceManager
+
+3. **NPC-UIs (NPCs-Modul)**
+   - **Problem:** NpcManagementUi manuell konstruiert
+   - **SOLID-Verstoß:** DIP (abhängig von konkreter UI-Implementierung)
+   - **Lösung:** NpcAction extends PlotAction + GuiBuilder
+
+4. **HandelsgildeUi (Plots-Modul)**
+   - **Problem:** Plot-spezifische UI-Klasse
+   - **SOLID-Verstoß:** OCP (neue Plot-Typen = neue UI-Klassen)
+   - **Lösung:** Vollständig durch GuiBuilder ersetzen
+
+### Universal Design Checklist
+
+Vor jeder neuen Feature-Implementierung fragen:
+
+- [ ] **Ist es universal?** Funktioniert es für ALLE Typen, nicht nur einen?
+- [ ] **Ist es erweiterbar?** Neue Implementierung ohne Code-Änderung?
+- [ ] **Ist die Hierarchie erkennbar?** Prefix-basierte Klassennamen?
+- [ ] **Nutzt es Self-Rendering?** Objekte kennen ihre Darstellung?
+- [ ] **Verwendet es Interfaces?** Composition over Inheritance?
+- [ ] **Ist es type-safe?** Compiler-Checks statt Runtime-Checks?
+- [ ] **Folgt es SOLID?** Alle 5 Prinzipien beachtet?
+
+### Anti-Patterns (erweitert)
+
+**❌ Plot-Typ-spezifische UIs:**
+```java
+// NIEMALS!
+class TradeguildPlotUi extends BasicUi { }
+class MarketPlotUi extends BasicUi { }
+class WarehousePlotUi extends BasicUi { }
+```
+
+**✅ Universal GuiBuilder:**
+```java
+// IMMER!
+GuiBuilder.buildFrom(player, title, plot.getAvailablePlotActions(player));
+```
 
 ---
 
@@ -910,7 +1110,14 @@ git push -u origin <branch>
 
 **Last Updated:** 2025-11-19
 **Version:** 1.0-SNAPSHOT
-**Sprint:** 17-18 (Trait-Actions + Command Pattern ✅, GuiRenderable + Universal GuiBuilder 📋)
+**Sprint:** 18 (Universal GUI-System ✅) → 19 (Vollständige UI-Migration + SOLID-Refactoring 📋)
 **Branch:** claude/fix-storage-price-loop-012sXDfqzLyyPSPX8QC8egq7
+
+**Wichtige Erkenntnisse (Sprint 18):**
+- MenuAction ist INTERFACE, keine Klasse!
+- PlotAction kann Untermenüs haben (implements MenuAction), muss aber nicht
+- GuiBuilder ist universal für ALLE Plot-Typen
+- SOLID-Prinzipien müssen auf ALLE Module übertragen werden
+- Code muss universal und erweiterbar sein (nicht Plot-Typ-spezifisch)
 
 **Hinweis:** module-merchants und module-adminshops wurden entfernt (obsolet - Funktionalität in NPCs-Modul)
