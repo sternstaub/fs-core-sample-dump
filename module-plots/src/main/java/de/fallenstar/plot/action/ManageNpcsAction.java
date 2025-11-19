@@ -7,8 +7,11 @@ import de.fallenstar.core.ui.element.UiAction;
 import de.fallenstar.plot.PlotModule;
 import de.fallenstar.plot.ui.NpcManagementUi;
 import de.fallenstar.plot.ui.PlayerNpcManagementUi;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -104,5 +107,29 @@ public final class ManageNpcsAction extends de.fallenstar.core.ui.element.PlotAc
      */
     public PlotModule getPlotModule() {
         return plotModule;
+    }
+
+    // ========== GuiRenderable Implementation ==========
+
+    @Override
+    protected Material getIcon() {
+        return Material.VILLAGER_SPAWN_EGG;
+    }
+
+    @Override
+    protected String getDisplayName() {
+        return "§bNPCs verwalten";
+    }
+
+    @Override
+    protected List<String> getLore() {
+        List<String> lore = new ArrayList<>();
+
+        lore.add("§7Verwalte Gildenhändler und");
+        lore.add("§7Spielerhändler auf diesem Plot");
+        lore.add("");
+        lore.add("§7Klicke zum Öffnen");
+
+        return lore;
     }
 }

@@ -4,7 +4,11 @@ import de.fallenstar.core.provider.NamedPlot;
 import de.fallenstar.core.provider.Plot;
 import de.fallenstar.core.registry.ProviderRegistry;
 import de.fallenstar.core.ui.element.PlotAction;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Action zum Setzen des Plot-Namens.
@@ -68,5 +72,34 @@ public class SetNameAction extends PlotAction {
 
         // Alternativ: Direkter Command
         // player.performCommand("plot name");
+    }
+
+    // ========== GuiRenderable Implementation ==========
+
+    @Override
+    protected Material getIcon() {
+        return Material.NAME_TAG;
+    }
+
+    @Override
+    protected String getDisplayName() {
+        return "§dPlot-Name setzen";
+    }
+
+    @Override
+    protected List<String> getLore() {
+        List<String> lore = new ArrayList<>();
+
+        // Aktueller Name anzeigen wenn NamedPlot
+        if (plot instanceof NamedPlot namedPlot) {
+            lore.add("§7Aktueller Name: §e" + namedPlot.getDisplayName());
+            lore.add("");
+        }
+
+        lore.add("§7Klicke um den Plot-Namen zu ändern");
+        lore.add("§7Du wirst aufgefordert einen neuen");
+        lore.add("§7Namen im Chat einzugeben");
+
+        return lore;
     }
 }

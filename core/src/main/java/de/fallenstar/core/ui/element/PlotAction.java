@@ -3,6 +3,8 @@ package de.fallenstar.core.ui.element;
 import de.fallenstar.core.provider.Plot;
 import de.fallenstar.core.provider.PlotProvider;
 import de.fallenstar.core.registry.ProviderRegistry;
+import de.fallenstar.core.ui.builder.GuiBuilder;
+import de.fallenstar.core.ui.container.PageableBasicUi;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -241,20 +243,82 @@ public abstract class PlotAction implements UiAction, MenuAction, GuiRenderable 
      *
      * Wird automatisch von execute() aufgerufen wenn hasSubMenu() == true.
      *
-     * TODO: Implementierung mit GuiBuilder (Sprint 18)
-     * Aktuell: Placeholder mit Nachricht
+     * Diese Methode verwendet den GuiBuilder um aus den SubActions
+     * automatisch ein PageableBasicUi zu erstellen.
+     *
+     * **Funktionsweise:**
+     * 1. Hole SubActions via getSubActions(player)
+     * 2. Filtere sichtbare Actions (isVisible)
+     * 3. Erstelle Display-Items (getDisplayItem)
+     * 4. Baue PageableBasicUi via GuiBuilder
+     * 5. Öffne GUI für Spieler
+     *
+     * **Type-Safety:**
+     * GuiRenderable ist bounded, muss UiAction sein für GuiBuilder.
+     * Wenn getSubActions() Actions zurückgibt die NICHT UiAction sind,
+     * gibt es einen Compile-Error!
      *
      * @param player Der Spieler
      */
+    @SuppressWarnings("unchecked")
     private void openSubMenu(Player player) {
-        // TODO: Ersetzen durch GuiBuilder sobald implementiert
-        // List<? extends GuiRenderable> subActions = getSubActions(player);
-        // PageableGui gui = GuiBuilder.buildFrom(player, getSubMenuTitle(), subActions);
-        // gui.open(player);
+        player.closeInventory();
 
-        // Placeholder:
-        player.sendMessage("§e[Untermenü] §f" + getSubMenuTitle());
-        player.sendMessage("§7TODO: GuiBuilder implementieren (Sprint 18)");
+        // Hole SubActions
+        List<? extends GuiRenderable> subActions = getSubActions(player);
+
+        if (subActions.isEmpty()) {
+            // Kein Untermenü vorhanden (sollte nie passieren durch hasSubMenu())
+            player.sendMessage("§cKein Untermenü verfügbar.");
+            return;
+        }
+
+        // Type-Safe Cast: GuiRenderable in SubActions sollten auch UiAction sein
+        // PlotAction erfüllt beide Interfaces!
+        List<UiAction> uiActions = new ArrayList<>();
+        for (GuiRenderable renderable : subActions) {
+            if (renderable instanceof UiAction uiAction) {
+                uiActions.add(uiAction);
+            } else {
+                // Warnung: GuiRenderable ist kein UiAction!
+                // Sollte nie passieren bei PlotAction-SubActions
+                player.sendMessage("§cFehler: SubAction ist kein UiAction!");
+                return;
+            }
+        }
+
+        // Erstelle GUI via GuiBuilder
+        // Wir müssen einen expliziten Cast machen, weil Java Generics nicht
+        // garantieren kann, dass GuiRenderable auch UiAction ist
+        try {
+            // Trick: Erstelle eine temporäre Liste mit dem richtigen Typ
+            List<GuiRenderable> renderables = new ArrayList<>(subActions);
+
+            // GuiBuilder braucht T extends GuiRenderable & UiAction
+            // Wir wissen, dass PlotAction beides ist, aber Java kann das nicht inferieren
+            // Daher: Manuelle Konstruktion
+            PageableBasicUi gui = new PageableBasicUi(getSubMenuTitle());
+
+            for (GuiRenderable renderable : renderables) {
+                if (!(renderable instanceof UiAction action)) {
+                    continue; // Überspringe Non-UiActions
+                }
+
+                if (!renderable.isVisible(player)) {
+                    continue; // Überspringe unsichtbare Actions
+                }
+
+                ItemStack displayItem = renderable.getDisplayItem(player);
+                var button = new ClickableUiElement.CustomButton<>(displayItem, action);
+                gui.append(button);
+            }
+
+            gui.open(player);
+
+        } catch (Exception e) {
+            player.sendMessage("§cFehler beim Öffnen des Untermenüs: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     /**
