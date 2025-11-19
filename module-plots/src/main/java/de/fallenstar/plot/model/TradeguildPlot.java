@@ -518,7 +518,7 @@ public class TradeguildPlot extends BasePlot implements
     }
 
     @Override
-    public List<DistributableNpc> getDistributed() {
+    public List<DistributableNpc> getDistributedNpcs() {
         return new ArrayList<>(npcCache.values());
     }
 
@@ -645,7 +645,7 @@ public class TradeguildPlot extends BasePlot implements
     }
 
     @Override
-    public List<DistributableQuest> getDistributed() {
+    public List<DistributableQuest> getDistributedQuests() {
         return new ArrayList<>(quests);
     }
 

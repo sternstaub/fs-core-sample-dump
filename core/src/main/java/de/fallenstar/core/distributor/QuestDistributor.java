@@ -6,6 +6,10 @@ import java.util.concurrent.ThreadLocalRandom;
 /**
  * Distributor für Quests an NPCs.
  *
+ * **HINWEIS:** Erweitert NICHT Distributor<T> um Kompatibilität mit NpcDistributor zu ermöglichen.
+ * Java erlaubt nicht, dass eine Klasse Distributor<DistributableNpc> UND Distributor<DistributableQuest>
+ * gleichzeitig implementiert (Generics Erasure Problem).
+ *
  * **Features:**
  * - Automatische Zuweisung an NPCs
  * - Zufällige Verteilung
@@ -49,9 +53,9 @@ import java.util.concurrent.ThreadLocalRandom;
  * </pre>
  *
  * @author FallenStar
- * @version 1.0
+ * @version 2.0 - Refactored: Entfernt Distributor<T> Vererbung
  */
-public interface QuestDistributor extends Distributor<DistributableQuest> {
+public interface QuestDistributor {
 
     /**
      * Distribuiert eine Quest an einen zufälligen NPC.
@@ -66,8 +70,54 @@ public interface QuestDistributor extends Distributor<DistributableQuest> {
      * @param quest Die Quest
      * @return true wenn erfolgreich
      */
-    @Override
     boolean distribute(DistributableQuest quest);
+
+    /**
+     * Entfernt eine distribuierte Quest.
+     *
+     * @param quest Die Quest
+     * @return true wenn erfolgreich entfernt
+     */
+    boolean undistribute(DistributableQuest quest);
+
+    /**
+     * Gibt die maximale Quest-Kapazität zurück.
+     *
+     * @return Maximale Anzahl an Quests über alle Container
+     */
+    default int getCapacity() {
+        return getQuestContainers().stream()
+            .mapToInt(QuestContainer::getMaxQuestCapacity)
+            .sum();
+    }
+
+    /**
+     * Gibt die aktuelle Anzahl distribuierter Quests zurück.
+     *
+     * @return Anzahl Quests
+     */
+    default int getCurrentCount() {
+        return getDistributedQuests().size();
+    }
+
+    /**
+     * Prüft ob noch Quest-Kapazität verfügbar ist.
+     *
+     * @return true wenn Platz frei
+     */
+    default boolean hasCapacity() {
+        return canDistributeQuests();
+    }
+
+    /**
+     * Gibt alle distribuierten Quests zurück.
+     *
+     * HINWEIS: Umbenennung von getDistributed() um Konflikt mit NpcDistributor zu vermeiden.
+     * NpcDistributor.getDistributedNpcs() gibt List<DistributableNpc> zurück.
+     *
+     * @return Liste von DistributableQuests
+     */
+    List<DistributableQuest> getDistributedQuests();
 
     /**
      * Gibt alle Quest-Container zurück.
