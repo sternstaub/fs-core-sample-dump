@@ -172,19 +172,20 @@ public final class GuiBuilder {
      * gui.open(player);
      * </pre>
      *
+     * @param <T> Typ der Actions (muss GuiRenderable UND UiAction sein)
      * @param viewer Der Spieler der das GUI sieht
      * @param title Titel des GUIs
      * @param actions Liste von PlotActions
      * @return PageableBasicUi mit allen sichtbaren Actions
      */
-    public static PageableBasicUi buildFromPlotActions(
+    public static <T extends GuiRenderable & UiAction> PageableBasicUi buildFromPlotActions(
             Player viewer,
             String title,
-            List<? extends GuiRenderable & UiAction> actions
+            List<T> actions
     ) {
         PageableBasicUi ui = new PageableBasicUi(title);
 
-        for (var action : actions) {
+        for (T action : actions) {
             if (!action.isVisible(viewer)) {
                 continue;
             }
