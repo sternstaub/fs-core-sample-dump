@@ -162,8 +162,8 @@ public final class GuiBuilder {
     /**
      * Convenience-Methode für PlotAction-Listen.
      *
-     * Diese Methode ist identisch zu buildFrom(), aber typisiert explizit
-     * auf PlotAction für bessere IDE-Unterstützung.
+     * Diese Methode ist identisch zu buildFrom(), aber verwendet
+     * Raw-Type Wildcards für Flexibilität.
      *
      * **Verwendung:**
      * <pre>
@@ -172,24 +172,31 @@ public final class GuiBuilder {
      * gui.open(player);
      * </pre>
      *
+     * **Hinweis:** Nutze buildFrom() für volle Type-Safety mit Intersection Types.
+     *
      * @param viewer Der Spieler der das GUI sieht
      * @param title Titel des GUIs
-     * @param actions Liste von PlotActions
+     * @param actions Liste von Actions (sollten GuiRenderable + UiAction sein)
      * @return PageableBasicUi mit allen sichtbaren Actions
      */
     public static PageableBasicUi buildFromPlotActions(
             Player viewer,
             String title,
-            List<? extends GuiRenderable & UiAction> actions
+            List<? extends GuiRenderable> actions
     ) {
         PageableBasicUi ui = new PageableBasicUi(title);
 
-        for (var action : actions) {
-            if (!action.isVisible(viewer)) {
+        for (var renderable : actions) {
+            if (!renderable.isVisible(viewer)) {
                 continue;
             }
 
-            ItemStack displayItem = action.getDisplayItem(viewer);
+            // Runtime-Check: GuiRenderable sollte auch UiAction sein
+            if (!(renderable instanceof UiAction action)) {
+                continue; // Überspringe Non-UiActions
+            }
+
+            ItemStack displayItem = renderable.getDisplayItem(viewer);
             var button = new ClickableUiElement.CustomButton<>(displayItem, action);
             ui.append(button);
         }
