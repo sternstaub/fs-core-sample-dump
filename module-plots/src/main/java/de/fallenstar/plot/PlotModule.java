@@ -890,7 +890,7 @@ public class PlotModule extends JavaPlugin implements Listener {
 
             // Hole alle MERCHANT_GUILD Plot-IDs
             java.util.List<String> merchantGuildPlotIds =
-                plotRegistry.getPlotIdentifiers(de.fallenstar.plot.registry.PlotRegistry.PlotType.MERCHANT_GUILD);
+                plotRegistry.getPlotIdsByType(de.fallenstar.plot.registry.PlotRegistry.PlotType.MERCHANT_GUILD);
 
             getLogger().info("Lade " + merchantGuildPlotIds.size() + " Tradeguild-Plots...");
 

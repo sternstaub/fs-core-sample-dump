@@ -3,7 +3,6 @@ package de.fallenstar.plot.ui;
 import de.fallenstar.core.provider.Plot;
 import de.fallenstar.core.provider.PlotProvider;
 import de.fallenstar.core.ui.SmallChestUi;
-import de.fallenstar.plot.model.NamedPlot;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Material;
@@ -97,10 +96,7 @@ public class PlotInfoUi extends SmallChestUi {
         ItemMeta meta = plotIcon.getItemMeta();
 
         // Name des Plots
-        String displayName = plot.getIdentifier();
-        if (plot instanceof NamedPlot namedPlot && namedPlot.hasCustomName()) {
-            displayName = namedPlot.getDisplayName();
-        }
+        String displayName = plotNameManager.getDisplayName(plot);
 
         meta.displayName(Component.text(displayName).color(NamedTextColor.GOLD));
 
@@ -174,8 +170,9 @@ public class PlotInfoUi extends SmallChestUi {
         nameMeta.displayName(Component.text("§e§lPlot-Namen setzen").color(NamedTextColor.YELLOW));
 
         List<String> nameLore = new ArrayList<>();
-        if (plot instanceof NamedPlot namedPlot && namedPlot.hasCustomName()) {
-            nameLore.add("§7Aktuell: §f" + namedPlot.getCustomName().orElse("Kein Name"));
+        String currentName = plotNameManager.getPlotName(plot);
+        if (currentName != null && !currentName.trim().isEmpty()) {
+            nameLore.add("§7Aktuell: §f" + currentName);
         } else {
             nameLore.add("§7Aktuell: §cKein Name gesetzt");
         }

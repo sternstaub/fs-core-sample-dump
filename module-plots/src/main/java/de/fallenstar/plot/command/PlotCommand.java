@@ -467,6 +467,7 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
             de.fallenstar.plot.ui.PlotInfoUi ui = new de.fallenstar.plot.ui.PlotInfoUi(
                     plot,
                     providers.getPlotProvider(),
+                    plugin.getPlotNameManager(),
                     player
             );
 

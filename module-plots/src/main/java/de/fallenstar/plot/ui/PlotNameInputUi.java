@@ -44,8 +44,10 @@ public class PlotNameInputUi {
             Consumer<String> onSuccess
     ) {
         // Aktueller Name als Placeholder
-        String currentName = plotNameManager.getCustomName(plot.getUuid())
-                .orElse(plot.getIdentifier());
+        String currentName = plotNameManager.getPlotName(plot);
+        if (currentName == null || currentName.trim().isEmpty()) {
+            currentName = plot.getIdentifier();
+        }
 
         // Erstelle TextInputUI
         TextInputUi ui = new TextInputUi(
@@ -62,7 +64,7 @@ public class PlotNameInputUi {
                     }
 
                     // Namen setzen
-                    plotNameManager.setCustomName(plot.getUuid(), name);
+                    plotNameManager.setPlotName(plot, name);
                     player.sendMessage(Component.text("§a✓ Plot-Name gesetzt: §e" + name));
 
                     // Callback
