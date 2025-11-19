@@ -80,6 +80,8 @@ public class TradeguildPlot extends BasePlot implements
 
     // Dependencies (Injected)
     private de.fallenstar.plot.manager.PlotNameManager plotNameManager;
+    private de.fallenstar.plot.PlotModule plotModule;
+    private de.fallenstar.core.registry.ProviderRegistry providerRegistry;
 
     /**
      * Erstellt einen TradeguildPlot.
@@ -100,6 +102,28 @@ public class TradeguildPlot extends BasePlot implements
      */
     public void setPlotNameManager(de.fallenstar.plot.manager.PlotNameManager plotNameManager) {
         this.plotNameManager = plotNameManager;
+    }
+
+    /**
+     * Setzt das PlotModule (Dependency Injection für Sprint 19).
+     *
+     * Benötigt für getAvailablePlotActions() und GuiBuilder-Integration.
+     *
+     * @param plotModule PlotModule-Instanz
+     */
+    public void setPlotModule(de.fallenstar.plot.PlotModule plotModule) {
+        this.plotModule = plotModule;
+    }
+
+    /**
+     * Setzt die ProviderRegistry (Dependency Injection für Sprint 19).
+     *
+     * Benötigt für getAvailablePlotActions() und GuiBuilder-Integration.
+     *
+     * @param providerRegistry ProviderRegistry-Instanz
+     */
+    public void setProviderRegistry(de.fallenstar.core.registry.ProviderRegistry providerRegistry) {
+        this.providerRegistry = providerRegistry;
     }
 
     // ========== NamedPlot Implementation ==========
@@ -403,10 +427,88 @@ public class TradeguildPlot extends BasePlot implements
 
     // ========== UiTarget Implementation ==========
 
+    /**
+     * Gibt alle verfügbaren PlotActions für einen Spieler zurück (Sprint 19).
+     *
+     * Diese Methode kombiniert alle Trait-Actions und filtert basierend auf:
+     * - Owner-Status (via PlotProvider.isOwner())
+     * - Permissions (via PlotAction.canExecute())
+     * - Plot-Typ (via PlotAction.isVisible())
+     *
+     * **Trait-Komposition:**
+     * - NamedPlot → SetNameAction
+     * - StorageContainerPlot → ManageStorageAction, ManagePricesAction, ViewPricesAction
+     * - NpcContainerPlot → ManageNpcsAction
+     * - Generisch → TeleportAction, InfoAction
+     *
+     * **Owner vs. Guest:**
+     * - Owner sieht: Manage-Actions (Storage, Prices, NPCs, Name)
+     * - Guest sieht: View-Actions (ViewPrices, Info, Teleport)
+     * - Filterung erfolgt automatisch via PlotAction.canExecute()
+     *
+     * **Verwendung:**
+     * <pre>
+     * List&lt;PlotAction&gt; actions = plot.getAvailablePlotActions(player, providers, plotModule);
+     * PageableBasicUi gui = GuiBuilder.buildFrom(player, "§6Plot-Verwaltung", actions);
+     * gui.open(player);
+     * </pre>
+     *
+     * @param player Der Spieler der die Actions sieht
+     * @param providers ProviderRegistry für Owner-Checks
+     * @param plotModule PlotModule für Storage/Price-Zugriff
+     * @return Liste aller verfügbaren PlotActions
+     */
+    public List<de.fallenstar.core.ui.element.PlotAction> getAvailablePlotActions(
+            Player player,
+            de.fallenstar.core.registry.ProviderRegistry providers,
+            de.fallenstar.plot.PlotModule plotModule
+    ) {
+        List<de.fallenstar.core.ui.element.PlotAction> actions = new ArrayList<>();
+
+        // 1. NamedPlot: SetNameAction
+        actions.add(new de.fallenstar.plot.action.PlotActionSetName(this, providers));
+
+        // 2. StorageContainerPlot: Storage + Prices Actions
+        actions.add(new de.fallenstar.plot.action.PlotActionManageStorage(this, providers, plotModule));
+        actions.add(new de.fallenstar.plot.action.PlotActionManagePrices(this, providers, plotModule));
+        actions.add(new de.fallenstar.plot.action.PlotActionViewPrices(this, providers, plotModule));
+
+        // 3. NpcContainerPlot: ManageNpcsAction
+        actions.add(new de.fallenstar.plot.action.ManageNpcsAction(this, providers, plotModule));
+
+        // 4. Generisch: Teleport + Info (für alle Plots)
+        actions.add(new de.fallenstar.plot.action.PlotActionTeleport(this, providers));
+        actions.add(new de.fallenstar.plot.action.PlotActionInfo(this, providers));
+
+        // KEINE manuelle Filterung mehr!
+        // GuiBuilder filtert automatisch via:
+        // - isVisible(player) → entfernt unsichtbare Actions
+        // - canExecute(player) → fügt Permission-Lore hinzu
+
+        return actions;
+    }
+
     @Override
     public Optional<BaseUi> createUi(Player player, InteractionContext context) {
-        // Erstelle Generic Interaction Menu (Self-Constructing!)
-        UiContext uiContext = UiContext.MAIN_MENU; // Default: Main Menu
+        // Sprint 19: Nutze GuiBuilder wenn Dependencies gesetzt sind
+        if (plotModule != null && providerRegistry != null) {
+            // Neues System: GuiBuilder mit PlotActions
+            List<de.fallenstar.core.ui.element.PlotAction> actions =
+                getAvailablePlotActions(player, providerRegistry, plotModule);
+
+            de.fallenstar.core.ui.container.PageableBasicUi gui =
+                de.fallenstar.core.ui.builder.GuiBuilder.buildFrom(
+                    player,
+                    "§6§lHandelsgilde §7- §e" + getDisplayName(),
+                    actions
+                );
+
+            return Optional.of(gui);
+        }
+
+        // Fallback: GenericInteractionMenuUi (alte Methode, deprecated)
+        // TODO: Entfernen sobald alle Plots Dependencies haben
+        UiContext uiContext = UiContext.MAIN_MENU;
         de.fallenstar.core.ui.GenericInteractionMenuUi menu =
                 new de.fallenstar.core.ui.GenericInteractionMenuUi(this, player, uiContext);
 

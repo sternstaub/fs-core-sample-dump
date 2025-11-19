@@ -19,7 +19,11 @@ import java.util.List;
  * TradeguildPlot implementiert jetzt UiTarget und erstellt
  * automatisch GenericInteractionMenuUi aus verfügbaren Actions.
  *
- * **Migration:**
+ * **Sprint 19 Update:**
+ * Das neue GuiBuilder-System ersetzt diese Klasse vollständig!
+ * TradeguildPlot.createUi() verwendet jetzt GuiBuilder mit PlotActions.
+ *
+ * **Migration (Sprint 19):**
  * Statt:
  * <pre>
  * HandelsgildeUi ui = new HandelsgildeUi(plot, ...);
@@ -28,16 +32,27 @@ import java.util.List;
  *
  * Verwende:
  * <pre>
+ * // UiTarget-Pattern (automatisch via GuiBuilder):
  * if (plot instanceof UiTarget uiTarget) {
  *     uiTarget.createUi(player, context).ifPresent(ui -> ui.open(player));
  * }
+ *
+ * // ODER direkt mit GuiBuilder:
+ * if (plot instanceof TradeguildPlot tradeguildPlot) {
+ *     List&lt;PlotAction&gt; actions = tradeguildPlot.getAvailablePlotActions(player, providers, plotModule);
+ *     PageableBasicUi gui = GuiBuilder.buildFrom(player, "§6Handelsgilde", actions);
+ *     gui.open(player);
+ * }
  * </pre>
  *
- * **Vorteile des neuen Systems:**
- * - Trait-Komposition: Actions aus NamedPlot, StorageContainerPlot, NpcContainerPlot
- * - Automatische Owner/Guest-Filterung
- * - DRY: Keine Duplikation von Action-Definitionen
- * - Self-Constructing UIs
+ * **Vorteile des neuen Systems (Sprint 18-19):**
+ * - **GuiRenderable:** Actions rendern sich selbst (Display + Logik + Permissions)
+ * - **Universal:** Ein GuiBuilder für ALLE Plot-Typen
+ * - **SOLID:** Single Responsibility, Open/Closed, Dependency Inversion
+ * - **DRY:** Keine Duplikation von Action-Definitionen
+ * - **Self-Rendering:** ItemStack mit automatischer Permission-Lore
+ * - **Trait-Komposition:** Actions aus NamedPlot, StorageContainerPlot, NpcContainerPlot
+ * - **Automatische Filterung:** isVisible() + canExecute() per Action
  *
  * **Legacy-Dokumentation:**
  * - Ersetzt alte HandelsgildeUI (639 Zeilen) durch type-safe BasicGsUi (~150 Zeilen)
@@ -46,10 +61,12 @@ import java.util.List;
  *
  * @author FallenStar
  * @version 2.0
- * @deprecated Ersetzt durch TradeguildPlot.createUi() → GenericInteractionMenuUi
+ * @deprecated Ersetzt durch TradeguildPlot.createUi() → GuiBuilder (Sprint 19)
  * @see de.fallenstar.core.interaction.UiTarget
- * @see de.fallenstar.core.ui.GenericInteractionMenuUi
+ * @see de.fallenstar.core.ui.builder.GuiBuilder
+ * @see de.fallenstar.core.ui.element.GuiRenderable
  * @see de.fallenstar.plot.model.TradeguildPlot#createUi
+ * @see de.fallenstar.plot.model.TradeguildPlot#getAvailablePlotActions
  */
 @Deprecated(since = "Sprint 17", forRemoval = true)
 public class HandelsgildeUi extends BasicGsUi {
