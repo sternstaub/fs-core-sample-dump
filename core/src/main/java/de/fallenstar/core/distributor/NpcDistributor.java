@@ -40,6 +40,11 @@ import java.util.UUID;
  *
  *         return true;
  *     }
+ *
+ *     {@literal @}Override
+ *     public boolean hasNpcCapacity() {
+ *         return getCurrentCount() < getCapacity();
+ *     }
  * }
  * </pre>
  *
@@ -89,11 +94,12 @@ public interface NpcDistributor {
     /**
      * Prüft ob noch NPC-Kapazität verfügbar ist.
      *
+     * HINWEIS: Keine default-Implementierung um Konflikt mit QuestDistributor.hasCapacity() zu vermeiden.
+     * Implementierung: return getCurrentCount() < getCapacity();
+     *
      * @return true wenn Platz frei
      */
-    default boolean hasCapacity() {
-        return getCurrentCount() < getCapacity();
-    }
+    boolean hasNpcCapacity();
 
     /**
      * Gibt alle distribuierten NPCs zurück.

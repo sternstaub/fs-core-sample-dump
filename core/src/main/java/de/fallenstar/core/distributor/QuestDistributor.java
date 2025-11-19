@@ -103,11 +103,12 @@ public interface QuestDistributor {
     /**
      * Prüft ob noch Quest-Kapazität verfügbar ist.
      *
+     * HINWEIS: Keine default-Implementierung um Konflikt mit NpcDistributor.hasNpcCapacity() zu vermeiden.
+     * Implementierung: return canDistributeQuests();
+     *
      * @return true wenn Platz frei
      */
-    default boolean hasCapacity() {
-        return canDistributeQuests();
-    }
+    boolean hasQuestCapacity();
 
     /**
      * Gibt alle distribuierten Quests zurück.

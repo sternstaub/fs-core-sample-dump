@@ -439,7 +439,7 @@ public class TradeguildPlot extends BasePlot implements
 
     @Override
     public boolean distribute(DistributableNpc npc) {
-        if (!hasCapacity()) {
+        if (!hasNpcCapacity()) {
             return false;
         }
 
@@ -515,6 +515,11 @@ public class TradeguildPlot extends BasePlot implements
     @Override
     public int getCurrentCount() {
         return getOccupiedSlotCount();
+    }
+
+    @Override
+    public boolean hasNpcCapacity() {
+        return getCurrentCount() < getCapacity();
     }
 
     @Override
@@ -633,6 +638,12 @@ public class TradeguildPlot extends BasePlot implements
         }
 
         return success;
+    }
+
+    @Override
+    public boolean hasQuestCapacity() {
+        return getQuestContainers().stream()
+            .anyMatch(QuestContainer::hasQuestCapacity);
     }
 
     @Override
