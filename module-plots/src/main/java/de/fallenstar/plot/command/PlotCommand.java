@@ -376,23 +376,35 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
     /**
      * Öffnet die Handelsgilde-UI (Guest/Owner Views).
      *
+     * Nutzt das UiTarget-Pattern: Plot erstellt sein eigenes UI
+     * automatisch aus verfügbaren Actions (Trait-Komposition!).
+     *
      * @param player Der Spieler
      * @param plot Der Plot
      * @param isOwner Ob Spieler Owner ist
      */
     private void openHandelsgildeUI(Player player, de.fallenstar.core.provider.Plot plot, boolean isOwner) {
         try {
-            // Öffne HandelsgildeUi (Type-Safe, mit Guest/Owner View)
-            de.fallenstar.plot.ui.HandelsgildeUi ui = new de.fallenstar.plot.ui.HandelsgildeUi(
-                    plot,
-                    plugin.getStorageProvider(),
-                    plugin.getStorageManager(),
-                    providers,  // ProviderRegistry für NPC-Verwaltung
-                    plugin,     // PlotModule für NPC-Manager-Zugriff
-                    isOwner
-            );
+            // UiTarget-Pattern: Plot erstellt sein UI selbst!
+            if (plot instanceof de.fallenstar.core.interaction.UiTarget uiTarget) {
+                de.fallenstar.core.interaction.InteractionContext context =
+                        new de.fallenstar.core.interaction.InteractionContext(
+                                de.fallenstar.core.interaction.InteractionType.PLOT,
+                                player,
+                                plot.getLocation()
+                        );
 
-            ui.open(player);
+                // Plot erstellt GenericInteractionMenuUi aus verfügbaren Actions
+                Optional<de.fallenstar.core.ui.BaseUi> ui = uiTarget.createUi(player, context);
+
+                if (ui.isPresent()) {
+                    ui.get().open(player);
+                } else {
+                    player.sendMessage("§cKeine UI für diesen Plot verfügbar.");
+                }
+            } else {
+                player.sendMessage("§cDieser Plot unterstützt keine UI.");
+            }
 
         } catch (Exception e) {
             player.sendMessage("§cFehler beim Öffnen der Handelsgilde-UI: " + e.getMessage());
