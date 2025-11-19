@@ -338,6 +338,11 @@ class NpcDistributorTest {
         }
 
         @Override
+        public String getDisplayName() {
+            return "§e" + npcType + " NPC";
+        }
+
+        @Override
         public Optional<UUID> getEntityId() {
             return Optional.ofNullable(entityId);
         }
