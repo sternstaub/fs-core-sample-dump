@@ -80,6 +80,10 @@ public class TradeguildPlot extends BasePlot implements
 
     // Dependencies (Injected)
     private de.fallenstar.plot.manager.PlotNameManager plotNameManager;
+    private de.fallenstar.core.registry.ProviderRegistry providerRegistry;
+    private de.fallenstar.plot.PlotModule plotModule;
+    private de.fallenstar.plot.storage.manager.StorageManager storageManager;
+    private de.fallenstar.plot.storage.provider.PlotStorageProvider storageProvider;
 
     /**
      * Erstellt einen TradeguildPlot.
@@ -100,6 +104,42 @@ public class TradeguildPlot extends BasePlot implements
      */
     public void setPlotNameManager(de.fallenstar.plot.manager.PlotNameManager plotNameManager) {
         this.plotNameManager = plotNameManager;
+    }
+
+    /**
+     * Setzt die ProviderRegistry (Dependency Injection).
+     *
+     * @param providerRegistry ProviderRegistry-Instanz
+     */
+    public void setProviderRegistry(de.fallenstar.core.registry.ProviderRegistry providerRegistry) {
+        this.providerRegistry = providerRegistry;
+    }
+
+    /**
+     * Setzt das PlotModule (Dependency Injection).
+     *
+     * @param plotModule PlotModule-Instanz
+     */
+    public void setPlotModule(de.fallenstar.plot.PlotModule plotModule) {
+        this.plotModule = plotModule;
+    }
+
+    /**
+     * Setzt den StorageManager (Dependency Injection).
+     *
+     * @param storageManager StorageManager-Instanz
+     */
+    public void setStorageManager(de.fallenstar.plot.storage.manager.StorageManager storageManager) {
+        this.storageManager = storageManager;
+    }
+
+    /**
+     * Setzt den PlotStorageProvider (Dependency Injection).
+     *
+     * @param storageProvider PlotStorageProvider-Instanz
+     */
+    public void setPlotStorageProvider(de.fallenstar.plot.storage.provider.PlotStorageProvider storageProvider) {
+        this.storageProvider = storageProvider;
     }
 
     // ========== NamedPlot Implementation ==========
@@ -313,6 +353,10 @@ public class TradeguildPlot extends BasePlot implements
         };
     }
 
+    /**
+     * @deprecated Ersetzt durch {@link #getAvailablePlotActions(Player)} (Sprint 19 - Phase 2).
+     */
+    @Deprecated(since = "Sprint 19", forRemoval = true)
     private List<UiActionInfo> getMainMenuActions(Player player) {
         List<UiActionInfo> actions = new ArrayList<>();
 
@@ -363,6 +407,72 @@ public class TradeguildPlot extends BasePlot implements
         return List.of();
     }
 
+    /**
+     * Gibt alle verfügbaren PlotActions für einen Spieler zurück (Sprint 19 - Phase 2).
+     *
+     * **Ersetzt:** getMainMenuActions() + UiActionInfo-System
+     *
+     * **Trait-Komposition:**
+     * Kombiniert Actions aus allen implementierten Traits:
+     * - NamedPlot → PlotActionSetName
+     * - StorageContainerPlot → PlotActionManageStorage, PlotActionViewPrices, PlotActionManagePrices
+     * - NpcContainerPlot → PlotActionManageNpcs
+     * - Zusätzlich: PlotActionInfo, PlotActionTeleport
+     *
+     * **Owner-Filterung:**
+     * Actions prüfen via canExecute() automatisch:
+     * - requiresOwnership() → isOwner()
+     * - requiredPermission() → player.hasPermission()
+     * - GuiBuilder filtert unsichtbare Actions via isVisible()
+     *
+     * **Null-Safety:**
+     * Wenn Dependencies nicht injiziert sind, werden Actions übersprungen (defensive Programmierung).
+     *
+     * @param player Der Spieler
+     * @return Liste von PlotActions (nie null, kann aber leer sein)
+     */
+    public List<de.fallenstar.core.ui.element.PlotAction> getAvailablePlotActions(Player player) {
+        List<de.fallenstar.core.ui.element.PlotAction> actions = new ArrayList<>();
+
+        // Null-Safety: Wenn providerRegistry nicht injiziert, returniere leere Liste
+        if (providerRegistry == null) {
+            return actions;
+        }
+
+        // ========== NamedPlot Actions ==========
+        actions.add(new de.fallenstar.plot.action.PlotActionSetName(this, providerRegistry));
+
+        // ========== StorageContainerPlot Actions ==========
+        if (storageProvider != null && storageManager != null) {
+            actions.add(new de.fallenstar.plot.action.PlotActionManageStorage(
+                    this, providerRegistry, storageProvider, storageManager
+            ));
+        }
+
+        actions.add(new de.fallenstar.plot.action.PlotActionViewPrices(this, providerRegistry));
+        actions.add(new de.fallenstar.plot.action.PlotActionManagePrices(this, providerRegistry));
+
+        // ========== NpcContainerPlot Actions ==========
+        if (plotModule != null) {
+            actions.add(new de.fallenstar.plot.action.PlotActionManageNpcs(
+                    this, providerRegistry, plotModule
+            ));
+        }
+
+        // ========== Allgemeine Plot-Actions ==========
+        actions.add(new de.fallenstar.plot.action.PlotActionInfo(this, providerRegistry));
+        actions.add(new de.fallenstar.plot.action.PlotActionTeleport(this, providerRegistry));
+
+        // Owner-Filterung + Permission-Checks erfolgen via PlotAction.canExecute()!
+        // GuiBuilder filtert via isVisible()
+        return actions;
+    }
+
+    /**
+     * @deprecated Ersetzt durch PlotAction-System (Sprint 19 - Phase 2).
+     *             Verwende stattdessen {@link #getAvailablePlotActions(Player)}.
+     */
+    @Deprecated(since = "Sprint 19", forRemoval = true)
     @Override
     public boolean executeAction(Player player, String actionId) {
         return switch (actionId) {

@@ -766,35 +766,31 @@ var button = new ClickableUiElement.CustomButton<>(item, action);
 
 ---
 
-#### **Phase 2: TradeguildPlot Refactoring** 📋 Geplant
+#### **Phase 2: TradeguildPlot Refactoring** ✅ ABGESCHLOSSEN
 
 **Ziel:** TradeguildPlot nutzt neues PlotAction-System
 
-**2A. getAvailablePlotActions() implementieren:**
-```java
-public List<PlotAction> getAvailablePlotActions(Player player) {
-    List<PlotAction> actions = new ArrayList<>();
+**2A. getAvailablePlotActions() implementiert:**
+- ✅ 7 PlotActions verfügbar (mit Null-Safety)
+- ✅ Defensive Programmierung: Leere Liste wenn ProviderRegistry fehlt
+- ✅ Automatische Owner-Filterung via PlotAction.canExecute()
 
-    // NamedPlot Actions
-    actions.add(new PlotActionSetName(this, providers));
+**2B. executeAction() als @Deprecated markiert:**
+- ✅ `@Deprecated(since = "Sprint 19", forRemoval = true)`
+- ✅ Verweis auf `getAvailablePlotActions()`
+- ✅ getMainMenuActions() auch deprecated
 
-    // StorageContainerPlot Actions
-    actions.add(new PlotActionManageStorage(this, providers, storageManager));
-    actions.add(new PlotActionViewPrices(this, providers));
+**2C. Dependency Injection hinzugefügt:**
+- ✅ `setProviderRegistry()` - Für Owner-Checks
+- ✅ `setPlotModule()` - Für NPC-Actions
+- ✅ `setStorageManager()` + `setPlotStorageProvider()` - Für Storage-Actions
 
-    // NpcContainerPlot Actions
-    actions.add(new PlotActionManageNpcs(this, providers, plotModule));
-
-    // Owner-Filterung via canExecute() automatisch!
-    return actions;
-}
-```
-
-**2B. executeAction() entfernen** (obsolet mit PlotAction)
-
-**2C. UiActionInfo ersetzen** durch PlotAction
-
-**Ergebnis:** TradeguildPlot vollständig auf GuiBuilder-System migriert
+**Ergebnis:** TradeguildPlot vollständig refactored
+- **Unit Tests:** TradeguildPlotTest.java (16 Tests)
+  - Dependency Injection Tests
+  - Action-Type Tests (alle 7 Actions getestet)
+  - Null-Safety Tests
+  - Integration Tests (Plot-Referenz, PlotAction-Instanzen)
 
 ---
 
