@@ -4,10 +4,13 @@ import de.fallenstar.core.provider.Plot;
 import de.fallenstar.core.registry.ProviderRegistry;
 import de.fallenstar.core.ui.container.BasicGsUi;
 import de.fallenstar.plot.PlotModule;
+import de.fallenstar.plot.action.PlotActionInfo;
 import de.fallenstar.plot.action.PlotActionManageNpcs;
-import de.fallenstar.plot.action.OpenStorageUiAction;
-import de.fallenstar.plot.action.SetPriceAction;
-import de.fallenstar.plot.action.ViewPricesAction;
+import de.fallenstar.plot.action.PlotActionManageStorage;
+import de.fallenstar.plot.action.PlotActionManagePrices;
+import de.fallenstar.plot.action.PlotActionViewPrices;
+import de.fallenstar.plot.action.ManageSlotsAction;
+import de.fallenstar.plot.action.OpenShopAction;
 import de.fallenstar.plot.storage.manager.StorageManager;
 import de.fallenstar.plot.storage.provider.PlotStorageProvider;
 import org.bukkit.Material;
@@ -173,7 +176,7 @@ public class HandelsgildeUi extends BasicGsUi {
                         "§7",
                         "§a§lKlicke zum Öffnen"
                 ),
-                new ViewPricesAction(plot)  // Type-Safe Action!
+                new PlotActionViewPrices(plot, providers)  // Type-Safe Action!
         );
 
         // Preise setzen
@@ -189,7 +192,7 @@ public class HandelsgildeUi extends BasicGsUi {
                         "§7",
                         "§a§lKlicke zum Aktivieren"
                 ),
-                new SetPriceAction(plot)  // Type-Safe Action!
+                new PlotActionManagePrices(plot, providers)  // Type-Safe Action!
         );
 
         // Storage verwalten
@@ -202,7 +205,7 @@ public class HandelsgildeUi extends BasicGsUi {
                         "§7",
                         "§a§lKlicke zum Öffnen"
                 ),
-                new OpenStorageUiAction(plot, storageProvider, storageManager, isOwner)  // Type-Safe!
+                new PlotActionManageStorage(plot, providers, storageProvider, storageManager)  // Type-Safe!
         );
 
         // NPCs verwalten
@@ -240,7 +243,7 @@ public class HandelsgildeUi extends BasicGsUi {
                         "§7",
                         "§a§lKlicke zum Öffnen"
                 ),
-                new ViewPlotInfoAction(plot)  // Type-Safe Action!
+                new PlotActionInfo(plot, providers)  // Type-Safe Action!
         );
     }
 
@@ -258,7 +261,7 @@ public class HandelsgildeUi extends BasicGsUi {
                         "§7",
                         "§a§lKlicke zum Öffnen"
                 ),
-                new ViewPricesAction(plot)  // Type-Safe Action!
+                new PlotActionViewPrices(plot, providers)  // Type-Safe Action!
         );
 
         // Shop (Placeholder)
@@ -283,7 +286,7 @@ public class HandelsgildeUi extends BasicGsUi {
                         "§7",
                         "§a§lKlicke zum Öffnen"
                 ),
-                new ViewPlotInfoAction(plot)  // Type-Safe Action!
+                new PlotActionInfo(plot, providers)  // Type-Safe Action!
         );
     }
 }
