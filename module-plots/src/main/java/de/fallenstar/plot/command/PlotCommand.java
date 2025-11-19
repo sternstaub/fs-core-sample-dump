@@ -376,34 +376,44 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
     /**
      * Öffnet die Handelsgilde-UI (Guest/Owner Views).
      *
-     * Nutzt das UiTarget-Pattern: Plot erstellt sein eigenes UI
-     * automatisch aus verfügbaren Actions (Trait-Komposition!).
+     * **Sprint 19 - Phase 3:**
+     * Nutzt jetzt GuiBuilder mit PlotAction-System direkt.
+     *
+     * **Migration:**
+     * - ALT: UiTarget-Pattern → GenericInteractionMenuUi (UiActionInfo)
+     * - NEU: GuiBuilder → PageableBasicUi (PlotAction)
+     *
+     * **Vorteile:**
+     * - Universal: Funktioniert für ALLE Plot-Typen
+     * - Self-Rendering: Actions kennen ihre Darstellung
+     * - Automatische Permission-Lore
+     * - Type-Safe
+     * - Kein UiTarget-Overhead mehr
      *
      * @param player Der Spieler
      * @param plot Der Plot
-     * @param isOwner Ob Spieler Owner ist
+     * @param isOwner Ob Spieler Owner ist (wird nicht mehr benötigt - canExecute() prüft!)
      */
     private void openHandelsgildeUI(Player player, de.fallenstar.core.provider.Plot plot, boolean isOwner) {
         try {
-            // UiTarget-Pattern: Plot erstellt sein UI selbst!
-            if (plot instanceof de.fallenstar.core.interaction.UiTarget uiTarget) {
-                de.fallenstar.core.interaction.InteractionContext context =
-                        new de.fallenstar.core.interaction.InteractionContext(
-                                de.fallenstar.core.interaction.InteractionType.PLOT,
+            // Prüfe ob Plot TradeguildPlot ist (hat getAvailablePlotActions)
+            if (plot instanceof de.fallenstar.plot.model.TradeguildPlot tradeguildPlot) {
+                // Hole PlotActions (mit GuiRenderable + UiAction)
+                List<de.fallenstar.core.ui.element.PlotAction> actions =
+                        tradeguildPlot.getAvailablePlotActions(player);
+
+                // GuiBuilder erstellt automatisch PageableBasicUi
+                de.fallenstar.core.ui.container.PageableBasicUi ui =
+                        de.fallenstar.core.ui.builder.GuiBuilder.buildFrom(
                                 player,
-                                plot.getLocation()
+                                "§6§lHandelsgilde - " + tradeguildPlot.getDisplayName(),
+                                actions
                         );
 
-                // Plot erstellt GenericInteractionMenuUi aus verfügbaren Actions
-                Optional<de.fallenstar.core.ui.BaseUi> ui = uiTarget.createUi(player, context);
-
-                if (ui.isPresent()) {
-                    ui.get().open(player);
-                } else {
-                    player.sendMessage("§cKeine UI für diesen Plot verfügbar.");
-                }
+                // Öffne UI
+                ui.open(player);
             } else {
-                player.sendMessage("§cDieser Plot unterstützt keine UI.");
+                player.sendMessage("§cDieser Plot ist keine Handelsgilde.");
             }
 
         } catch (Exception e) {

@@ -513,14 +513,36 @@ public class TradeguildPlot extends BasePlot implements
 
     // ========== UiTarget Implementation ==========
 
+    /**
+     * Erstellt ein UI für diesen Plot.
+     *
+     * **Sprint 19 - Phase 3:**
+     * Nutzt jetzt GuiBuilder mit PlotAction-System statt GenericInteractionMenuUi.
+     *
+     * **Vorteile:**
+     * - Universal: Funktioniert für alle Plot-Typen
+     * - Self-Rendering: Actions kennen ihre Darstellung
+     * - Automatische Permission-Lore
+     * - Type-Safe
+     *
+     * @param player Der Spieler
+     * @param context Interaktionskontext (nicht verwendet)
+     * @return Optional mit PageableBasicUi
+     */
     @Override
     public Optional<BaseUi> createUi(Player player, InteractionContext context) {
-        // Erstelle Generic Interaction Menu (Self-Constructing!)
-        UiContext uiContext = UiContext.MAIN_MENU; // Default: Main Menu
-        de.fallenstar.core.ui.GenericInteractionMenuUi menu =
-                new de.fallenstar.core.ui.GenericInteractionMenuUi(this, player, uiContext);
+        // Hole verfügbare Actions (PlotAction mit GuiRenderable + UiAction)
+        List<de.fallenstar.core.ui.element.PlotAction> actions = getAvailablePlotActions(player);
 
-        return Optional.of(menu);
+        // GuiBuilder erstellt automatisch PageableBasicUi
+        de.fallenstar.core.ui.container.PageableBasicUi ui =
+                de.fallenstar.core.ui.builder.GuiBuilder.buildFrom(
+                        player,
+                        "§6§lHandelsgilde - " + getDisplayName(),
+                        actions
+                );
+
+        return Optional.of(ui);
     }
 
     @Override

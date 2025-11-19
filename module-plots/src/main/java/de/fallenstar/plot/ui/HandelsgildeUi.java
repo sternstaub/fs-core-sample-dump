@@ -17,30 +17,48 @@ import java.util.List;
 /**
  * Type-Safe Handelsgilde-UI mit Guest/Owner Ansichten.
  *
- * **⚠️ DEPRECATED:**
- * Diese Klasse wurde durch das UiTarget-Pattern ersetzt!
- * TradeguildPlot implementiert jetzt UiTarget und erstellt
- * automatisch GenericInteractionMenuUi aus verfügbaren Actions.
+ * **⚠️ DEPRECATED (Sprint 19 - Phase 3):**
+ * Diese Klasse wurde durch das GuiBuilder-Pattern ersetzt!
+ * TradeguildPlot nutzt jetzt getAvailablePlotActions() + GuiBuilder
+ * für vollständig self-rendering UIs.
  *
- * **Migration:**
- * Statt:
+ * **Migration (Sprint 17 → Sprint 19):**
+ *
+ * Sprint 17 (ALT):
  * <pre>
  * HandelsgildeUi ui = new HandelsgildeUi(plot, ...);
  * ui.open(player);
  * </pre>
  *
- * Verwende:
+ * Sprint 17-19 (Übergang - UiTarget):
  * <pre>
  * if (plot instanceof UiTarget uiTarget) {
  *     uiTarget.createUi(player, context).ifPresent(ui -> ui.open(player));
  * }
  * </pre>
  *
- * **Vorteile des neuen Systems:**
- * - Trait-Komposition: Actions aus NamedPlot, StorageContainerPlot, NpcContainerPlot
- * - Automatische Owner/Guest-Filterung
- * - DRY: Keine Duplikation von Action-Definitionen
- * - Self-Constructing UIs
+ * Sprint 19 (NEU - GuiBuilder):
+ * <pre>
+ * if (plot instanceof TradeguildPlot tradeguildPlot) {
+ *     List&lt;PlotAction&gt; actions = tradeguildPlot.getAvailablePlotActions(player);
+ *     PageableBasicUi ui = GuiBuilder.buildFrom(player, "§6Plot-Verwaltung", actions);
+ *     ui.open(player);
+ * }
+ * </pre>
+ *
+ * **Vorteile des GuiBuilder-Systems:**
+ * - **Universal:** Funktioniert für ALLE Plot-Typen
+ * - **Self-Rendering:** Actions kennen Display + Logik + Permissions
+ * - **Automatisch:** Permission-Checks → Lore-Updates
+ * - **Type-Safe:** Intersection Types (GuiRenderable & UiAction)
+ * - **DRY:** Keine Duplikation zwischen Action-Display und Action-Logik
+ * - **SOLID:** Single Responsibility, Open/Closed, Dependency Inversion
+ *
+ * **Architektur-Evolution:**
+ * - Sprint 15: UiActionInfo (Metadaten) + switch(actionId)
+ * - Sprint 17: PlotAction (Command Pattern) + UiTarget
+ * - Sprint 18: GuiRenderable Interface + GuiBuilder
+ * - Sprint 19: Vollständige Migration → HandelsgildeUi obsolet
  *
  * **Legacy-Dokumentation:**
  * - Ersetzt alte HandelsgildeUI (639 Zeilen) durch type-safe BasicGsUi (~150 Zeilen)
@@ -48,13 +66,14 @@ import java.util.List;
  * - Owner-Ansicht: Preise, Storage, NPCs, Händler-Slots, Info
  *
  * @author FallenStar
- * @version 2.0
- * @deprecated Ersetzt durch TradeguildPlot.createUi() → GenericInteractionMenuUi
- * @see de.fallenstar.core.interaction.UiTarget
- * @see de.fallenstar.core.ui.GenericInteractionMenuUi
+ * @version 3.0
+ * @deprecated Ersetzt durch TradeguildPlot.getAvailablePlotActions() + GuiBuilder (Sprint 19)
+ * @see de.fallenstar.core.ui.builder.GuiBuilder
+ * @see de.fallenstar.core.ui.element.PlotAction
+ * @see de.fallenstar.plot.model.TradeguildPlot#getAvailablePlotActions
  * @see de.fallenstar.plot.model.TradeguildPlot#createUi
  */
-@Deprecated(since = "Sprint 17", forRemoval = true)
+@Deprecated(since = "Sprint 19", forRemoval = true)
 public class HandelsgildeUi extends BasicGsUi {
 
     private final Plot plot;
