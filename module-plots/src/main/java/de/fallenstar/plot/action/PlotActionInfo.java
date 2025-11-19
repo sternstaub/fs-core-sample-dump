@@ -70,9 +70,28 @@ public final class PlotActionInfo extends PlotAction {
     protected void executeAction(Player player) {
         player.closeInventory();
 
-        // Öffne PlotInfoUi
-        PlotInfoUi infoUi = new PlotInfoUi(plot, providers);
-        infoUi.open(player);
+        // TODO: PlotInfoUi benötigt PlotNameManager - aktuell Chat-Nachricht (Sprint 19+)
+        player.sendMessage("§7§m                                    ");
+        player.sendMessage("§6§lPlot-Informationen");
+        player.sendMessage("");
+        player.sendMessage("§7Identifier: §e" + plot.getIdentifier());
+        player.sendMessage("§7UUID: §e" + plot.getUuid());
+        player.sendMessage("§7Typ: §e" + plot.getClass().getSimpleName());
+
+        // Owner ermitteln (mit Try-Catch wegen Exception)
+        try {
+            var plotProvider = providers.getPlotProvider();
+            var owner = plotProvider.getOwner(plot);
+            if (owner.isPresent()) {
+                player.sendMessage("§7Owner: §e" + owner.get().getName());
+            } else {
+                player.sendMessage("§7Owner: §c§oUnbekannt");
+            }
+        } catch (Exception e) {
+            player.sendMessage("§7Owner: §c§oFehler beim Laden");
+        }
+
+        player.sendMessage("§7§m                                    ");
     }
 
     // ========== GuiRenderable Implementation ==========

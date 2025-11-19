@@ -88,7 +88,7 @@ public final class PlotActionViewPrices extends PlotAction {
         // TODO: Dedizierte Read-Only Preis-UI (Sprint 19+)
         // Aktuell: Chat-Nachricht
         player.sendMessage("§7§m                                    ");
-        player.sendMessage("§6§lPreisliste: §e" + storagePlot.getDisplayName());
+        player.sendMessage("§6§lPreisliste: §e" + storagePlot.getIdentifier());  // Plot hat getIdentifier() nicht getDisplayName()
         player.sendMessage("");
         player.sendMessage("§7Hier siehst du alle Ankauf- und");
         player.sendMessage("§7Verkaufs-Preise dieses Händlers.");

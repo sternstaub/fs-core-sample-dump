@@ -11,6 +11,7 @@ import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -85,7 +86,7 @@ public final class PlotActionManageStorage extends PlotAction {
         // Öffne PlotStorageUi
         PlotStorageUi storageUi = new PlotStorageUi(
             storagePlot,
-            plotModule.getProviderRegistry(),
+            providers,  // Nutze providers Feld statt plotModule.getProviderRegistry()
             plotModule
         );
         storageUi.open(player);
@@ -110,11 +111,12 @@ public final class PlotActionManageStorage extends PlotAction {
         // Storage-Info anzeigen wenn StorageContainerPlot
         if (plot instanceof StorageContainerPlot storagePlot) {
             try {
-                var storage = storagePlot.getStorage();
-                int itemCount = storage.getAllItems().size();
+                Map<Material, Integer> storageContents = storagePlot.getStorageContents();
+                int itemTypeCount = storageContents.size();
+                int totalItems = storageContents.values().stream().mapToInt(Integer::intValue).sum();
 
-                lore.add("§7Aktuelle Items: §e" + itemCount);
-                lore.add("§7Receiver: " + (storagePlot.hasReceiver() ? "§a✓ Aktiv" : "§c✗ Nicht gesetzt"));
+                lore.add("§7Item-Typen: §e" + itemTypeCount);
+                lore.add("§7Gesamt-Items: §e" + totalItems);
                 lore.add("");
             } catch (Exception e) {
                 // Fehler beim Laden - zeige Standard-Lore

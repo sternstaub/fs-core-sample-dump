@@ -86,7 +86,7 @@ public final class PlotActionManagePrices extends PlotAction {
         // Öffne StoragePriceUi
         StoragePriceUi priceUi = new StoragePriceUi(
             storagePlot,
-            plotModule.getProviderRegistry(),
+            providers,  // Nutze providers Feld statt plotModule.getProviderRegistry()
             plotModule
         );
         priceUi.open(player);

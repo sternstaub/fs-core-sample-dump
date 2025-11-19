@@ -389,13 +389,17 @@ public class PlotCommand implements CommandExecutor, TabCompleter {
             if (plot instanceof de.fallenstar.core.interaction.UiTarget uiTarget) {
                 de.fallenstar.core.interaction.InteractionContext context =
                         new de.fallenstar.core.interaction.InteractionContext(
-                                de.fallenstar.core.interaction.InteractionType.PLOT,
                                 player,
+                                false,  // isSneaking
+                                false,  // isLeftClick
+                                java.util.Optional.empty(),  // clickedBlock
+                                java.util.Optional.empty(),  // clickedEntity
+                                java.util.Optional.empty(),  // itemInHand
                                 plot.getLocation()
                         );
 
                 // Plot erstellt GenericInteractionMenuUi aus verfügbaren Actions
-                Optional<de.fallenstar.core.ui.BaseUi> ui = uiTarget.createUi(player, context);
+                java.util.Optional<de.fallenstar.core.ui.BaseUi> ui = uiTarget.createUi(player, context);
 
                 if (ui.isPresent()) {
                     ui.get().open(player);

@@ -1,6 +1,7 @@
 package de.fallenstar.core.provider;
 
 import de.fallenstar.core.interaction.action.UiActionInfo;
+import de.fallenstar.core.pricing.Priceable;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
@@ -15,9 +16,14 @@ import java.util.Optional;
  *
  * **Features:**
  * - Virtuelles Inventar für Items
- * - Ankauf/Verkauf-Preise pro Material
+ * - Ankauf/Verkauf-Preise pro Material (via Priceable)
  * - Unbegrenzte Kapazität
  * - Persistente Speicherung
+ *
+ * **SOLID-Refactoring (Sprint 19 Phase 3):**
+ * - **Interface Segregation**: StorageContainerPlot extends Priceable
+ * - **Single Responsibility**: Storage-Logik getrennt von Preis-Logik
+ * - **Composition**: Priceable wird komponiert statt dupliziert
  *
  * **Verwendung:**
  * <pre>
@@ -26,6 +32,7 @@ import java.util.Optional;
  *     private Map&lt;Material, BigDecimal&gt; buyPrices = new HashMap&lt;&gt;();
  *     private Map&lt;Material, BigDecimal&gt; sellPrices = new HashMap&lt;&gt;();
  *
+ *     // Storage-Methoden:
  *     {@literal @}Override
  *     public int getStoredAmount(Material material) {
  *         return storage.getOrDefault(material, 0);
@@ -34,6 +41,17 @@ import java.util.Optional;
  *     {@literal @}Override
  *     public void addToStorage(ItemStack item) {
  *         storage.merge(item.getType(), item.getAmount(), Integer::sum);
+ *     }
+ *
+ *     // Priceable-Methoden (geerbt):
+ *     {@literal @}Override
+ *     public Optional&lt;BigDecimal&gt; getBuyPrice(Material material) {
+ *         return Optional.ofNullable(buyPrices.get(material));
+ *     }
+ *
+ *     {@literal @}Override
+ *     public void setBuyPrice(Material material, BigDecimal price) {
+ *         buyPrices.put(material, price);
  *     }
  * }
  * </pre>
@@ -44,9 +62,10 @@ import java.util.Optional;
  * - GuildTraderNPC: Nutzt Lager für Handel
  *
  * @author FallenStar
- * @version 1.0
+ * @version 2.0 (Sprint 19 - extends Priceable)
+ * @see Priceable
  */
-public interface StorageContainerPlot extends Plot {
+public interface StorageContainerPlot extends Plot, Priceable {
 
     /**
      * Gibt die Anzahl eines Materials im Lager zurück.
@@ -95,51 +114,21 @@ public interface StorageContainerPlot extends Plot {
      */
     void clearStorage();
 
-    /**
-     * Gibt den Ankaufspreis zurück (NPC kauft von Spieler).
-     *
-     * @param material Material
-     * @return Optional mit Preis, oder empty wenn nicht gesetzt
-     */
-    Optional<BigDecimal> getBuyPrice(Material material);
-
-    /**
-     * Gibt den Verkaufspreis zurück (Spieler kauft von NPC).
-     *
-     * @param material Material
-     * @return Optional mit Preis, oder empty wenn nicht gesetzt
-     */
-    Optional<BigDecimal> getSellPrice(Material material);
-
-    /**
-     * Setzt den Ankaufspreis.
-     *
-     * @param material Material
-     * @param price Preis (null zum Löschen)
-     */
-    void setBuyPrice(Material material, BigDecimal price);
-
-    /**
-     * Setzt den Verkaufspreis.
-     *
-     * @param material Material
-     * @param price Preis (null zum Löschen)
-     */
-    void setSellPrice(Material material, BigDecimal price);
-
-    /**
-     * Gibt alle Ankaufspreise zurück.
-     *
-     * @return Map von Material zu Preis
-     */
-    Map<Material, BigDecimal> getAllBuyPrices();
-
-    /**
-     * Gibt alle Verkaufspreise zurück.
-     *
-     * @return Map von Material zu Preis
-     */
-    Map<Material, BigDecimal> getAllSellPrices();
+    // ========== Preis-Methoden (geerbt von Priceable) ==========
+    // Folgende Methoden sind jetzt von Priceable geerbt:
+    // - Optional<BigDecimal> getBuyPrice(Material material)
+    // - Optional<BigDecimal> getSellPrice(Material material)
+    // - void setBuyPrice(Material material, BigDecimal price)
+    // - void setSellPrice(Material material, BigDecimal price)
+    // - Map<Material, BigDecimal> getAllBuyPrices()
+    // - Map<Material, BigDecimal> getAllSellPrices()
+    // - void removeBuyPrice(Material material)
+    // - void removeSellPrice(Material material)
+    // - void clearAllBuyPrices()
+    // - void clearAllSellPrices()
+    //
+    // Siehe: de.fallenstar.core.pricing.Priceable
+    // ===========================================================
 
     /**
      * Gibt die Standard-Actions für StorageContainerPlot zurück.

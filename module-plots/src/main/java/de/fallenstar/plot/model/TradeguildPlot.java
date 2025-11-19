@@ -13,6 +13,7 @@ import de.fallenstar.core.provider.NpcContainerPlot;
 import de.fallenstar.core.provider.SlottablePlot;
 import de.fallenstar.core.provider.StorageContainerPlot;
 import de.fallenstar.core.ui.BaseUi;
+import de.fallenstar.plot.action.*;  // PlotAction Imports für Phase 2
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -221,6 +222,30 @@ public class TradeguildPlot extends BasePlot implements
     @Override
     public Map<Material, BigDecimal> getAllSellPrices() {
         return new HashMap<>(sellPrices);
+    }
+
+    @Override
+    public void removeBuyPrice(Material material) {
+        buyPrices.remove(material);
+        // TODO: Speichern
+    }
+
+    @Override
+    public void removeSellPrice(Material material) {
+        sellPrices.remove(material);
+        // TODO: Speichern
+    }
+
+    @Override
+    public void clearAllBuyPrices() {
+        buyPrices.clear();
+        // TODO: Speichern
+    }
+
+    @Override
+    public void clearAllSellPrices() {
+        sellPrices.clear();
+        // TODO: Speichern
     }
 
     // ========== NpcContainerPlot Implementation ==========
