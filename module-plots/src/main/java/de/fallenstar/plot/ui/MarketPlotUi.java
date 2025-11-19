@@ -3,7 +3,10 @@ package de.fallenstar.plot.ui;
 import de.fallenstar.core.provider.Plot;
 import de.fallenstar.core.registry.ProviderRegistry;
 import de.fallenstar.core.ui.container.BasicGsUi;
-import de.fallenstar.plot.action.*;
+import de.fallenstar.plot.action.PlotActionManageNpcs;
+import de.fallenstar.plot.action.ManageTraderSlotsAction;
+import de.fallenstar.plot.action.ViewAvailableGoodsAction;
+import de.fallenstar.plot.action.ViewMarketStatsAction;
 import de.fallenstar.plot.slot.MarketPlot;
 import de.fallenstar.plot.slot.PlotSlotManager;
 import de.fallenstar.plot.storage.manager.StorageManager;
@@ -199,7 +202,7 @@ public class MarketPlotUi extends BasicGsUi {
                         "§7",
                         "§a§lKlicke zum Öffnen"
                 ),
-                new ManageNpcsAction(plot, providers, plotModule)  // Type-Safe Action!
+                new PlotActionManageNpcs(plot, providers, plotModule)  // Type-Safe Action!
         );
 
         // Storage verwalten
