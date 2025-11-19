@@ -71,10 +71,10 @@ import java.util.List;
  * }
  * </pre>
  *
- * **Ersetzte Klassen:**
- * - HandelsgildeUi (deprecated) → GuiBuilder + TradeguildPlot.getAvailablePlotActions()
- * - Manuelle UI-Konstruktion → Automatisch via GuiBuilder
- * - UiActionInfo-Switch-Statements → Self-Executing Actions
+ * **Ersetzte Pattern:**
+ * - Manuelle Plot-spezifische UIs (Sprint 17) → Universal GuiBuilder (Sprint 19)
+ * - UiActionInfo-Switch-Statements → Self-Executing PlotActions
+ * - Duplikation zwischen UI-Code → Self-Rendering Actions
  *
  * @author FallenStar
  * @version 1.0

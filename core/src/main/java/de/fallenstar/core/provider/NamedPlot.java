@@ -34,7 +34,7 @@ import java.util.Optional;
  * </pre>
  *
  * **Integration:**
- * - HandelsgildeUi: Owner-Button "Plot-Namen setzen"
+ * - PlotAction-System: PlotActionSetName für Namen-Setzung
  * - PlotListUI: Anzeige Custom-Namen in Listen
  * - PlotInfoCommand: Custom-Namen in /plot info
  *

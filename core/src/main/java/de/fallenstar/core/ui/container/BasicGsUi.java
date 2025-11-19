@@ -28,10 +28,9 @@ import java.util.List;
  * - Row 1: Funktionen (abhängig von GS-Typ)
  * - Row 2: Navigation (Schließen)
  *
- * Beispiel-Subklassen:
- * - HandelsgildeUi (Handelsgilde-Funktionen)
- * - BotschaftUi (Botschafts-Funktionen)
- * - BankUi (Bank-Funktionen)
+ * **Migration (Sprint 19):**
+ * Manuelle BasicGsUi-Subklassen wurden durch GuiBuilder + PlotAction-System ersetzt.
+ * Verwende stattdessen: `GuiBuilder.buildFrom(player, title, plotActions)`
  *
  * @author FallenStar
  * @version 2.0
