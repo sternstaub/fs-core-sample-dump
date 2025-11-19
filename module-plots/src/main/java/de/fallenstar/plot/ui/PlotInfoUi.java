@@ -3,7 +3,6 @@ package de.fallenstar.plot.ui;
 import de.fallenstar.core.provider.Plot;
 import de.fallenstar.core.provider.PlotProvider;
 import de.fallenstar.core.ui.SmallChestUi;
-import de.fallenstar.plot.model.NamedPlot;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Material;
@@ -40,6 +39,7 @@ public class PlotInfoUi extends SmallChestUi {
 
     private final Plot plot;
     private final PlotProvider plotProvider;
+    private final de.fallenstar.plot.manager.PlotNameManager plotNameManager;
     private final boolean isOwner;
 
     /**
@@ -47,12 +47,14 @@ public class PlotInfoUi extends SmallChestUi {
      *
      * @param plot Der Plot
      * @param plotProvider PlotProvider (für Owner-Check)
+     * @param plotNameManager PlotNameManager (für Namen-Verwaltung)
      * @param player Der Spieler
      */
-    public PlotInfoUi(Plot plot, PlotProvider plotProvider, Player player) {
+    public PlotInfoUi(Plot plot, PlotProvider plotProvider, de.fallenstar.plot.manager.PlotNameManager plotNameManager, Player player) {
         super("§6Plot-Informationen");
         this.plot = plot;
         this.plotProvider = plotProvider;
+        this.plotNameManager = plotNameManager;
 
         // Owner-Check
         boolean owner = false;
@@ -94,10 +96,7 @@ public class PlotInfoUi extends SmallChestUi {
         ItemMeta meta = plotIcon.getItemMeta();
 
         // Name des Plots
-        String displayName = plot.getIdentifier();
-        if (plot instanceof NamedPlot namedPlot && namedPlot.hasCustomName()) {
-            displayName = namedPlot.getDisplayName();
-        }
+        String displayName = plotNameManager.getDisplayName(plot);
 
         meta.displayName(Component.text(displayName).color(NamedTextColor.GOLD));
 
@@ -171,8 +170,9 @@ public class PlotInfoUi extends SmallChestUi {
         nameMeta.displayName(Component.text("§e§lPlot-Namen setzen").color(NamedTextColor.YELLOW));
 
         List<String> nameLore = new ArrayList<>();
-        if (plot instanceof NamedPlot namedPlot && namedPlot.hasCustomName()) {
-            nameLore.add("§7Aktuell: §f" + namedPlot.getCustomName().orElse("Kein Name"));
+        String currentName = plotNameManager.getPlotName(plot);
+        if (currentName != null && !currentName.trim().isEmpty()) {
+            nameLore.add("§7Aktuell: §f" + currentName);
         } else {
             nameLore.add("§7Aktuell: §cKein Name gesetzt");
         }
@@ -183,9 +183,17 @@ public class PlotInfoUi extends SmallChestUi {
         nameItem.setItemMeta(nameMeta);
 
         setItem(20, nameItem, player -> {
-            player.sendMessage("§c✗ Plot-Namen-Feature noch nicht implementiert!");
-            player.sendMessage("§7Hinweis: PlotNameInputUi benötigt AnvilUi-Implementierung");
+            if (!isOwner) {
+                player.sendMessage("§c✗ Du musst der Owner sein um den Namen zu ändern!");
+                close(player);
+                return;
+            }
+
+            // Öffne Namen-Eingabe
             close(player);
+            PlotNameInputUi.openNameInput(player, plot, plotNameManager, name -> {
+                player.sendMessage("§a✓ Plot-Name gesetzt: §e" + name);
+            });
         });
 
         // Slot 22: Plot-Typ-Info

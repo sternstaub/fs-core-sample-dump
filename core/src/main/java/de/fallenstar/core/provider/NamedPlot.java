@@ -1,24 +1,31 @@
-package de.fallenstar.plot.model;
-
-import de.fallenstar.core.provider.Plot;
-import de.fallenstar.plot.manager.PlotNameManager;
+package de.fallenstar.core.provider;
 
 import java.util.Optional;
 
 /**
- * Wrapper-Klasse für Plots mit Custom-Namen.
+ * Trait-Interface für Plots mit benutzerdefinierten Namen.
  *
- * Features:
- * - Benutzerdefinierte Namen für Grundstücke
+ * **Features:**
+ * - Custom-Namen für Grundstücke
  * - Optional: Fallback zu Default-Namen
  * - Persistent gespeichert
  *
  * **Verwendung:**
  * <pre>
- * Plot plot = plotProvider.getPlot(location);
- * NamedPlot namedPlot = new NamedPlot(plot, plotNameManager);
- * namedPlot.setCustomName("Meine Handelsgilde");
- * String displayName = namedPlot.getDisplayName();  // "Meine Handelsgilde"
+ * class TradeguildPlot extends BasePlot implements NamedPlot {
+ *     private String customName;
+ *
+ *     {@literal @}Override
+ *     public Optional&lt;String&gt; getCustomName() {
+ *         return Optional.ofNullable(customName);
+ *     }
+ *
+ *     {@literal @}Override
+ *     public void setCustomName(String name) {
+ *         this.customName = name;
+ *         // Speichern...
+ *     }
+ * }
  * </pre>
  *
  * **Integration:**
@@ -29,30 +36,14 @@ import java.util.Optional;
  * @author FallenStar
  * @version 1.0
  */
-public class NamedPlot extends Plot {
-
-    private final PlotNameManager nameManager;
-
-    /**
-     * Erstellt einen NamedPlot-Wrapper.
-     *
-     * @param plot Der ursprüngliche Plot
-     * @param nameManager Der PlotNameManager
-     */
-    public NamedPlot(Plot plot, PlotNameManager nameManager) {
-        super(plot.getUuid(), plot.getIdentifier(), plot.getLocation(), plot.getNativePlot());
-        this.nameManager = nameManager;
-    }
+public interface NamedPlot extends Plot {
 
     /**
      * Gibt den benutzerdefinierten Namen zurück.
      *
      * @return Optional mit Custom-Namen, oder empty wenn nicht gesetzt
      */
-    public Optional<String> getCustomName() {
-        String name = nameManager.getPlotName(this);
-        return Optional.ofNullable(name);
-    }
+    Optional<String> getCustomName();
 
     /**
      * Setzt den benutzerdefinierten Namen.
@@ -60,21 +51,14 @@ public class NamedPlot extends Plot {
      * @param name Der neue Name (max. 32 Zeichen)
      * @throws IllegalArgumentException wenn Name zu lang oder ungültig
      */
-    public void setCustomName(String name) {
-        if (!isValidName(name)) {
-            throw new IllegalArgumentException("Ungültiger Plot-Name: " + name);
-        }
-        nameManager.setPlotName(this, name);
-    }
+    void setCustomName(String name);
 
     /**
      * Entfernt den benutzerdefinierten Namen.
      *
      * Danach wird wieder der Default-Name verwendet.
      */
-    public void clearCustomName() {
-        nameManager.setPlotName(this, null);
-    }
+    void clearCustomName();
 
     /**
      * Gibt den Anzeige-Namen zurück (Custom oder Default).
@@ -84,7 +68,7 @@ public class NamedPlot extends Plot {
      *
      * @return Anzeige-Name
      */
-    public String getDisplayName() {
+    default String getDisplayName() {
         return getCustomName().orElse("Plot #" + getIdentifier());
     }
 
@@ -93,7 +77,7 @@ public class NamedPlot extends Plot {
      *
      * @return true wenn Custom-Name vorhanden
      */
-    public boolean hasCustomName() {
+    default boolean hasCustomName() {
         return getCustomName().isPresent();
     }
 
@@ -108,7 +92,7 @@ public class NamedPlot extends Plot {
      * @param name Der zu validierende Name
      * @return true wenn gültig
      */
-    public static boolean isValidName(String name) {
+    static boolean isValidName(String name) {
         if (name == null || name.isEmpty()) {
             return false;
         }

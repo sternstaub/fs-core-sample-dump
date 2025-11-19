@@ -30,6 +30,7 @@ public class ProviderRegistry {
     private EconomyProvider economyProvider;
     private NPCProvider npcProvider;
     private ItemProvider itemProvider;
+    private CoinProvider coinProvider;
     private ChatProvider chatProvider;
     private NetworkProvider networkProvider;
     private UIProvider uiProvider;
@@ -106,6 +107,10 @@ public class ProviderRegistry {
             logger.info("○ No custom item plugin - using vanilla items only");
         }
 
+        // Coin Provider - NoOp (Economy-Modul registriert Implementierung)
+        coinProvider = new NoOpCoinProvider();
+        logger.info("○ CoinProvider: NoOp (Economy-Modul wird Implementierung registrieren)");
+
         // Chat Provider - NoOp
         chatProvider = new NoOpChatProvider();
         logger.info("○ Chat provider: NoOp (external chat integration disabled)");
@@ -141,6 +146,7 @@ public class ProviderRegistry {
     public EconomyProvider getEconomyProvider() { return economyProvider; }
     public NPCProvider getNpcProvider() { return npcProvider; }
     public ItemProvider getItemProvider() { return itemProvider; }
+    public CoinProvider getCoinProvider() { return coinProvider; }
     public ChatProvider getChatProvider() { return chatProvider; }
     public NetworkProvider getNetworkProvider() { return networkProvider; }
     public UIProvider getUIProvider() { return uiProvider; }
@@ -181,6 +187,11 @@ public class ProviderRegistry {
     public void setItemProvider(ItemProvider itemProvider) {
         this.itemProvider = itemProvider;
         logger.info("✓ ItemProvider updated: " + itemProvider.getClass().getSimpleName());
+    }
+
+    public void setCoinProvider(CoinProvider coinProvider) {
+        this.coinProvider = coinProvider;
+        logger.info("✓ CoinProvider updated: " + coinProvider.getClass().getSimpleName());
     }
 
     public void setChatProvider(ChatProvider chatProvider) {

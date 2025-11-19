@@ -7,6 +7,7 @@ import com.palmergames.bukkit.towny.object.TownBlockType;
 import com.palmergames.bukkit.towny.object.Resident;
 import com.palmergames.bukkit.towny.utils.PlayerCacheUtil;
 import de.fallenstar.core.exception.ProviderFunctionalityNotFoundException;
+import de.fallenstar.core.provider.BasePlot;
 import de.fallenstar.core.provider.Plot;
 import de.fallenstar.core.provider.PlotProvider;
 import org.bukkit.Location;
@@ -72,7 +73,7 @@ public class TownyPlotProvider implements PlotProvider {
             String identifier = generatePlotIdentifier(townBlock);
 
             // Erstelle Plot-Objekt (nativePlot = TownBlock)
-            return new Plot(plotId, identifier, location, townBlock);
+            return new BasePlot(plotId, identifier, location, townBlock);
 
         } catch (Exception e) {
             throw new ProviderFunctionalityNotFoundException(
@@ -375,7 +376,7 @@ public class TownyPlotProvider implements PlotProvider {
                 }
 
                 // Erstelle Plot-Objekt
-                Plot plot = new Plot(
+                Plot plot = new BasePlot(
                     plotId,
                     identifier,
                     world.getBlockAt(

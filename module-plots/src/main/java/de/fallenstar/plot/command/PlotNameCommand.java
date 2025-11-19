@@ -151,8 +151,8 @@ public class PlotNameCommand {
      * @return true
      */
     private boolean handleSetName(Player player, Plot plot, String name) {
-        // Validierung via NamedPlot
-        if (!de.fallenstar.plot.model.NamedPlot.isValidName(name)) {
+        // Validierung via PlotNameInputUi
+        if (!de.fallenstar.plot.ui.PlotNameInputUi.isValidName(name)) {
             player.sendMessage("§cUngültiger Plot-Name!");
             player.sendMessage("§7Namen müssen 1-32 Zeichen lang sein.");
             player.sendMessage("§7Erlaubt: Buchstaben, Zahlen, Leerzeichen, -, _");

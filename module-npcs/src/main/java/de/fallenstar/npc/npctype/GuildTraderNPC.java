@@ -37,11 +37,12 @@ import java.util.logging.Logger;
  *
  * Voraussetzungen:
  * - PlotProvider (required)
- * - PlotStorageProvider via Reflection (Plots-Modul)
- * - ItemBasePriceProvider via Reflection (Economy-Modul)
+ * - EconomyProvider (für Preise)
+ * - CoinProvider (für Münz-Erstellung)
+ * - PlotStorageProvider via Reflection (Plots-Modul) - TODO: Type-Safe Provider
  *
  * @author FallenStar
- * @version 1.0
+ * @version 2.0 - Refactored: Reflection → CoinProvider (Type-Safe)
  */
 public class GuildTraderNPC implements NPCType, TradingEntity {
 
@@ -511,12 +512,14 @@ public class GuildTraderNPC implements NPCType, TradingEntity {
 
             logger.info("Using EconomyProvider for price lookup");
 
-            // Hole Economy-Plugin für Münz-Erstellung
-            var economyPlugin = Bukkit.getPluginManager().getPlugin("FallenStar-Economy");
-            if (economyPlugin == null) {
-                logger.warning("Economy module not loaded - cannot create coins");
+            // Hole CoinProvider (Type-Safe Alternative zu Reflection!)
+            de.fallenstar.core.provider.CoinProvider coinProvider = providers.getCoinProvider();
+            if (coinProvider == null || !coinProvider.isAvailable()) {
+                logger.warning("CoinProvider nicht verfügbar - Münz-Erstellung nicht möglich");
                 return tradeSets;
             }
+
+            logger.info("Using CoinProvider for coin creation");
 
             // Für jedes Item: Erstelle TradeSet
             for (ItemStack item : items) {
@@ -536,8 +539,8 @@ public class GuildTraderNPC implements NPCType, TradingEntity {
                     continue;
                 }
 
-                // Erstelle Münzen für den Preis
-                ItemStack coinStack = createCoinsForPrice(economyPlugin, price);
+                // Erstelle Münzen für den Preis (Type-Safe via CoinProvider!)
+                ItemStack coinStack = createCoinsForPrice(coinProvider, price);
                 if (coinStack == null) {
                     logger.warning("Failed to create coins for price " + price);
                     continue;
@@ -613,45 +616,23 @@ public class GuildTraderNPC implements NPCType, TradingEntity {
     /**
      * Erstellt Münz-ItemStack für einen Preis.
      *
-     * Nutzt CurrencyManager aus Economy-Modul via Reflection.
+     * Nutzt CoinProvider (Type-Safe Interface) statt Reflection.
      *
-     * @param economyPlugin Economy-Plugin-Instanz
+     * @param coinProvider CoinProvider-Instanz
      * @param price Preis in Basiswährung
      * @return ItemStack mit Münzen oder null bei Fehler
      */
-    private ItemStack createCoinsForPrice(Object economyPlugin, BigDecimal price) {
+    private ItemStack createCoinsForPrice(de.fallenstar.core.provider.CoinProvider coinProvider, BigDecimal price) {
         try {
-            // Hole CurrencyManager
-            var getCurrencyManager = economyPlugin.getClass().getMethod("getCurrencyManager");
-            var currencyManager = getCurrencyManager.invoke(economyPlugin);
+            // Delegiere an CoinProvider (Type-Safe!)
+            Optional<ItemStack> coins = coinProvider.createCoinsForPrice(price, 64);
 
-            // Konvertiere Preis zu int (Sterne sind ganzzahlig)
-            int amount = price.intValue();
-
-            // Erstelle Münzen via createCoin(String currencyId, CurrencyTier tier, int amount)
-            // Tier bestimmen: Bronze (1-99), Silber (100-9999), Gold (10000+)
-            String tier = "BRONZE";
-            if (amount >= 10000) {
-                tier = "GOLD";
-                amount = amount / 100; // Gold = 100 Sterne
-            } else if (amount >= 100) {
-                tier = "SILVER";
-                amount = amount / 10; // Silber = 10 Sterne
+            if (coins.isEmpty()) {
+                logger.warning("CoinProvider konnte keine Münzen für Preis " + price + " erstellen");
+                return null;
             }
 
-            // Reflection: createCoin(String, CurrencyTier, int)
-            Class<?> currencyTierClass = Class.forName("de.fallenstar.economy.model.CurrencyTier");
-            var tierEnum = Enum.valueOf((Class<Enum>) currencyTierClass, tier);
-
-            var createCoinMethod = currencyManager.getClass().getMethod(
-                "createCoin", String.class, currencyTierClass, int.class
-            );
-
-            ItemStack coinStack = (ItemStack) createCoinMethod.invoke(
-                currencyManager, "sterne", tierEnum, amount
-            );
-
-            return coinStack;
+            return coins.get();
 
         } catch (Exception e) {
             logger.warning("Failed to create coins: " + e.getMessage());

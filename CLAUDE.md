@@ -56,10 +56,16 @@ private void initializeProviders() {
 ### Status
 
 - **Version:** 1.0-SNAPSHOT
-- **Phase:** Aktive Entwicklung (~70%)
-- **Abgeschlossen:** Core ✅, Plots ✅, Items ✅, Economy ✅, Trading-System ✅
-- **Aktuell:** Sprint 13-14 (NPCs - Citizens-Integration 🔨)
-- **Nächster:** Sprint 15+ (Chat, Auth, WebHooks)
+- **Phase:** Aktive Entwicklung (~85%)
+- **Abgeschlossen:**
+  - Core ✅ (Provider, UI-Framework, Interaction System, Distributor Pattern)
+  - Plots ✅ (TradeguildPlot, DataStore-Persistenz, InteractionRegistry)
+  - Items ✅ (Vanilla Coins, MMOItems-Support)
+  - Economy ✅ (Vault-Integration, TradeSet-System)
+  - Trading-System ✅ (TradeUI, TradingEntity)
+  - NPCs ✅ (GuildTraderNpcEntity, DistributableNpc, QuestContainer)
+- **Aktuell:** Sprint 15+ (Quest-System, Chat, Auth, WebHooks 📋)
+- **Nächster:** Production-Deployment
 
 ---
 
@@ -285,8 +291,10 @@ git push -u origin <branch-name>
 | 7-8 | UI-Refactoring (in Core integriert) | ✅ |
 | 9-10 | Economy | ✅ |
 | 11-12 | Trading + NPC-GUI | ✅ |
-| 13-14 | NPCs (Citizens + Händler-NPCs) | 🔨 |
-| 15+ | Chat, Auth, WebHooks | 📋 |
+| 13-14 | NPCs (Citizens + Händler-NPCs) | ✅ |
+| 15 | Interaction System + Distributor Pattern | ✅ |
+| 16 | DataStore-Integration + Persistenz | ✅ |
+| 17+ | Quest-System, Chat, Auth, WebHooks | 📋 |
 
 ### Testbefehle
 
@@ -399,36 +407,50 @@ var button = new ClickableUiElement.CustomButton<>(item, action);
 
 ---
 
-## Current Sprint (13-14)
+## Current Sprint (15-17)
 
-### Abgeschlossen (Sprint 11-12)
+### Abgeschlossen (Sprint 13-16)
 
-1. ✅ **TradeSet-System** (Economy-Modul)
-2. ✅ **TradingEntity-Interface** (Core)
-3. ✅ **TradeUI** (Core - migriert von UI-Modul)
-4. ✅ **PlotRegistry** (Plots-Modul)
-5. ✅ **Virtuelles Händler-Inventar** (Plots-Modul)
-6. ✅ **NPC-Verwaltungs-GUI** (Plots-Modul)
+**Sprint 13-14: NPCs-Modul - Citizens-Integration + Gildenhändler**
+1. ✅ CitizensNPCProvider (NPCProvider-Implementierung)
+2. ✅ GuildTraderNPC (Gildenhändler - PlotBoundNPC mit ItemBasePriceProvider)
+3. ✅ GuildTraderNpcEntity (DistributableNpc + QuestContainer + UiTarget)
+4. ✅ NPCManager + GuildTraderManager
+5. ✅ Admin-Befehle (/fscore admin npc)
 
-### Aktuell in Arbeit (Sprint 13-14)
+**Sprint 15: Interaction System + Distributor Pattern**
+1. ✅ Interactable Interface (Click-Handler für Entities/Plots)
+2. ✅ UiTarget Interface (Self-Constructing UIs)
+3. ✅ InteractionRegistry + InteractionHandler (Event-Routing)
+4. ✅ Distributor<T> + Distributable (Generisches Verteilungssystem)
+5. ✅ NpcDistributor + QuestDistributor (Automatische Content-Verteilung)
+6. ✅ TradeguildPlot implements NpcDistributor + QuestDistributor
+7. ✅ GenericInteractionMenuUi (Self-Constructing UI aus UiActionInfo)
 
-**NPCs-Modul - Citizens-Integration + Gildenhändler:**
-- 🔨 CitizensNPCProvider (NPCProvider-Implementierung)
-- 🔨 NPCType Interface + Konkrete Implementierungen:
-  - GuildTraderNPC (Gildenhändler - PlotBoundNPC mit ItemBasePriceProvider)
-  - AmbassadorNPC (Botschafter - Teleport zu Towns)
-  - PlayerTraderNPC (Spielerhändler - PlayerBoundNPC, später)
-  - WorldBankerNPC (Weltbankier - Währungsumtausch, später)
-- 🔨 NPCManager + GuildTraderManager
-- 🔨 Admin-Befehle (/fscore admin npc)
+**Sprint 16: DataStore-Integration + Persistenz**
+1. ✅ TradeguildPlotData (Serialisierbares POJO für Persistierung)
+2. ✅ TradeguildPlot.exportData() / importData()
+3. ✅ TradeguildPlotFactory mit DataStore-Integration
+4. ✅ Lazy Loading (Auto-Load beim ersten Zugriff)
+5. ✅ Auto-Save beim Server-Shutdown
 
-**Plots-Modul - NPC-Bindungssystem:**
-- 🔨 PlotBoundNPCRegistry (Verwaltung Plot-gebundener NPCs)
-- 🔨 PlotPriceManager (ItemBasePriceProvider-Implementierung)
-- 🔨 PlotPriceData (Ankauf/Verkauf-Preise pro Material)
+### Aktuell in Arbeit (Sprint 17+)
 
-**Core - Neue Interfaces:**
-- 🔨 ItemBasePriceProvider (Preis-Schnittstelle für Handelsgründe)
+**Quest-System:**
+- 📋 Quest-UI (GenericInteractionMenuUi-basiert)
+- 📋 Quest-Manager
+- 📋 Quest-Persistierung
+
+**Chat-System:**
+- 📋 Chat-Provider Interface
+- 📋 Channel-System
+
+**Auth-System:**
+- 📋 Authentication-Provider
+- 📋 Session-Management
+
+**WebHooks:**
+- 📋 Event-Streaming zu externen Services
 
 ---
 
@@ -598,7 +620,7 @@ git push -u origin <branch>
 
 **Last Updated:** 2025-11-18
 **Version:** 1.0-SNAPSHOT
-**Sprint:** 13-14 (NPCs - Citizens-Integration 🔨)
-**Branch:** claude/migrate-storage-price-ui-01XKnojmCKHCGNiSBZgzUsro
+**Sprint:** 15-17 (Interaction System + Distributor Pattern ✅, DataStore-Integration ✅)
+**Branch:** claude/fix-storage-price-loop-012sXDfqzLyyPSPX8QC8egq7
 
 **Hinweis:** module-merchants und module-adminshops wurden entfernt (obsolet - Funktionalität in NPCs-Modul)

@@ -1,6 +1,7 @@
 package de.fallenstar.plot.ui;
 
 import de.fallenstar.core.provider.Plot;
+import de.fallenstar.core.ui.TextInputUi;
 import de.fallenstar.plot.manager.PlotNameManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -9,12 +10,12 @@ import org.bukkit.entity.Player;
 import java.util.function.Consumer;
 
 /**
- * UI zur Eingabe eines Plot-Namens.
+ * UI zur Eingabe eines Plot-Namens via TextInputUI (Anvil-basiert).
  *
  * Features:
- * - Namen-Eingabe via Chat (vereinfacht)
+ * - Namen-Eingabe via Anvil-Rename
  * - Validierung (max. 32 Zeichen, Sonderzeichen)
- * - Callback bei Erfolg
+ * - Callback bei Erfolg/Abbruch
  *
  * **Verwendung:**
  * <pre>
@@ -23,13 +24,8 @@ import java.util.function.Consumer;
  * });
  * </pre>
  *
- * **Hinweis:**
- * Dies ist eine vereinfachte Implementierung via Chat.
- * Für eine vollständige Implementierung sollte ein
- * AnvilUi oder SignUi verwendet werden (UI-Framework).
- *
  * @author FallenStar
- * @version 1.0
+ * @version 2.0
  */
 public class PlotNameInputUi {
 
@@ -47,34 +43,41 @@ public class PlotNameInputUi {
             PlotNameManager plotNameManager,
             Consumer<String> onSuccess
     ) {
-        // Zeige Anleitung
-        player.sendMessage(Component.empty());
-        player.sendMessage(Component.text("═══════════════════════════════════", NamedTextColor.GOLD));
-        player.sendMessage(Component.text("         Plot-Namen setzen", NamedTextColor.YELLOW));
-        player.sendMessage(Component.text("═══════════════════════════════════", NamedTextColor.GOLD));
-        player.sendMessage(Component.empty());
-        player.sendMessage(Component.text("Aktueller Name: ", NamedTextColor.GRAY)
-                .append(Component.text(plot.getIdentifier(), NamedTextColor.YELLOW)));
-        player.sendMessage(Component.empty());
-        player.sendMessage(Component.text("Schreibe den neuen Namen in den Chat:", NamedTextColor.YELLOW));
-        player.sendMessage(Component.text("  • Max. 32 Zeichen", NamedTextColor.GRAY));
-        player.sendMessage(Component.text("  • Buchstaben, Zahlen, Leerzeichen, -, _", NamedTextColor.GRAY));
-        player.sendMessage(Component.text("  • Schreibe 'cancel' zum Abbrechen", NamedTextColor.GRAY));
-        player.sendMessage(Component.empty());
-        player.sendMessage(Component.text("═══════════════════════════════════", NamedTextColor.GOLD));
-        player.sendMessage(Component.empty());
+        // Aktueller Name als Placeholder
+        String currentName = plotNameManager.getPlotName(plot);
+        if (currentName == null || currentName.trim().isEmpty()) {
+            currentName = plot.getIdentifier();
+        }
 
-        // TODO: Chat-Listener registrieren
-        // Für vollständige Implementierung:
-        // 1. AsyncPlayerChatEvent-Listener registrieren
-        // 2. Bei Eingabe validieren
-        // 3. plotNameManager.setCustomName() aufrufen
-        // 4. onSuccess-Callback ausführen
-        // 5. Listener de-registrieren
+        // Erstelle TextInputUI
+        TextInputUi ui = new TextInputUi(
+                "Plot-Namen setzen",
+                currentName,
+                // Input-Handler (Bestätigung)
+                name -> {
+                    // Validierung
+                    String error = getValidationError(name);
+                    if (error != null) {
+                        player.sendMessage(Component.text("§c✗ " + error));
+                        player.sendMessage(Component.text("§7Versuche es erneut: /plot setname <name>", NamedTextColor.GRAY));
+                        return;
+                    }
 
-        // Vereinfachte Version: Nur Info-Nachricht
-        player.sendMessage(Component.text("✗ Chat-basierte Eingabe noch nicht implementiert!", NamedTextColor.RED));
-        player.sendMessage(Component.text("Nutze vorerst: /plot setname <name>", NamedTextColor.YELLOW));
+                    // Namen setzen
+                    plotNameManager.setPlotName(plot, name);
+                    player.sendMessage(Component.text("§a✓ Plot-Name gesetzt: §e" + name));
+
+                    // Callback
+                    if (onSuccess != null) {
+                        onSuccess.accept(name);
+                    }
+                },
+                // Cancel-Handler
+                p -> p.sendMessage(Component.text("§7Namen-Eingabe abgebrochen.", NamedTextColor.GRAY))
+        );
+
+        // Öffne UI
+        ui.open(player);
     }
 
     /**

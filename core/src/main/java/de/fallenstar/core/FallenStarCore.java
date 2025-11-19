@@ -6,6 +6,8 @@ import de.fallenstar.core.database.impl.MySQLDataStore;
 import de.fallenstar.core.database.impl.PostgreSQLDataStore;
 import de.fallenstar.core.database.impl.SQLiteDataStore;
 import de.fallenstar.core.event.ProvidersReadyEvent;
+import de.fallenstar.core.interaction.handler.InteractionHandler;
+import de.fallenstar.core.interaction.handler.InteractionRegistry;
 import de.fallenstar.core.registry.AdminCommandRegistry;
 import de.fallenstar.core.registry.PlotTypeRegistry;
 import de.fallenstar.core.registry.ProviderRegistry;
@@ -42,6 +44,8 @@ public class FallenStarCore extends JavaPlugin {
     private AdminCommandRegistry adminCommandRegistry;
     private UIButtonManager uiButtonManager;
     private DataStore dataStore;
+    private InteractionRegistry interactionRegistry;
+    private InteractionHandler interactionHandler;
     
     @Override
     public void onEnable() {
@@ -150,6 +154,15 @@ public class FallenStarCore extends JavaPlugin {
         uiButtonManager = new UIButtonManager();
         uiButtonManager.initialize();
         getLogger().info("✓ UIButtonManager initialized");
+
+        // InteractionRegistry initialisieren
+        interactionRegistry = new InteractionRegistry();
+        getLogger().info("✓ InteractionRegistry initialized");
+
+        // InteractionHandler initialisieren und registrieren
+        interactionHandler = new InteractionHandler(interactionRegistry, getLogger());
+        Bukkit.getPluginManager().registerEvents(interactionHandler, this);
+        getLogger().info("✓ InteractionHandler registered");
 
         // Test-UIs registrieren
         registerTestUIs();
@@ -276,5 +289,27 @@ public class FallenStarCore extends JavaPlugin {
      */
     public UIButtonManager getUIButtonManager() {
         return uiButtonManager;
+    }
+
+    /**
+     * API-Methode: Gibt die InteractionRegistry zurück.
+     *
+     * Wird von Modulen genutzt um Interactable-Objekte zu registrieren.
+     *
+     * @return InteractionRegistry
+     */
+    public InteractionRegistry getInteractionRegistry() {
+        return interactionRegistry;
+    }
+
+    /**
+     * API-Methode: Gibt den InteractionHandler zurück.
+     *
+     * Wird von Modulen genutzt für direkte Handler-Operationen.
+     *
+     * @return InteractionHandler
+     */
+    public InteractionHandler getInteractionHandler() {
+        return interactionHandler;
     }
 }

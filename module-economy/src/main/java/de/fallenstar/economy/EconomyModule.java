@@ -8,6 +8,7 @@ import de.fallenstar.economy.command.EconomyAdminHandler;
 import de.fallenstar.economy.manager.CurrencyManager;
 import de.fallenstar.economy.model.CurrencyItemSet;
 import de.fallenstar.economy.pricing.ItemBasePriceProvider;
+import de.fallenstar.economy.provider.CoinProviderImpl;
 import de.fallenstar.economy.provider.VaultEconomyProvider;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -37,6 +38,7 @@ public class EconomyModule extends JavaPlugin implements Listener {
     private CurrencyManager currencyManager;
     private ItemBasePriceProvider priceProvider;
     private VaultEconomyProvider economyProvider;
+    private CoinProviderImpl coinProvider;
 
     @Override
     public void onEnable() {
@@ -81,7 +83,12 @@ public class EconomyModule extends JavaPlugin implements Listener {
         // Setze EconomyProvider im CurrencyManager (für withdrawCoins)
         currencyManager.setEconomyProvider(economyProvider);
 
+        // Registriere Basiswährung (muss vor CoinProvider erfolgen!)
         registerBaseCurrency();
+
+        // Registriere CoinProvider (benötigt Basiswährung)
+        registerCoinProvider();
+
         registerAdminCommands();
 
         getLogger().info("✓ Economy-Modul erfolgreich initialisiert!");
@@ -180,6 +187,27 @@ public class EconomyModule extends JavaPlugin implements Listener {
             }
         } else {
             getLogger().warning("✗ VaultEconomyProvider nicht verfügbar (Vault-Plugin fehlt?)");
+        }
+    }
+
+    /**
+     * Registriert den CoinProvider in der ProviderRegistry.
+     */
+    private void registerCoinProvider() {
+        // Erstelle CoinProvider
+        this.coinProvider = new CoinProviderImpl(getLogger(), currencyManager);
+
+        // Registriere in ProviderRegistry
+        providers.setCoinProvider(coinProvider);
+
+        if (coinProvider.isAvailable()) {
+            try {
+                getLogger().info("✓ CoinProvider registriert: " + coinProvider.getBaseCurrencyName());
+            } catch (Exception e) {
+                getLogger().info("✓ CoinProvider registriert (Name nicht abrufbar)");
+            }
+        } else {
+            getLogger().warning("✗ CoinProvider nicht verfügbar (Basiswährung fehlt?)");
         }
     }
 

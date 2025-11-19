@@ -3058,40 +3058,1118 @@ public class TradeguildPlot implements UiActionTarget {
 
 ---
 
+## 🎮 ERWEITERUNG 2: Interaction-System
+
+**User-Feedback:** "Ein Plot ist ein UiActionTarget? Wäre cool wenn man den NPC anklickt und das UI öffnet sich!"
+
+**Problem:** Wie werden UIs geöffnet? Wie werden Clicks geroutet?
+
+**Lösung:** Interaction-System mit Interactable, UiTarget, InteractionHandler
+
+---
+
+### Das fehlende Puzzle-Stück
+
+**Bisher hatten wir:**
+- ✅ Plot hat UiActionTarget (kennt seine Actions)
+- ✅ UI kann sich selbst bauen (Self-Constructing)
+- ❌ **Aber:** Wie wird das UI **geöffnet**?
+
+**Jetzt fehlt:**
+1. **Click-Detection:** Wie wissen wir, dass Plot/NPC angeklickt wurde?
+2. **Click-Routing:** Woher weiß System welches Objekt angeklickt wurde?
+3. **UI-Opening:** Wer öffnet das UI?
+4. **Permission-Check:** Wer darf interagieren?
+
+---
+
+### 1. Interactable-Interface (Basis!)
+
+**Location:** `core/src/main/java/de/fallenstar/core/interaction/Interactable.java`
+
+```java
+package de.fallenstar.core.interaction;
+
+import org.bukkit.entity.Player;
+
+/**
+ * Interface für interaktive Objekte.
+ *
+ * Ermöglicht es Objekten (Plot, NPC, Block, Item) auf
+ * Spieler-Interaktionen zu reagieren.
+ *
+ * **Konzept:**
+ * - Objekt definiert wie es interagiert wird
+ * - Objekt entscheidet ob Interaktion erlaubt ist
+ * - Objekt führt Interaktion aus
+ *
+ * @author FallenStar
+ * @version 2.0
+ */
+public interface Interactable {
+
+    /**
+     * Wird aufgerufen wenn Spieler mit Objekt interagiert.
+     *
+     * @param player Der Spieler
+     * @param context Interaktions-Kontext
+     * @return true wenn Interaktion verarbeitet wurde (cancelt Event)
+     */
+    boolean onInteract(Player player, InteractionContext context);
+
+    /**
+     * Prüft ob Spieler mit diesem Objekt interagieren darf.
+     *
+     * @param player Der Spieler
+     * @return true wenn Interaktion erlaubt
+     */
+    default boolean canInteract(Player player) {
+        return true; // Default: alle dürfen
+    }
+
+    /**
+     * Gibt den Interaktions-Typ zurück.
+     *
+     * @return InteractionType
+     */
+    InteractionType getInteractionType();
+}
+```
+
+---
+
+### 2. InteractionContext (Kontext-Informationen)
+
+**Location:** `core/src/main/java/de/fallenstar/core/interaction/InteractionContext.java`
+
+```java
+package de.fallenstar.core.interaction;
+
+import org.bukkit.block.Block;
+import org.bukkit.entity.Entity;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.ItemStack;
+
+/**
+ * Kontext einer Interaktion.
+ *
+ * Enthält alle relevanten Informationen über die Interaktion:
+ * - Typ (Block, Entity, Item)
+ * - Modifikatoren (Shift, Links/Rechts-Klick)
+ * - Angeklicktes Objekt
+ *
+ * @author FallenStar
+ * @version 2.0
+ */
+public record InteractionContext(
+        InteractionType type,
+        boolean isSneaking,
+        boolean isLeftClick,
+        Block clickedBlock,
+        Entity clickedEntity,
+        ItemStack itemInHand
+) {
+
+    /**
+     * Erstellt Context aus PlayerInteractEvent.
+     */
+    public static InteractionContext fromEvent(PlayerInteractEvent event, InteractionType type) {
+        return new InteractionContext(
+                type,
+                event.getPlayer().isSneaking(),
+                event.getAction().isLeftClick(),
+                event.getClickedBlock(),
+                null,
+                event.getItem()
+        );
+    }
+
+    /**
+     * Erstellt Context aus Entity-Click.
+     */
+    public static InteractionContext fromEntityClick(Entity entity, boolean isSneaking) {
+        return new InteractionContext(
+                InteractionType.ENTITY,
+                isSneaking,
+                false,
+                null,
+                entity,
+                null
+        );
+    }
+
+    /**
+     * @return true wenn Shift+Rechtsklick (Admin-Mode)
+     */
+    public boolean isAdminInteraction() {
+        return isSneaking && !isLeftClick;
+    }
+}
+```
+
+---
+
+### 3. InteractionType-Enum
+
+**Location:** `core/src/main/java/de/fallenstar/core/interaction/InteractionType.java`
+
+```java
+package de.fallenstar.core.interaction;
+
+/**
+ * Typ der Interaktion.
+ *
+ * @author FallenStar
+ * @version 2.0
+ */
+public enum InteractionType {
+    /**
+     * Block angeklickt.
+     */
+    BLOCK,
+
+    /**
+     * Entity angeklickt (z.B. NPC).
+     */
+    ENTITY,
+
+    /**
+     * Item in Inventory angeklickt.
+     */
+    ITEM,
+
+    /**
+     * Plot-Area betreten/interagiert.
+     */
+    PLOT,
+
+    /**
+     * Welt-Interaktion (Air-Click, etc.).
+     */
+    WORLD
+}
+```
+
+---
+
+### 4. UiTarget-Interface (UI-Öffnung!)
+
+**Location:** `core/src/main/java/de/fallenstar/core/ui/UiTarget.java`
+
+```java
+package de.fallenstar.core.ui;
+
+import de.fallenstar.core.interaction.Interactable;
+import de.fallenstar.core.interaction.InteractionContext;
+import org.bukkit.entity.Player;
+
+import java.util.Optional;
+
+/**
+ * Interface für Objekte die ein UI öffnen können.
+ *
+ * **Kombiniert drei Konzepte:**
+ * 1. Interactable - Wie wird interagiert? (Rechtsklick, etc.)
+ * 2. UiActionTarget - Welche Actions sind verfügbar?
+ * 3. UiTarget - Welches UI wird geöffnet?
+ *
+ * **Workflow:**
+ * ```
+ * Player rechtsklickt Plot
+ *   → InteractionHandler ruft onInteract() auf
+ *   → onInteract() ruft openUi() auf
+ *   → openUi() ruft createUi() auf
+ *   → UI wird geöffnet
+ * ```
+ *
+ * @author FallenStar
+ * @version 2.0
+ */
+public interface UiTarget extends Interactable, UiActionTarget {
+
+    /**
+     * Erstellt das Haupt-UI für dieses Objekt.
+     *
+     * @param player Der Spieler
+     * @param context Interaktions-Kontext
+     * @return Optional mit UI, oder empty wenn kein UI verfügbar
+     */
+    Optional<BaseUi> createUi(Player player, InteractionContext context);
+
+    /**
+     * Öffnet das UI für einen Spieler.
+     *
+     * @param player Der Spieler
+     * @param context Interaktions-Kontext
+     * @return true wenn UI geöffnet wurde
+     */
+    default boolean openUi(Player player, InteractionContext context) {
+        Optional<BaseUi> ui = createUi(player, context);
+
+        if (ui.isEmpty()) {
+            return false;
+        }
+
+        ui.get().open(player);
+        return true;
+    }
+
+    /**
+     * Default-Implementation von Interactable.onInteract().
+     *
+     * Öffnet automatisch das UI bei Interaktion:
+     * - Shift+Rechtsklick → Admin-UI (falls verfügbar)
+     * - Normal-Rechtsklick → Standard-UI
+     */
+    @Override
+    default boolean onInteract(Player player, InteractionContext context) {
+        // Shift+Rechtsklick → Admin-UI (wenn Admin-Permission)
+        if (context.isAdminInteraction() && player.hasPermission("fallenstar.admin")) {
+            return openAdminUi(player, context);
+        }
+
+        // Normal-Rechtsklick → Standard-UI
+        return openUi(player, context);
+    }
+
+    /**
+     * Öffnet Admin-UI (falls verfügbar).
+     *
+     * Override in konkreten Implementierungen für erweiterte Admin-Funktionen.
+     *
+     * @param player Der Spieler (muss Admin sein)
+     * @param context Interaktions-Kontext
+     * @return true wenn Admin-UI geöffnet wurde
+     */
+    default boolean openAdminUi(Player player, InteractionContext context) {
+        // Default: kein Admin-UI → öffne normales UI
+        return openUi(player, context);
+    }
+}
+```
+
+---
+
+### 5. InteractionHandler (Click-Routing!)
+
+**Location:** `core/src/main/java/de/fallenstar/core/interaction/InteractionHandler.java`
+
+```java
+package de.fallenstar.core.interaction;
+
+import org.bukkit.Location;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+
+import java.util.Optional;
+import java.util.logging.Logger;
+
+/**
+ * Handler für Spieler-Interaktionen.
+ *
+ * Routet Clicks zu den richtigen Interactable-Objekten:
+ * - Block/Air-Clicks → Plots
+ * - Entity-Clicks → NPCs
+ * - Item-Clicks → Custom Items
+ *
+ * @author FallenStar
+ * @version 2.0
+ */
+public class InteractionHandler implements Listener {
+
+    private final InteractionRegistry registry;
+    private final Logger logger;
+
+    public InteractionHandler(InteractionRegistry registry, Logger logger) {
+        this.registry = registry;
+        this.logger = logger;
+    }
+
+    /**
+     * Handhabt Block-/Air-Interaktionen (Plot-Clicks).
+     */
+    @EventHandler
+    public void onPlayerInteract(PlayerInteractEvent event) {
+        Player player = event.getPlayer();
+
+        // Prüfe ob Spieler auf Plot steht
+        Location location = player.getLocation();
+        Optional<Interactable> plotOpt = registry.getInteractableAtLocation(location);
+
+        if (plotOpt.isEmpty()) {
+            return; // Kein interaktives Objekt
+        }
+
+        Interactable interactable = plotOpt.get();
+
+        // Permission-Check
+        if (!interactable.canInteract(player)) {
+            player.sendMessage("§cDu darfst nicht mit diesem Objekt interagieren!");
+            return;
+        }
+
+        // Erstelle Context
+        InteractionContext context = InteractionContext.fromEvent(
+                event,
+                interactable.getInteractionType()
+        );
+
+        // Interaktion ausführen
+        boolean handled = interactable.onInteract(player, context);
+
+        if (handled) {
+            event.setCancelled(true); // Verhindere normale Interaktion
+            logger.fine("Handled interaction with " + interactable.getClass().getSimpleName());
+        }
+    }
+
+    /**
+     * Handhabt Entity-Interaktionen (NPC-Clicks).
+     */
+    @EventHandler
+    public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {
+        Player player = event.getPlayer();
+        Entity entity = event.getRightClicked();
+
+        // Hole Interactable für Entity (z.B. NPC)
+        Optional<Interactable> npcOpt = registry.getInteractableForEntity(entity.getUniqueId());
+
+        if (npcOpt.isEmpty()) {
+            return; // Keine interaktive Entity
+        }
+
+        Interactable interactable = npcOpt.get();
+
+        // Permission-Check
+        if (!interactable.canInteract(player)) {
+            player.sendMessage("§cDu darfst nicht mit diesem NPC interagieren!");
+            event.setCancelled(true);
+            return;
+        }
+
+        // Erstelle Context
+        InteractionContext context = InteractionContext.fromEntityClick(
+                entity,
+                player.isSneaking()
+        );
+
+        // Interaktion ausführen
+        boolean handled = interactable.onInteract(player, context);
+
+        if (handled) {
+            event.setCancelled(true);
+            logger.fine("Handled entity interaction with " + interactable.getClass().getSimpleName());
+        }
+    }
+}
+```
+
+---
+
+### 6. InteractionRegistry (Objekt-Verwaltung!)
+
+**Location:** `core/src/main/java/de/fallenstar/core/interaction/InteractionRegistry.java`
+
+```java
+package de.fallenstar.core.interaction;
+
+import de.fallenstar.core.provider.Plot;
+import de.fallenstar.core.provider.PlotProvider;
+import org.bukkit.Location;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
+
+/**
+ * Registry für Interactable-Objekte.
+ *
+ * Verwaltet Zuordnung:
+ * - Location → Plot
+ * - Entity-UUID → NPC
+ * - Item-ID → Custom Item
+ *
+ * @author FallenStar
+ * @version 2.0
+ */
+public class InteractionRegistry {
+
+    private final PlotProvider plotProvider;
+    private final Logger logger;
+
+    // Entity-UUID → Interactable (für NPCs)
+    private final Map<UUID, Interactable> entityInteractables;
+
+    // Item-ID → Interactable (für Custom Items)
+    private final Map<String, Interactable> itemInteractables;
+
+    public InteractionRegistry(PlotProvider plotProvider, Logger logger) {
+        this.plotProvider = plotProvider;
+        this.logger = logger;
+        this.entityInteractables = new ConcurrentHashMap<>();
+        this.itemInteractables = new ConcurrentHashMap<>();
+    }
+
+    /**
+     * Gibt Interactable an Location zurück (z.B. Plot).
+     *
+     * @param location Location
+     * @return Optional mit Interactable
+     */
+    public Optional<Interactable> getInteractableAtLocation(Location location) {
+        if (plotProvider == null || !plotProvider.isAvailable()) {
+            return Optional.empty();
+        }
+
+        try {
+            Plot plot = plotProvider.getPlot(location);
+
+            if (plot instanceof Interactable) {
+                return Optional.of((Interactable) plot);
+            }
+
+        } catch (Exception e) {
+            // Kein Plot an Location
+            logger.fine("No plot at location " + location);
+        }
+
+        return Optional.empty();
+    }
+
+    /**
+     * Gibt Interactable für Entity zurück (z.B. NPC).
+     *
+     * @param entityId Entity-UUID
+     * @return Optional mit Interactable
+     */
+    public Optional<Interactable> getInteractableForEntity(UUID entityId) {
+        return Optional.ofNullable(entityInteractables.get(entityId));
+    }
+
+    /**
+     * Registriert einen NPC.
+     *
+     * @param entityId Entity-UUID (Citizens-NPC-UUID)
+     * @param npc NPC (muss Interactable implementieren)
+     */
+    public void registerNPC(UUID entityId, Interactable npc) {
+        entityInteractables.put(entityId, npc);
+        logger.info("Registered NPC " + entityId + " (" + npc.getClass().getSimpleName() + ")");
+    }
+
+    /**
+     * Unregistriert einen NPC.
+     *
+     * @param entityId Entity-UUID
+     */
+    public void unregisterNPC(UUID entityId) {
+        Interactable removed = entityInteractables.remove(entityId);
+        if (removed != null) {
+            logger.info("Unregistered NPC " + entityId);
+        }
+    }
+
+    /**
+     * Gibt Interactable für Item zurück.
+     *
+     * @param itemId Item-ID
+     * @return Optional mit Interactable
+     */
+    public Optional<Interactable> getInteractableForItem(String itemId) {
+        return Optional.ofNullable(itemInteractables.get(itemId));
+    }
+
+    /**
+     * Registriert ein Custom Item.
+     *
+     * @param itemId Item-ID
+     * @param item Item (muss Interactable implementieren)
+     */
+    public void registerItem(String itemId, Interactable item) {
+        itemInteractables.put(itemId, item);
+        logger.info("Registered item " + itemId);
+    }
+
+    /**
+     * @return Anzahl registrierter NPCs
+     */
+    public int getNPCCount() {
+        return entityInteractables.size();
+    }
+
+    /**
+     * @return Anzahl registrierter Items
+     */
+    public int getItemCount() {
+        return itemInteractables.size();
+    }
+}
+```
+
+---
+
+### 7. TradeguildPlot mit UiTarget
+
+**Location:** `module-plots/src/main/java/de/fallenstar/plot/model/TradeguildPlot.java`
+
+```java
+package de.fallenstar.plot.model;
+
+import de.fallenstar.core.provider.*;
+import de.fallenstar.core.ui.*;
+import de.fallenstar.core.interaction.*;
+import de.fallenstar.plot.ui.PlotMainMenuUi;
+import de.fallenstar.plot.ui.PlotAdminUi;
+import org.bukkit.entity.Player;
+
+import java.util.Optional;
+
+/**
+ * TradeguildPlot mit vollständiger UI-Integration.
+ *
+ * Features:
+ * - NamedPlot (Custom-Namen)
+ * - StorageContainerPlot (Storage-System)
+ * - NpcContainerPlot (NPC-Verwaltung)
+ * - UiTarget (UI-Interaktion) ← NEU!
+ *
+ * **Interaktion:**
+ * - Rechtsklick auf Plot → Öffnet PlotMainMenuUi
+ * - Shift+Rechtsklick → Öffnet PlotAdminUi (nur Admin)
+ *
+ * @author FallenStar
+ * @version 2.0
+ */
+public class TradeguildPlot implements
+        NamedPlot,
+        StorageContainerPlot,
+        NpcContainerPlot,
+        UiTarget {  // ← UiTarget statt nur UiActionTarget!
+
+    // ... bestehende Fields ...
+
+    // UiTarget Implementation
+    @Override
+    public Optional<BaseUi> createUi(Player player, InteractionContext context) {
+        // Erstelle PlotMainMenuUi
+        PlotMainMenuUi ui = new PlotMainMenuUi(this, player);
+        return Optional.of(ui);
+    }
+
+    @Override
+    public InteractionType getInteractionType() {
+        return InteractionType.PLOT;
+    }
+
+    @Override
+    public boolean canInteract(Player player) {
+        // Jeder kann Plot-UI öffnen
+        // Permissions werden in UiActions geprüft
+        return true;
+    }
+
+    @Override
+    public boolean openAdminUi(Player player, InteractionContext context) {
+        // Admin-Permission-Check
+        if (!player.hasPermission("fallenstar.admin.plots")) {
+            player.sendMessage("§cKeine Admin-Berechtigung!");
+            return false;
+        }
+
+        // Öffne erweiterte Admin-UI
+        PlotAdminUi adminUi = new PlotAdminUi(this, player);
+        adminUi.open(player);
+
+        player.sendMessage("§a§lAdmin-UI geöffnet!");
+        return true;
+    }
+
+    // UiActionTarget Implementation (wie vorher)
+    @Override
+    public List<UiActionInfo> getAvailableUiActions(Player player, UiContext context) {
+        // ... wie vorher implementiert ...
+    }
+}
+```
+
+---
+
+### 8. GuildTraderNPC mit UiTarget
+
+**Location:** `module-npcs/src/main/java/de/fallenstar/npc/npctype/GuildTraderNPC.java`
+
+```java
+package de.fallenstar.npc.npctype;
+
+import de.fallenstar.core.ui.*;
+import de.fallenstar.core.interaction.*;
+import de.fallenstar.npc.ui.*;
+
+/**
+ * GuildTraderNPC mit UI-Integration.
+ *
+ * **Interaktion:**
+ * - Rechtsklick → Trade-UI (Gäste) oder Management-UI (Owner)
+ * - Shift+Rechtsklick → Erweiterte Optionen
+ *
+ * @author FallenStar
+ * @version 2.0
+ */
+public class GuildTraderNPC implements
+        NPCType,
+        TradingEntity,
+        UiTarget {  // ← UiTarget!
+
+    private final UUID npcId;
+    private final Plot owningPlot;
+
+    // UiTarget Implementation
+    @Override
+    public Optional<BaseUi> createUi(Player player, InteractionContext context) {
+        boolean isOwner = isOwner(player);
+
+        if (isOwner) {
+            // Owner → Management-UI (Configure, Remove, etc.)
+            return Optional.of(new NpcManagementUi(this, player));
+        } else {
+            // Gast → Trade-UI (Handeln)
+            return Optional.of(new NpcTradeUi(this, player));
+        }
+    }
+
+    @Override
+    public InteractionType getInteractionType() {
+        return InteractionType.ENTITY;
+    }
+
+    @Override
+    public boolean canInteract(Player player) {
+        // Jeder kann mit NPC interagieren
+        return true;
+    }
+
+    // UiActionTarget Implementation (wie vorher)
+    @Override
+    public List<UiActionInfo> getAvailableUiActions(Player player, UiContext context) {
+        // ... wie vorher implementiert ...
+    }
+
+    private boolean isOwner(Player player) {
+        // Check ob Player Owner des owningPlot ist
+        // TODO: Implementierung
+        return false;
+    }
+}
+```
+
+---
+
+### 9. Permission-Integration in UiActionInfo
+
+**Erweiterte UiActionInfo:**
+
+```java
+public record UiActionInfo(
+        String id,
+        String displayName,
+        List<String> description,
+        Material icon,
+        UiAction action,
+        UiContext context,
+        int priority,
+        String requiredPermission  // ← NEU!
+) {
+
+    /**
+     * Prüft ob Spieler diese Action ausführen darf.
+     *
+     * @param player Der Spieler
+     * @return true wenn erlaubt
+     */
+    public boolean canExecute(Player player) {
+        if (requiredPermission == null) {
+            return true; // Keine Permission erforderlich
+        }
+
+        return player.hasPermission(requiredPermission);
+    }
+
+    /**
+     * Builder (erweitert).
+     */
+    public static class Builder {
+        private String requiredPermission = null;
+
+        public Builder requiredPermission(String permission) {
+            this.requiredPermission = permission;
+            return this;
+        }
+
+        // ... rest bleibt gleich ...
+    }
+}
+```
+
+**Self-Constructing UI mit Permission-Filter:**
+
+```java
+public class PlotMainMenuUi extends GenericUiSmallChest {
+
+    private void buildUi() {
+        if (plot instanceof UiActionTarget) {
+            var actionTarget = (UiActionTarget) plot;
+
+            // Hole Actions
+            var actions = actionTarget.getAvailableUiActions(viewer, UiContext.MAIN_MENU);
+
+            int slot = 1;
+            for (var actionInfo : actions) {
+                // Permission-Check!
+                if (!actionInfo.canExecute(viewer)) {
+                    continue; // Überspringe Action
+                }
+
+                actionsRow.setElement(slot++, actionInfo.createButton());
+            }
+        }
+    }
+}
+```
+
+---
+
+### 10. Validated Actions
+
+**Location:** `core/src/main/java/de/fallenstar/core/ui/element/ValidatedUiAction.java`
+
+```java
+package de.fallenstar.core.ui.element;
+
+import org.bukkit.entity.Player;
+
+/**
+ * UiAction mit Validation.
+ *
+ * Validiert vor Ausführung ob Action erlaubt ist:
+ * - Permissions
+ * - State-Checks (Plot existiert noch?)
+ * - Business-Logic (genug Geld? etc.)
+ *
+ * @author FallenStar
+ * @version 2.0
+ */
+public interface ValidatedUiAction extends UiAction {
+
+    /**
+     * Validiert ob Action ausgeführt werden darf.
+     *
+     * @param player Der Spieler
+     * @return Validierungs-Ergebnis
+     */
+    ValidationResult validate(Player player);
+
+    /**
+     * Führt Action aus (nur wenn Validation erfolgreich).
+     */
+    @Override
+    default void execute(Player player) {
+        ValidationResult result = validate(player);
+
+        if (!result.isValid()) {
+            player.sendMessage("§c" + result.errorMessage());
+            return;
+        }
+
+        // Validation erfolgreich → Action ausführen
+        executeValidated(player);
+    }
+
+    /**
+     * Führt validierte Action aus.
+     *
+     * Wird nur aufgerufen wenn validate() erfolgreich war.
+     *
+     * @param player Der Spieler
+     */
+    void executeValidated(Player player);
+
+    /**
+     * Validierungs-Ergebnis.
+     */
+    record ValidationResult(boolean isValid, String errorMessage) {
+        public static ValidationResult success() {
+            return new ValidationResult(true, null);
+        }
+
+        public static ValidationResult failure(String message) {
+            return new ValidationResult(false, message);
+        }
+    }
+}
+```
+
+**Beispiel-Verwendung:**
+
+```java
+public class OpenPriceMenuAction implements ValidatedUiAction {
+    private final TradeguildPlot plot;
+
+    @Override
+    public ValidationResult validate(Player player) {
+        // Check 1: Plot existiert noch?
+        if (plot == null) {
+            return ValidationResult.failure("Plot nicht gefunden!");
+        }
+
+        // Check 2: Spieler ist Owner?
+        if (!plot.isOwner(player)) {
+            return ValidationResult.failure("Nur der Besitzer kann Preise verwalten!");
+        }
+
+        // Check 3: Economy-System verfügbar?
+        if (!isEconomyAvailable()) {
+            return ValidationResult.failure("Economy-System nicht verfügbar!");
+        }
+
+        return ValidationResult.success();
+    }
+
+    @Override
+    public void executeValidated(Player player) {
+        // Alle Checks bestanden → Öffne Price-Menu
+        PlotPriceManagementUi ui = new PlotPriceManagementUi(plot, player);
+        ui.open(player);
+    }
+
+    @Override
+    public String getActionName() {
+        return "OpenPriceMenu";
+    }
+
+    private boolean isEconomyAvailable() {
+        // TODO: Check
+        return true;
+    }
+}
+```
+
+---
+
+## 🎯 Vollständiger Workflow
+
+### Beispiel 1: User klickt auf Handelsgilde
+
+```
+1. Player rechtsklickt in Handelsgilde-Area
+   ↓
+2. PlayerInteractEvent gefeuert
+   ↓
+3. InteractionHandler.onPlayerInteract() fängt Event ab
+   ↓
+4. InteractionRegistry.getInteractableAtLocation(location)
+   ├─ PlotProvider.getPlot(location) → TradeguildPlot
+   └─ TradeguildPlot instanceof Interactable → true
+   ↓
+5. TradeguildPlot.canInteract(player) → true
+   ↓
+6. InteractionContext erstellt (PLOT, Sneaking=false)
+   ↓
+7. TradeguildPlot.onInteract(player, context)
+   ├─ Nicht Sneaking → UiTarget.openUi() (Default-Implementation)
+   └─ TradeguildPlot.createUi(player, context)
+       └─ new PlotMainMenuUi(this, player)
+   ↓
+8. PlotMainMenuUi.buildUi()
+   ├─ plot.getAvailableUiActions(player, MAIN_MENU)
+   │   ├─ Storage-Action (für alle)
+   │   ├─ NPC-Action (nur Owner)
+   │   ├─ Preis-Action (nur Owner)
+   │   └─ Info-Action (für alle)
+   ├─ Permission-Filter (canExecute() für jede Action)
+   └─ Automatische Button-Generierung
+   ↓
+9. UI.open(player)
+   ↓
+10. Player sieht UI mit personalisierten Buttons!
+```
+
+**Ergebnis:**
+- **Owner sieht:** Storage, NPCs, Preise, Info
+- **Gast sieht:** Storage, Info
+
+---
+
+### Beispiel 2: User klickt auf GuildTraderNPC
+
+```
+1. Player rechtsklickt auf Citizens-NPC
+   ↓
+2. PlayerInteractEntityEvent gefeuert
+   ↓
+3. InteractionHandler.onPlayerInteractEntity() fängt Event ab
+   ↓
+4. InteractionRegistry.getInteractableForEntity(npcUUID)
+   └─ GuildTraderNPC gefunden
+   ↓
+5. GuildTraderNPC.canInteract(player) → true
+   ↓
+6. InteractionContext erstellt (ENTITY, Sneaking=false)
+   ↓
+7. GuildTraderNPC.onInteract(player, context)
+   ├─ UiTarget.openUi() (Default-Implementation)
+   └─ GuildTraderNPC.createUi(player, context)
+       ├─ isOwner(player) → false
+       └─ new NpcTradeUi(this, player)  // Gast-UI!
+   ↓
+8. NpcTradeUi öffnet sich
+   ├─ Generiert TradeSets aus Plot-Storage + Preisen
+   └─ Zeigt Vanilla Merchant Interface
+   ↓
+9. Player kann handeln!
+```
+
+**Ergebnis:**
+- **Owner:** Sieht NpcManagementUi (Configure, Remove)
+- **Gast:** Sieht NpcTradeUi (Handeln)
+
+---
+
+### Beispiel 3: Admin Shift+Rechtsklickt Plot
+
+```
+1. Player Shift+Rechtsklick auf Plot
+   ↓
+2. InteractionContext (PLOT, Sneaking=true)
+   ↓
+3. TradeguildPlot.onInteract(player, context)
+   ├─ context.isAdminInteraction() → true
+   ├─ player.hasPermission("fallenstar.admin") → true
+   └─ TradeguildPlot.openAdminUi(player, context)
+   ↓
+4. PlotAdminUi öffnet sich
+   ├─ Erweiterte Funktionen
+   ├─ Debug-Informationen
+   └─ Admin-Tools
+   ↓
+5. Admin sieht erweiterte Optionen!
+```
+
+---
+
+## 📚 Vorteile Interaction-System
+
+### ✅ Zentrales Click-Routing
+
+```java
+// EINE Handler-Klasse für ALLE Interaktionen!
+public class InteractionHandler {
+    // Block-Clicks → Plots
+    // Entity-Clicks → NPCs
+    // Item-Clicks → Custom Items
+}
+```
+
+### ✅ Type-Safe Interactions
+
+```java
+// Compiler-Check: Objekt MUSS Interactable implementieren!
+public class TradeguildPlot implements UiTarget {
+    // MUSS onInteract(), createUi(), etc. implementieren
+}
+```
+
+### ✅ Automatische UI-Öffnung
+
+```java
+// Default-Implementation in UiTarget!
+default boolean onInteract(...) {
+    return openUi(player, context);
+}
+// → Jedes UiTarget öffnet automatisch sein UI!
+```
+
+### ✅ Context-Aware
+
+```java
+// Verschiedene UIs je nach Kontext
+if (context.isSneaking()) {
+    openAdminUi();  // Admin-Modus
+} else {
+    openUi();       // Normal-Modus
+}
+```
+
+### ✅ Permission-Integration
+
+```java
+// Automatisches Permission-Filtering
+actions.stream()
+    .filter(action -> action.canExecute(player))
+    .forEach(action -> addButton(action));
+```
+
+---
+
 ## 🚀 Implementierungs-Phasen (aktualisiert)
 
 ### Phase 1: Plot-Interface-Refactoring (Sprint 15)
 - ✅ Plot-Interface-Hierarchie
-- ✅ Trait-Interfaces
-- ✅ Konkrete Implementierungen
+- ✅ Trait-Interfaces (NamedPlot, StorageContainerPlot, NpcContainerPlot, SlottablePlot)
+- ✅ Konkrete Implementierungen (TradeguildPlot, MarketPlot)
+- ✅ PlotProvider-Anpassungen (getPlotAs, hasTrait)
 
 ### Phase 2: UI-Navigation-System (Sprint 15-16)
 - ✅ ChildUI-Interface
 - ✅ BackButton
 - ✅ UI-Hierarchie
+- ✅ PlotMainMenuUi (Root)
+- ✅ SubMenus (PlotStorageUi, PlotNpcManagementUi, etc.)
 
-### Phase 3: UiActionTarget-Pattern (Sprint 16) **NEU!**
+### Phase 3: UiActionTarget-Pattern (Sprint 16)
 - ✅ UiActionTarget-Interface
-- ✅ UiContext-Enum
-- ✅ UiActionInfo-Record
+- ✅ UiContext-Enum (MAIN_MENU, STORAGE_MENU, etc.)
+- ✅ UiActionInfo-Record (mit Builder)
 - ✅ Plot-Implementierung
 - ✅ Self-Constructing UIs
 
-### Phase 4: NPC-Container-Abstraktion (Sprint 16)
+### Phase 4: Interaction-System (Sprint 16) **NEU!**
+- ✅ Interactable-Interface (Basis)
+- ✅ InteractionContext (Kontext-Informationen)
+- ✅ InteractionType-Enum
+- ✅ UiTarget-Interface (kombiniert Interactable + UiActionTarget)
+- ✅ InteractionHandler (Click-Routing)
+- ✅ InteractionRegistry (Objekt-Verwaltung)
+- ✅ Permission-Integration in UiActionInfo
+- ✅ ValidatedUiAction-Interface
+
+### Phase 5: Plot + NPC mit UiTarget (Sprint 16-17)
+- ✅ TradeguildPlot implementiert UiTarget
+- ✅ GuildTraderNPC implementiert UiTarget
+- ✅ Admin-UI-Funktionalität (Shift+Rechtsklick)
+- ✅ Automatische UI-Öffnung bei Rechtsklick
+
+### Phase 6: NPC-Container-Abstraktion (Sprint 17)
 - ✅ NpcContainer-Interface
 - ✅ PlotNpcContainer
 - ✅ PlayerNpcOwnership
+- ✅ Registry-Integration
 
-### Phase 5: Projekt-weite Anwendung (Sprint 17) **NEU!**
+### Phase 7: Projekt-weite Anwendung (Sprint 17-18)
 - ✅ Economy mit UiActionTarget
 - ✅ Items mit UiActionTarget
 - ✅ NPCs mit UiActionTarget
 - ✅ Storage mit UiActionTarget
+- ✅ Alle Systeme nutzen Interaction-System
 
-### Phase 6: Event-System-Integration (Sprint 17-18)
+### Phase 8: Event-System-Integration (Sprint 18)
 - ✅ PlotEvent-Hierarchie
 - ✅ UiEvent-Hierarchie
-- ✅ Action-Events (ActionExecutedEvent, etc.)
+- ✅ InteractionEvent (InteractionStartEvent, InteractionSuccessEvent)
+- ✅ Action-Events (ActionExecutedEvent, ActionFailedEvent)
 
 ---
 

@@ -268,6 +268,94 @@ public class CurrencyManager {
     }
 
     /**
+     * Erstellt Münzen als ItemStack (ohne Auszahlung an Spieler).
+     *
+     * Diese Methode wird von TradeSet-Generatoren verwendet, um Münzen
+     * für Handelstransaktionen zu erstellen.
+     *
+     * @param currencyId Währungs-ID (z.B. "sterne")
+     * @param tier Münz-Tier (BRONZE, SILVER, GOLD)
+     * @param amount Anzahl
+     * @return ItemStack mit Münzen, oder null wenn fehlgeschlagen
+     */
+    public ItemStack createCoin(String currencyId, CurrencyItemSet.CurrencyTier tier, int amount) {
+        Optional<CurrencyItemSet> currencyOpt = getCurrency(currencyId);
+
+        if (currencyOpt.isEmpty()) {
+            logger.warning("Währung nicht gefunden: " + currencyId);
+            return null;
+        }
+
+        CurrencyItemSet currency = currencyOpt.get();
+        String itemId = currency.getItemId(tier);
+
+        // Erstelle Münzen via ItemProvider
+        Optional<ItemStack> coins;
+        try {
+            coins = itemProvider.getSpecialItem(itemId, amount);
+        } catch (Exception e) {
+            // Fallback auf Vanilla Gold Nuggets wenn kein Custom-Item-Plugin verfügbar
+            logger.fine("ItemProvider nicht verfügbar - verwende Vanilla Fallback: " + e.getMessage());
+            return createVanillaCoinFallback(tier, amount);
+        }
+
+        if (coins.isEmpty()) {
+            // Fallback auf Vanilla Gold Nuggets
+            logger.fine("Custom-Item nicht verfügbar - verwende Vanilla Fallback");
+            return createVanillaCoinFallback(tier, amount);
+        }
+
+        return coins.get();
+    }
+
+    /**
+     * Erstellt Vanilla-Münzen als Fallback wenn kein Custom-Item-Plugin verfügbar ist.
+     *
+     * Mapping:
+     * - BRONZE → GOLD_NUGGET (1 Sterne)
+     * - SILVER → GOLD_INGOT (10 Sterne)
+     * - GOLD → GOLD_BLOCK (100 Sterne)
+     *
+     * @param tier Münz-Tier
+     * @param amount Anzahl
+     * @return ItemStack mit Vanilla-Münzen
+     */
+    private ItemStack createVanillaCoinFallback(CurrencyItemSet.CurrencyTier tier, int amount) {
+        org.bukkit.Material material = switch (tier) {
+            case BRONZE -> org.bukkit.Material.GOLD_NUGGET;  // 1 Sterne
+            case SILVER -> org.bukkit.Material.GOLD_INGOT;   // 10 Sterne
+            case GOLD -> org.bukkit.Material.GOLD_BLOCK;     // 100 Sterne
+        };
+
+        ItemStack coins = new ItemStack(material, amount);
+
+        // Setze Display-Name
+        org.bukkit.inventory.meta.ItemMeta meta = coins.getItemMeta();
+        if (meta != null) {
+            String displayName = switch (tier) {
+                case BRONZE -> "§e⭐ Stern";
+                case SILVER -> "§e⭐⭐ Stern-Barren (10 Sterne)";
+                case GOLD -> "§e⭐⭐⭐ Stern-Block (100 Sterne)";
+            };
+            meta.setDisplayName(displayName);
+
+            java.util.List<String> lore = new java.util.ArrayList<>();
+            lore.add("§7Währung: Sterne");
+            int value = switch (tier) {
+                case BRONZE -> 1;
+                case SILVER -> 10;
+                case GOLD -> 100;
+            };
+            lore.add("§7Wert: §e" + value + " Sterne");
+            meta.setLore(lore);
+
+            coins.setItemMeta(meta);
+        }
+
+        return coins;
+    }
+
+    /**
      * Nimmt Münzen vom Spieler-Inventar und zahlt den Gegenwert auf Vault ein.
      *
      * Diese Methode:
